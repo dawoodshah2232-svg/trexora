@@ -85,7 +85,7 @@ h3{font-size:1.1rem;font-weight:650}
 /* Hero */
 .hero{padding:64px 0 80px;position:relative;overflow:hidden}
 .hero::before{content:"";position:absolute;inset:0;background:radial-gradient(700px 340px at 75% 10%,rgba(163,22,40,.22),transparent 65%);pointer-events:none}
-.hero-inner{position:relative;display:grid;gap:44px}
+.hero-inner{position:relative;width:min(1120px,92%);margin:0 auto;display:grid;gap:44px}
 .hero-ctas{display:flex;gap:12px;flex-wrap:wrap}
 .hero-points{list-style:none;display:flex;gap:22px;margin-top:26px;flex-wrap:wrap}
 .hero-points li{font-size:.9rem;color:var(--muted)}
