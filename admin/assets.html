@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Assets — Trexora Admin</title>
+<meta name="robots" content="noindex">
+<link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
+<link rel="stylesheet" href="../styles.css">
+<link rel="stylesheet" href="admin.css">
+<script>try{var t=localStorage.getItem('trexora-theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}</script>
+</head>
+<body class="admin-body" data-page="assets">
+<div class="admin-shell">
+  <aside class="sidebar" id="sidebar">
+    <a class="brand" href="dashboard.html" aria-label="Trexora admin">
+      <img class="logo logo-dark" src="../assets/logo-dark.svg" alt="Trexora" height="32">
+      <img class="logo logo-light" src="../assets/logo-light.svg" alt="Trexora" height="32">
+    </a>
+    <a class="side-link" data-nav="dashboard" href="dashboard.html"><span class="ico">📊</span>Dashboard</a>
+    <a class="side-link" data-nav="users" href="users.html"><span class="ico">👥</span>Users</a>
+    <a class="side-link" data-nav="assets" href="assets.html"><span class="ico">💹</span>Assets</a>
+    <a class="side-link" data-nav="trades" href="trades.html"><span class="ico">📑</span>Trades</a>
+    <a class="side-link" data-nav="requests" href="requests.html"><span class="ico">💸</span>Requests</a>
+    <a class="side-link" data-nav="settings" href="settings.html"><span class="ico">⚙️</span>Settings</a>
+    <div class="side-foot">
+      <a class="side-link" href="../index.html"><span class="ico">🌐</span>View website</a>
+      <a class="side-link" href="../app/terminal.html"><span class="ico">📈</span>Client terminal</a>
+      <button class="side-link" id="logoutBtn" type="button" style="background:none;border:0;width:100%;text-align:left;cursor:pointer;font-family:var(--font)"><span class="ico">⏻</span>Log out</button>
+    </div>
+  </aside>
+
+  <main class="admin-main">
+    <div class="admin-top">
+      <button class="icon-btn mobile-nav-toggle" id="mobileNavToggle" aria-label="Menu">☰</button>
+      <h1>Assets</h1>
+      <span class="spacer"></span>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme" style="width:36px;height:36px">
+        <svg class="icon-sun" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M2 12h2.5M19.5 12H22M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+      </button>
+    </div>
+
+    <p style="color:var(--muted);font-size:.88rem;margin-bottom:16px">Changes here apply to the client terminal <strong>immediately</strong> — same data store. Settlement uses live CoinGecko quotes: crypto assets need a CoinGecko coin id (e.g. <code>bitcoin</code>, <code>pax-gold</code>); forex pairs need base/quote currency codes (e.g. EUR / USD).</p>
+
+    <div class="panel">
+      <h2>Add asset</h2>
+      <div class="form-grid two">
+        <div class="field"><label>Name</label><input class="inline-input" id="nName" type="text" placeholder="EUR/USD" style="width:100%"></div>
+        <div class="field"><label>TradingView symbol</label><input class="inline-input" id="nTv" type="text" placeholder="FX:EURUSD" style="width:100%"></div>
+        <div class="field"><label>Price source</label><select id="nKind" class="inline-input" style="width:100%"><option value="fiat">Fiat pair (currency codes)</option><option value="crypto">Crypto / metal (CoinGecko id)</option></select></div>
+        <div class="field"><label>Source codes</label><input class="inline-input" id="nCodes" type="text" placeholder="EUR / USD  or  bitcoin" style="width:100%"></div>
+        <div class="field"><label>Payout %</label><input class="inline-input" id="nPayout" type="number" min="1" max="100" value="80" style="width:100%"></div>
+        <div class="field"><label>Min / max trade (USD)</label><div style="display:flex;gap:8px"><input class="inline-input" id="nMin" type="number" min="1" value="1" style="width:100%"><input class="inline-input" id="nMax" type="number" min="1" value="1000" style="width:100%"></div></div>
+      </div>
+      <button class="btn btn-primary btn-sm" id="addBtn" type="button" style="margin-top:12px">Add asset</button>
+    </div>
+
+    <div class="tbl-wrap"><table class="data" id="assetsTable">
+      <thead><tr><th>Asset</th><th>TV symbol</th><th>Source</th><th>Payout %</th><th>Min</th><th>Max</th><th>Enabled</th><th></th></tr></thead>
+      <tbody></tbody>
+    </table></div>
+  </main>
+</div>
+<div class="toast" id="toast" style="position:fixed;left:50%;bottom:30px;transform:translateX(-50%);background:#1c0d11;color:#fff;border:1px solid var(--brand);padding:12px 20px;border-radius:12px;opacity:0;pointer-events:none;transition:.3s;z-index:200"></div>
+
+<script src="../shared/store.js"></script>
+<script src="admin.js"></script>
+<script>
+(function(){
+  "use strict";
+  var $ = ADM.$;
+  var s = TX.load();
+
+  function srcLabel(a){
+    return a.kind === "crypto" ? ("CG: " + (a.code || "—")) : ("FX: " + (a.base || "?") + "/" + (a.quote || "?"));
+  }
+
+  function render(){
+    var tb = $("assetsTable").querySelector("tbody"); tb.innerHTML = "";
+    s.assets.forEach(function(a){
+      var tr = document.createElement("tr");
+      tr.innerHTML =
+        "<td><strong>" + TX.esc(a.name) + "</strong></td>" +
+        '<td><input class="inline-input" data-f="tv" data-id="' + a.id + '" value="' + TX.esc(a.tv) + '" style="width:150px"></td>' +
+        "<td style='font-size:.78rem;color:var(--muted)'>" + TX.esc(srcLabel(a)) + "</td>" +
+        '<td><input class="inline-input" data-f="payout" data-id="' + a.id + '" type="number" min="1" max="100" value="' + a.payout + '" style="width:70px"></td>' +
+        '<td><input class="inline-input" data-f="min" data-id="' + a.id + '" type="number" min="1" value="' + a.min + '" style="width:80px"></td>' +
+        '<td><input class="inline-input" data-f="max" data-id="' + a.id + '" type="number" min="1" value="' + a.max + '" style="width:90px"></td>' +
+        '<td><label class="toggle"><input type="checkbox" data-f="enabled" data-id="' + a.id + '"' + (a.enabled ? " checked" : "") + '><span class="track"></span></label></td>' +
+        '<td><div class="row-actions"><button class="btn btn-ghost btn-xs" data-del="' + a.id + '" type="button">Delete</button></div></td>';
+      tb.appendChild(tr);
+    });
+    tb.querySelectorAll("input[data-f]").forEach(function(inp){
+      inp.addEventListener("change", function(){
+        var id = inp.getAttribute("data-id"), f = inp.getAttribute("data-f");
+        var a = null;
+        for (var i = 0; i < s.assets.length; i++) if (s.assets[i].id === id) a = s.assets[i];
+        if (!a) return;
+        if (f === "enabled") a.enabled = inp.checked;
+        else if (f === "payout") a.payout = Math.min(100, Math.max(1, parseInt(inp.value, 10) || a.payout));
+        else if (f === "min") a.min = Math.max(1, parseFloat(inp.value) || a.min);
+        else if (f === "max") a.max = Math.max(a.min, parseFloat(inp.value) || a.max);
+        else if (f === "tv") a.tv = inp.value.trim() || a.tv;
+        TX.save(s); render();
+        ADM.toast("Asset updated — live in the terminal now.");
+      });
+    });
+    tb.querySelectorAll("[data-del]").forEach(function(b){
+      b.addEventListener("click", function(){
+        var id = b.getAttribute("data-del");
+        var open = s.trades.some(function(t){ return t.assetId === id && t.status === "open"; });
+        if (open) { ADM.toast("Cannot delete: open positions exist on this asset."); return; }
+        if (!confirm("Delete this asset? It will disappear from the terminal.")) return;
+        s.assets = s.assets.filter(function(a){ return a.id !== id; });
+        TX.save(s); render();
+        ADM.toast("Asset deleted.");
+      });
+    });
+  }
+
+  $("addBtn").addEventListener("click", function(){
+    var name = $("nName").value.trim();
+    var tv = $("nTv").value.trim();
+    var kind = $("nKind").value;
+    var codes = $("nCodes").value.trim();
+    var payout = Math.min(100, Math.max(1, parseInt($("nPayout").value, 10) || 80));
+    var min = Math.max(1, parseFloat($("nMin").value) || 1);
+    var max = Math.max(min, parseFloat($("nMax").value) || 1000);
+    if (!name || !tv || !codes) { ADM.toast("Fill name, TradingView symbol and source codes."); return; }
+    var a = { id: TX.uid("a"), name: name, tv: tv, kind: kind, payout: payout, min: min, max: max, enabled: true };
+    if (kind === "crypto") a.code = codes.toLowerCase().replace(/\s+/g, "-");
+    else {
+      var parts = codes.split(/[\s\/,]+/).filter(Boolean);
+      if (parts.length < 2) { ADM.toast("Fiat pairs need two codes, e.g. EUR / USD."); return; }
+      a.base = parts[0].toUpperCase(); a.quote = parts[1].toUpperCase();
+    }
+    s.assets.push(a);
+    TX.save(s); render();
+    $("nName").value = ""; $("nTv").value = ""; $("nCodes").value = "";
+    ADM.toast("Asset added — live in the terminal now.");
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>

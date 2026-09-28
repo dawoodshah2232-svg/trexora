@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Requests — Trexora Admin</title>
+<meta name="robots" content="noindex">
+<link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
+<link rel="stylesheet" href="../styles.css">
+<link rel="stylesheet" href="admin.css">
+<script>try{var t=localStorage.getItem('trexora-theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}</script>
+</head>
+<body class="admin-body" data-page="requests">
+<div class="admin-shell">
+  <aside class="sidebar" id="sidebar">
+    <a class="brand" href="dashboard.html" aria-label="Trexora admin">
+      <img class="logo logo-dark" src="../assets/logo-dark.svg" alt="Trexora" height="32">
+      <img class="logo logo-light" src="../assets/logo-light.svg" alt="Trexora" height="32">
+    </a>
+    <a class="side-link" data-nav="dashboard" href="dashboard.html"><span class="ico">📊</span>Dashboard</a>
+    <a class="side-link" data-nav="users" href="users.html"><span class="ico">👥</span>Users</a>
+    <a class="side-link" data-nav="assets" href="assets.html"><span class="ico">💹</span>Assets</a>
+    <a class="side-link" data-nav="trades" href="trades.html"><span class="ico">📑</span>Trades</a>
+    <a class="side-link" data-nav="requests" href="requests.html"><span class="ico">💸</span>Requests</a>
+    <a class="side-link" data-nav="settings" href="settings.html"><span class="ico">⚙️</span>Settings</a>
+    <div class="side-foot">
+      <a class="side-link" href="../index.html"><span class="ico">🌐</span>View website</a>
+      <a class="side-link" href="../app/terminal.html"><span class="ico">📈</span>Client terminal</a>
+      <button class="side-link" id="logoutBtn" type="button" style="background:none;border:0;width:100%;text-align:left;cursor:pointer;font-family:var(--font)"><span class="ico">⏻</span>Log out</button>
+    </div>
+  </aside>
+
+  <main class="admin-main">
+    <div class="admin-top">
+      <button class="icon-btn mobile-nav-toggle" id="mobileNavToggle" aria-label="Menu">☰</button>
+      <h1>Deposit / withdrawal requests</h1>
+      <span class="spacer"></span>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme" style="width:36px;height:36px">
+        <svg class="icon-sun" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M2 12h2.5M19.5 12H22M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+      </button>
+    </div>
+
+    <p style="color:var(--muted);font-size:.88rem;margin-bottom:16px">Approving a deposit credits the user's demo balance; approving a withdrawal debits it. <strong>Demo funds only.</strong></p>
+
+    <div class="panel">
+      <h2>Pending <span id="pendCount"></span></h2>
+      <div id="pendingList"></div>
+    </div>
+
+    <div class="panel">
+      <h2>History</h2>
+      <div class="tbl-wrap"><table class="data" id="histTable">
+        <thead><tr><th>Time</th><th>User</th><th>Type</th><th>Amount</th><th>Method</th><th>Status</th></tr></thead>
+        <tbody></tbody>
+      </table></div>
+    </div>
+  </main>
+</div>
+<div class="toast" id="toast" style="position:fixed;left:50%;bottom:30px;transform:translateX(-50%);background:#1c0d11;color:#fff;border:1px solid var(--brand);padding:12px 20px;border-radius:12px;opacity:0;pointer-events:none;transition:.3s;z-index:200"></div>
+
+<script src="../shared/store.js"></script>
+<script src="admin.js"></script>
+<script>
+(function(){
+  "use strict";
+  var $ = ADM.$;
+  var s = TX.load();
+
+  function decide(id, approve){
+    var r = null;
+    for (var i = 0; i < s.requests.length; i++) if (s.requests[i].id === id) r = s.requests[i];
+    if (!r || r.status !== "pending") return;
+    var u = ADM.userById(s, r.userId);
+    if (approve && u) {
+      if (r.type === "deposit") {
+        u.balance = Math.round((u.balance + r.amount) * 100) / 100;
+      } else {
+        if (r.amount > u.balance) { ADM.toast("Insufficient balance — cannot approve."); return; }
+        u.balance = Math.round((u.balance - r.amount) * 100) / 100;
+      }
+    }
+    r.status = approve ? "approved" : "rejected";
+    r.decidedAt = Date.now();
+    TX.save(s); render();
+    ADM.toast(approve ? "Approved — balance updated." : "Request rejected.");
+  }
+
+  function render(){
+    var pend = s.requests.filter(function(r){ return r.status === "pending"; }).sort(function(a,b){ return a.createdAt - b.createdAt; });
+    $("pendCount").textContent = pend.length ? "(" + pend.length + ")" : "";
+    var pl = $("pendingList");
+    if (!pend.length) { pl.innerHTML = '<div class="empty" style="padding:20px">No pending requests.</div>'; }
+    else {
+      pl.innerHTML = "";
+      pend.forEach(function(r){
+        var d = document.createElement("div");
+        d.className = "pos-card";
+        d.innerHTML = '<div class="pos-top"><span class="pos-asset">' + TX.esc(r.userEmail) + '</span>' +
+          '<span class="status-pending">' + r.type + "</span></div>" +
+          '<div class="pos-meta"><span>Amount <strong>' + TX.fmt(r.amount) + '</strong></span>' +
+          "<span>Method <strong>" + TX.esc(r.method) + "</strong></span>" +
+          "<span>Requested <strong>" + TX.fmtTime(r.createdAt) + "</strong></span></div>" +
+          '<div class="pos-actions"><button class="btn btn-primary btn-sm" data-ok="' + r.id + '" type="button">Approve</button>' +
+          '<button class="btn btn-ghost btn-sm" data-no="' + r.id + '" type="button">Reject</button></div>';
+        pl.appendChild(d);
+      });
+      pl.querySelectorAll("[data-ok]").forEach(function(b){ b.addEventListener("click", function(){ decide(b.getAttribute("data-ok"), true); }); });
+      pl.querySelectorAll("[data-no]").forEach(function(b){ b.addEventListener("click", function(){ decide(b.getAttribute("data-no"), false); }); });
+    }
+
+    var tb = $("histTable").querySelector("tbody"); tb.innerHTML = "";
+    s.requests.filter(function(r){ return r.status !== "pending"; }).sort(function(a,b){ return b.createdAt - a.createdAt; }).forEach(function(r){
+      var tr = document.createElement("tr");
+      tr.innerHTML = "<td>" + TX.fmtTime(r.createdAt) + "</td><td>" + TX.esc(r.userEmail) + "</td>" +
+        "<td style='text-transform:capitalize'>" + r.type + "</td><td>" + TX.fmt(r.amount) + "</td>" +
+        "<td>" + TX.esc(r.method) + "</td><td>" + ADM.statusPill(r.status) + "</td>";
+      tb.appendChild(tr);
+    });
+  }
+
+  render();
+})();
+</script>
+</body>
+</html>

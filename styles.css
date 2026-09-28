@@ -90,6 +90,10 @@ h3{font-size:1.1rem;font-weight:650}
 .hero-points{list-style:none;display:flex;gap:22px;margin-top:26px;flex-wrap:wrap}
 .hero-points li{font-size:.9rem;color:var(--muted)}
 .hero-points strong{color:var(--text);font-size:1.05rem;margin-right:4px}
+
+/* Payment method chips */
+.pay-chips{display:flex;gap:10px;margin-top:22px;flex-wrap:wrap}
+.pay-chip{font-size:.78rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);border:1px solid var(--line);border-radius:8px;padding:6px 14px;background:var(--card)}
 .terminal-card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:18px;box-shadow:var(--shadow);max-width:520px}
 .terminal-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
 .asset-chip{display:flex;align-items:center;gap:10px}

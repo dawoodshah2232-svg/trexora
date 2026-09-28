@@ -1,4 +1,6 @@
 User-agent: *
 Allow: /
+Disallow: /app/
+Disallow: /admin/
 
-Sitemap: https://dawoodshah2232-svg.github.io/trexora/sitemap.xml
+Sitemap: https://trexora.flexspot.lol/sitemap.xml

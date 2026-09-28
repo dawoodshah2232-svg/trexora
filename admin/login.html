@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Admin login — Trexora</title>
+<meta name="robots" content="noindex">
+<link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
+<link rel="stylesheet" href="../styles.css">
+<link rel="stylesheet" href="../app/app.css">
+<script>try{var t=localStorage.getItem('trexora-theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}</script>
+</head>
+<body class="app-body">
+<header class="app-header">
+  <div class="app-header-inner">
+    <a class="back-link" href="../index.html">← Trexora</a>
+    <a class="brand" href="../index.html" aria-label="Trexora home">
+      <img class="logo logo-dark" src="../assets/logo-dark.svg" alt="Trexora" height="30">
+      <img class="logo logo-light" src="../assets/logo-light.svg" alt="Trexora" height="30">
+    </a>
+  </div>
+</header>
+
+<main class="auth-wrap">
+  <div class="auth-card">
+    <h1>Admin portal</h1>
+    <p class="sub">Restricted area. <strong>Demo environment — all data is simulated.</strong></p>
+
+    <div class="demo-box" role="note">
+      <strong>Demo access — visible credentials</strong>
+      <div class="row"><span>Username (email)</span><code>admin@trexora.demo</code></div>
+      <div class="row"><span>Password</span><code>trexora123</code></div>
+      <button class="btn btn-outline btn-sm" id="fillDemo" type="button" style="margin-top:10px;width:100%">Fill demo credentials</button>
+    </div>
+
+    <div class="form-err" id="formErr"></div>
+    <form id="loginForm" novalidate>
+      <div class="field">
+        <label for="email">Admin email</label>
+        <input type="email" id="email" autocomplete="username" placeholder="admin@example.com" required>
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
+        <input type="password" id="password" autocomplete="current-password" placeholder="••••••••" required>
+      </div>
+      <button class="btn btn-primary" type="submit" style="width:100%;padding:13px">Log in to admin</button>
+    </form>
+
+    <p class="auth-alt" style="margin-top:8px"><a href="../index.html">← Back to website</a></p>
+  </div>
+</main>
+
+<script src="../shared/store.js"></script>
+<script>
+(function(){
+  "use strict";
+  if(TX.adminAuthed()){ window.location.replace('dashboard.html'); return; }
+  document.getElementById('fillDemo').addEventListener('click',function(){
+    document.getElementById('email').value=TX.DEMO_ADMIN.email;
+    document.getElementById('password').value=TX.DEMO_ADMIN.password;
+  });
+  var err=document.getElementById('formErr');
+  document.getElementById('loginForm').addEventListener('submit',function(e){
+    e.preventDefault(); err.style.display='none';
+    var email=document.getElementById('email').value.trim().toLowerCase();
+    var pass=document.getElementById('password').value;
+    if(email===TX.DEMO_ADMIN.email&&pass===TX.DEMO_ADMIN.password){
+      TX.setAdminAuthed(true);
+      window.location.replace('dashboard.html');
+    }else{
+      err.textContent='Invalid admin credentials. Use the demo credentials shown above.';
+      err.style.display='block';
+    }
+  });
+})();
+</script>
+</body>
+</html>

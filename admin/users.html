@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Users — Trexora Admin</title>
+<meta name="robots" content="noindex">
+<link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
+<link rel="stylesheet" href="../styles.css">
+<link rel="stylesheet" href="admin.css">
+<script>try{var t=localStorage.getItem('trexora-theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}</script>
+</head>
+<body class="admin-body" data-page="users">
+<div class="admin-shell">
+  <aside class="sidebar" id="sidebar">
+    <a class="brand" href="dashboard.html" aria-label="Trexora admin">
+      <img class="logo logo-dark" src="../assets/logo-dark.svg" alt="Trexora" height="32">
+      <img class="logo logo-light" src="../assets/logo-light.svg" alt="Trexora" height="32">
+    </a>
+    <a class="side-link" data-nav="dashboard" href="dashboard.html"><span class="ico">📊</span>Dashboard</a>
+    <a class="side-link" data-nav="users" href="users.html"><span class="ico">👥</span>Users</a>
+    <a class="side-link" data-nav="assets" href="assets.html"><span class="ico">💹</span>Assets</a>
+    <a class="side-link" data-nav="trades" href="trades.html"><span class="ico">📑</span>Trades</a>
+    <a class="side-link" data-nav="requests" href="requests.html"><span class="ico">💸</span>Requests</a>
+    <a class="side-link" data-nav="settings" href="settings.html"><span class="ico">⚙️</span>Settings</a>
+    <div class="side-foot">
+      <a class="side-link" href="../index.html"><span class="ico">🌐</span>View website</a>
+      <a class="side-link" href="../app/terminal.html"><span class="ico">📈</span>Client terminal</a>
+      <button class="side-link" id="logoutBtn" type="button" style="background:none;border:0;width:100%;text-align:left;cursor:pointer;font-family:var(--font)"><span class="ico">⏻</span>Log out</button>
+    </div>
+  </aside>
+
+  <main class="admin-main">
+    <div class="admin-top">
+      <button class="icon-btn mobile-nav-toggle" id="mobileNavToggle" aria-label="Menu">☰</button>
+      <h1>Users</h1>
+      <span class="spacer"></span>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme" style="width:36px;height:36px">
+        <svg class="icon-sun" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M2 12h2.5M19.5 12H22M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+      </button>
+    </div>
+
+    <div class="toolbar">
+      <input type="search" id="q" placeholder="Search name or email…">
+      <select id="fStatus"><option value="">All statuses</option><option value="active">Active</option><option value="disabled">Disabled</option></select>
+    </div>
+
+    <div class="tbl-wrap"><table class="data" id="usersTable">
+      <thead><tr><th>Name</th><th>Email</th><th>Balance</th><th>Trades</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody></tbody>
+    </table></div>
+  </main>
+</div>
+
+<div class="modal-veil" id="userModal"><div class="modal">
+  <h2 id="mTitle">User</h2>
+  <div id="mBody"></div>
+  <div class="form-grid two" style="margin-top:14px">
+    <div class="field"><label>Adjust balance (+/− USD)</label><input class="inline-input" id="mAdj" type="number" step="0.01" placeholder="+100 / -50" style="width:100%"></div>
+    <div class="field"><label>&nbsp;</label><button class="btn btn-primary btn-sm" id="mApplyAdj" type="button" style="width:100%">Apply adjustment</button></div>
+  </div>
+  <div class="row-actions" style="margin-top:14px">
+    <button class="btn btn-ghost btn-sm" id="mToggle" type="button">Disable</button>
+    <button class="btn btn-ghost btn-sm" id="mClose" type="button">Close</button>
+  </div>
+</div></div>
+
+<div class="toast" id="toast" style="position:fixed;left:50%;bottom:30px;transform:translateX(-50%);background:#1c0d11;color:#fff;border:1px solid var(--brand);padding:12px 20px;border-radius:12px;opacity:0;pointer-events:none;transition:.3s;z-index:200"></div>
+
+<script src="../shared/store.js"></script>
+<script src="admin.js"></script>
+<script>
+(function(){
+  "use strict";
+  var $ = ADM.$;
+  var s = TX.load();
+  var curId = null;
+
+  function tradeCount(uid){ return s.trades.filter(function(t){ return t.userId === uid; }).length; }
+
+  function render(){
+    var q = $("q").value.trim().toLowerCase();
+    var fs = $("fStatus").value;
+    var tb = $("usersTable").querySelector("tbody"); tb.innerHTML = "";
+    s.users.filter(function(u){
+      if (q && u.name.toLowerCase().indexOf(q) === -1 && u.email.toLowerCase().indexOf(q) === -1) return false;
+      if (fs === "active" && u.disabled) return false;
+      if (fs === "disabled" && !u.disabled) return false;
+      return true;
+    }).forEach(function(u){
+      var tr = document.createElement("tr");
+      tr.innerHTML = "<td><strong>" + TX.esc(u.name) + "</strong></td><td>" + TX.esc(u.email) + "</td>" +
+        "<td>" + TX.fmt(u.balance) + "</td><td>" + tradeCount(u.id) + "</td>" +
+        '<td><span class="' + (u.disabled ? "pill-disabled" : "pill-active") + '">' + (u.disabled ? "disabled" : "active") + "</span></td>" +
+        '<td><div class="row-actions"><button class="btn btn-ghost btn-xs" data-view="' + u.id + '" type="button">View / edit</button></div></td>';
+      tb.appendChild(tr);
+    });
+    tb.querySelectorAll("[data-view]").forEach(function(b){
+      b.addEventListener("click", function(){ openModal(b.getAttribute("data-view")); });
+    });
+  }
+
+  function openModal(id){
+    curId = id;
+    var u = ADM.userById(s, id); if (!u) return;
+    $("mTitle").textContent = u.name;
+    var uts = s.trades.filter(function(t){ return t.userId === id; });
+    var pl = uts.reduce(function(a,t){ return a + (t.pl || 0); }, 0);
+    $("mBody").innerHTML =
+      '<div class="kv"><span>Email</span><strong>' + TX.esc(u.email) + "</strong></div>" +
+      '<div class="kv"><span>Balance</span><strong>' + TX.fmt(u.balance) + "</strong></div>" +
+      '<div class="kv"><span>Total trades</span><strong>' + uts.length + "</strong></div>" +
+      '<div class="kv"><span>Lifetime P/L</span><strong>' + (pl >= 0 ? "+" : "") + TX.fmt(pl) + "</strong></div>" +
+      '<div class="kv"><span>Registered</span><strong>' + TX.fmtTime(u.createdAt) + "</strong></div>" +
+      '<div class="kv"><span>Status</span><strong>' + (u.disabled ? "disabled" : "active") + "</strong></div>";
+    $("mToggle").textContent = u.disabled ? "Enable account" : "Disable account";
+    $("mAdj").value = "";
+    $("userModal").classList.add("open");
+  }
+
+  $("mClose").addEventListener("click", function(){ $("userModal").classList.remove("open"); });
+  $("userModal").addEventListener("click", function(e){ if (e.target === this) this.classList.remove("open"); });
+  $("mApplyAdj").addEventListener("click", function(){
+    var u = ADM.userById(s, curId); if (!u) return;
+    var d = parseFloat($("mAdj").value);
+    if (isNaN(d) || d === 0) { ADM.toast("Enter a non-zero amount."); return; }
+    u.balance = Math.round((u.balance + d) * 100) / 100;
+    TX.save(s); render(); openModal(curId);
+    ADM.toast("Balance adjusted to " + TX.fmt(u.balance) + ".");
+  });
+  $("mToggle").addEventListener("click", function(){
+    var u = ADM.userById(s, curId); if (!u) return;
+    u.disabled = !u.disabled;
+    TX.save(s); render(); openModal(curId);
+    ADM.toast(u.disabled ? "Account disabled." : "Account enabled.");
+  });
+
+  $("q").addEventListener("input", render);
+  $("fStatus").addEventListener("change", render);
+  render();
+})();
+</script>
+</body>
+</html>

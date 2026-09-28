@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Trades — Trexora Admin</title>
+<meta name="robots" content="noindex">
+<link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
+<link rel="stylesheet" href="../styles.css">
+<link rel="stylesheet" href="admin.css">
+<script>try{var t=localStorage.getItem('trexora-theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}</script>
+</head>
+<body class="admin-body" data-page="trades">
+<div class="admin-shell">
+  <aside class="sidebar" id="sidebar">
+    <a class="brand" href="dashboard.html" aria-label="Trexora admin">
+      <img class="logo logo-dark" src="../assets/logo-dark.svg" alt="Trexora" height="32">
+      <img class="logo logo-light" src="../assets/logo-light.svg" alt="Trexora" height="32">
+    </a>
+    <a class="side-link" data-nav="dashboard" href="dashboard.html"><span class="ico">📊</span>Dashboard</a>
+    <a class="side-link" data-nav="users" href="users.html"><span class="ico">👥</span>Users</a>
+    <a class="side-link" data-nav="assets" href="assets.html"><span class="ico">💹</span>Assets</a>
+    <a class="side-link" data-nav="trades" href="trades.html"><span class="ico">📑</span>Trades</a>
+    <a class="side-link" data-nav="requests" href="requests.html"><span class="ico">💸</span>Requests</a>
+    <a class="side-link" data-nav="settings" href="settings.html"><span class="ico">⚙️</span>Settings</a>
+    <div class="side-foot">
+      <a class="side-link" href="../index.html"><span class="ico">🌐</span>View website</a>
+      <a class="side-link" href="../app/terminal.html"><span class="ico">📈</span>Client terminal</a>
+      <button class="side-link" id="logoutBtn" type="button" style="background:none;border:0;width:100%;text-align:left;cursor:pointer;font-family:var(--font)"><span class="ico">⏻</span>Log out</button>
+    </div>
+  </aside>
+
+  <main class="admin-main">
+    <div class="admin-top">
+      <button class="icon-btn mobile-nav-toggle" id="mobileNavToggle" aria-label="Menu">☰</button>
+      <h1>Trades</h1>
+      <span class="spacer"></span>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme" style="width:36px;height:36px">
+        <svg class="icon-sun" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M2 12h2.5M19.5 12H22M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+      </button>
+    </div>
+
+    <div class="toolbar">
+      <input type="search" id="q" placeholder="Search user or asset…">
+      <select id="fStatus"><option value="">All statuses</option><option value="open">Open</option><option value="closed">Closed</option></select>
+      <select id="fResult"><option value="">All results</option><option value="win">Win</option><option value="loss">Loss</option><option value="tie">Tie</option><option value="early">Early close</option><option value="void">Void</option></select>
+    </div>
+
+    <div class="tbl-wrap"><table class="data" id="tradesTable">
+      <thead><tr><th>Opened</th><th>User</th><th>Asset</th><th>Dir</th><th>Amount</th><th>Entry</th><th>Exit</th><th>Status</th><th>P/L</th></tr></thead>
+      <tbody></tbody>
+    </table></div>
+    <p style="color:var(--faint);font-size:.82rem;margin-top:10px" id="countLine"></p>
+  </main>
+</div>
+<div class="toast" id="toast" style="position:fixed;left:50%;bottom:30px;transform:translateX(-50%);background:#1c0d11;color:#fff;border:1px solid var(--brand);padding:12px 20px;border-radius:12px;opacity:0;pointer-events:none;transition:.3s;z-index:200"></div>
+
+<script src="../shared/store.js"></script>
+<script src="admin.js"></script>
+<script>
+(function(){
+  "use strict";
+  var $ = ADM.$;
+  var s = TX.load();
+
+  function render(){
+    var q = $("q").value.trim().toLowerCase();
+    var fs = $("fStatus").value, fr = $("fResult").value;
+    var rows = s.trades.filter(function(t){
+      if (q && (t.userEmail || "").toLowerCase().indexOf(q) === -1 && (t.assetName || "").toLowerCase().indexOf(q) === -1) return false;
+      if (fs && t.status !== fs) return false;
+      if (fr && t.result !== fr) return false;
+      return true;
+    }).sort(function(a,b){ return b.openedAt - a.openedAt; });
+
+    var tb = $("tradesTable").querySelector("tbody"); tb.innerHTML = "";
+    rows.slice(0, 200).forEach(function(t){
+      var tr = document.createElement("tr");
+      tr.innerHTML = "<td>" + TX.fmtTime(t.openedAt) + "</td><td>" + TX.esc(t.userEmail || "") + "</td>" +
+        "<td>" + TX.esc(t.assetName) + "</td><td>" + t.dir.toUpperCase() + "</td>" +
+        "<td>" + TX.fmt(t.amount) + "</td><td>" + (t.entryPrice == null ? "—" : t.entryPrice) + "</td>" +
+        "<td>" + (t.exitPrice == null ? "—" : t.exitPrice) + "</td>" +
+        "<td>" + ADM.statusPill(t.status) + (t.result ? " " + ADM.statusPill(t.result) : "") + "</td>" +
+        "<td>" + (t.pl == null ? "—" : ((t.pl > 0 ? "+" : "") + TX.fmt(t.pl))) + "</td>";
+      tb.appendChild(tr);
+    });
+    $("countLine").textContent = rows.length + " trade" + (rows.length === 1 ? "" : "s") + (rows.length > 200 ? " — showing first 200" : "") + ". Demo data included.";
+  }
+
+  $("q").addEventListener("input", render);
+  $("fStatus").addEventListener("change", render);
+  $("fResult").addEventListener("change", render);
+  render();
+})();
+</script>
+</body>
+</html>

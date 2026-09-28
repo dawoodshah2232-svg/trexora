@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Log in — Trexora</title>
+<meta name="description" content="Log in to your Trexora demo trading account.">
+<meta name="robots" content="noindex">
+<link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
+<link rel="stylesheet" href="../styles.css">
+<link rel="stylesheet" href="app.css">
+<script>try{var t=localStorage.getItem('trexora-theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}</script>
+</head>
+<body class="app-body">
+<header class="app-header">
+  <div class="app-header-inner">
+    <a class="back-link" href="../index.html">← Trexora</a>
+    <a class="brand" href="../index.html" aria-label="Trexora home">
+      <img class="logo logo-dark" src="../assets/logo-dark.svg" alt="Trexora" height="30">
+      <img class="logo logo-light" src="../assets/logo-light.svg" alt="Trexora" height="30">
+    </a>
+    <span style="margin-left:auto"></span>
+    <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme" style="width:36px;height:36px">
+      <svg class="icon-sun" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M2 12h2.5M19.5 12H22M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></svg>
+      <svg class="icon-moon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+    </button>
+  </div>
+</header>
+
+<main class="auth-wrap">
+  <div class="auth-card">
+    <h1>Welcome back</h1>
+    <p class="sub">Log in to your Trexora demo terminal. <strong>Demo environment — virtual funds only, no real money.</strong></p>
+
+    <div class="demo-box" role="note">
+      <strong>Demo access — visible credentials</strong>
+      <div class="row"><span>Username (email)</span><code>trader@trexora.demo</code></div>
+      <div class="row"><span>Password</span><code>trexora123</code></div>
+      <button class="btn btn-outline btn-sm" id="fillDemo" type="button" style="margin-top:10px;width:100%">Fill demo credentials</button>
+    </div>
+
+    <div class="form-err" id="formErr"></div>
+    <form id="loginForm" novalidate>
+      <div class="field">
+        <label for="email">Email</label>
+        <input type="email" id="email" name="email" autocomplete="username" placeholder="you@example.com" required>
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" autocomplete="current-password" placeholder="••••••••" required>
+      </div>
+      <button class="btn btn-primary" type="submit" style="width:100%;padding:13px">Log in to terminal</button>
+    </form>
+
+    <p class="auth-alt">New to Trexora? <a href="signup.html">Create a free demo account</a></p>
+    <p class="auth-alt" style="margin-top:8px"><a href="../index.html">← Back to website</a></p>
+  </div>
+</main>
+
+<script src="../shared/store.js"></script>
+<script>
+(function(){
+  "use strict";
+  var root=document.documentElement;
+  document.getElementById('themeToggle').addEventListener('click',function(){
+    var next=root.getAttribute('data-theme')==='light'?'dark':'light';
+    root.setAttribute('data-theme',next);
+    try{localStorage.setItem('trexora-theme',next);}catch(e){}
+  });
+  if(TX.clientSession()){ window.location.replace('terminal.html'); return; }
+  document.getElementById('fillDemo').addEventListener('click',function(){
+    document.getElementById('email').value=TX.DEMO_CLIENT.email;
+    document.getElementById('password').value=TX.DEMO_CLIENT.password;
+  });
+  var err=document.getElementById('formErr');
+  function showErr(m){ err.textContent=m; err.style.display='block'; }
+  document.getElementById('loginForm').addEventListener('submit',function(e){
+    e.preventDefault(); err.style.display='none';
+    var email=document.getElementById('email').value.trim().toLowerCase();
+    var pass=document.getElementById('password').value;
+    if(!email||!pass){ showErr('Enter your email and password.'); return; }
+    var s=TX.load();
+    var u=null;
+    for(var i=0;i<s.users.length;i++){ if(s.users[i].email.toLowerCase()===email){ u=s.users[i]; break; } }
+    if(!u){ showErr('No account found for this email. Try the demo credentials above or sign up.'); return; }
+    if(u.password!==pass){ showErr('Incorrect password.'); return; }
+    if(u.disabled){ showErr('This account has been disabled. Contact support.'); return; }
+    TX.setClientSession(u.email);
+    window.location.replace('terminal.html');
+  });
+})();
+</script>
+</body>
+</html>

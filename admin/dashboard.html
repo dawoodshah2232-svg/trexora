@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Dashboard — Trexora Admin</title>
+<meta name="robots" content="noindex">
+<link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
+<link rel="stylesheet" href="../styles.css">
+<link rel="stylesheet" href="admin.css">
+<script>try{var t=localStorage.getItem('trexora-theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}</script>
+</head>
+<body class="admin-body" data-page="dashboard">
+<div class="admin-shell">
+  <aside class="sidebar" id="sidebar">
+    <a class="brand" href="dashboard.html" aria-label="Trexora admin">
+      <img class="logo logo-dark" src="../assets/logo-dark.svg" alt="Trexora" height="32">
+      <img class="logo logo-light" src="../assets/logo-light.svg" alt="Trexora" height="32">
+    </a>
+    <a class="side-link" data-nav="dashboard" href="dashboard.html"><span class="ico">📊</span>Dashboard</a>
+    <a class="side-link" data-nav="users" href="users.html"><span class="ico">👥</span>Users</a>
+    <a class="side-link" data-nav="assets" href="assets.html"><span class="ico">💹</span>Assets</a>
+    <a class="side-link" data-nav="trades" href="trades.html"><span class="ico">📑</span>Trades</a>
+    <a class="side-link" data-nav="requests" href="requests.html"><span class="ico">💸</span>Requests</a>
+    <a class="side-link" data-nav="settings" href="settings.html"><span class="ico">⚙️</span>Settings</a>
+    <div class="side-foot">
+      <a class="side-link" href="../index.html"><span class="ico">🌐</span>View website</a>
+      <a class="side-link" href="../app/terminal.html"><span class="ico">📈</span>Client terminal</a>
+      <button class="side-link" id="logoutBtn" type="button" style="background:none;border:0;width:100%;text-align:left;cursor:pointer;font-family:var(--font)"><span class="ico">⏻</span>Log out</button>
+    </div>
+  </aside>
+
+  <main class="admin-main">
+    <div class="admin-top">
+      <button class="icon-btn mobile-nav-toggle" id="mobileNavToggle" aria-label="Menu">☰</button>
+      <h1>Dashboard</h1>
+      <span class="spacer"></span>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme" style="width:36px;height:36px">
+        <svg class="icon-sun" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M2 12h2.5M19.5 12H22M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+      </button>
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat-card"><small>Total users</small><div class="num" id="stUsers">—</div></div>
+      <div class="stat-card"><small>Total trades</small><div class="num" id="stTrades">—</div></div>
+      <div class="stat-card"><small>Total volume</small><div class="num" id="stVolume">—</div></div>
+      <div class="stat-card"><small>Open exposure</small><div class="num" id="stExposure">—</div></div>
+    </div>
+
+    <div class="panel">
+      <h2>Trades — last 7 days <span style="color:var(--faint);font-weight:400;font-size:.8rem">(demo data)</span></h2>
+      <div class="bar-chart" id="weekChart"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Recent trades</h2>
+      <div class="tbl-wrap"><table class="data" id="recentTable">
+        <thead><tr><th>Time</th><th>User</th><th>Asset</th><th>Dir</th><th>Amount</th><th>Status</th><th>P/L</th></tr></thead>
+        <tbody></tbody>
+      </table></div>
+    </div>
+
+    <div class="panel">
+      <h2>Pending requests</h2>
+      <div id="pendingBox"></div>
+    </div>
+  </main>
+</div>
+<div class="toast" id="toast" style="position:fixed;left:50%;bottom:30px;transform:translateX(-50%);background:#1c0d11;color:#fff;border:1px solid var(--brand);padding:12px 20px;border-radius:12px;opacity:0;pointer-events:none;transition:.3s;z-index:200"></div>
+
+<script src="../shared/store.js"></script>
+<script src="admin.js"></script>
+<script>
+(function(){
+  "use strict";
+  var s = TX.load();
+  var $ = ADM.$;
+
+  var activeUsers = s.users.filter(function(u){ return !u.disabled; });
+  $("stUsers").textContent = activeUsers.length + " active / " + s.users.length + " total";
+  $("stTrades").textContent = s.trades.length;
+  var vol = s.trades.reduce(function(a,t){ return a + t.amount; }, 0);
+  $("stVolume").textContent = TX.fmt(vol);
+  var exp = s.trades.filter(function(t){ return t.status === "open"; }).reduce(function(a,t){ return a + t.amount; }, 0);
+  $("stExposure").textContent = TX.fmt(exp);
+
+  // 7-day bar chart
+  var days = [], counts = [];
+  for (var d = 6; d >= 0; d--) {
+    var day = new Date(); day.setHours(0,0,0,0); day.setDate(day.getDate() - d);
+    var next = new Date(day); next.setDate(next.getDate() + 1);
+    var c = s.trades.filter(function(t){ return t.openedAt >= day.getTime() && t.openedAt < next.getTime(); }).length;
+    days.push(day.toLocaleDateString("en-GB", { weekday: "short" }));
+    counts.push(c);
+  }
+  var max = Math.max.apply(null, counts.concat([1]));
+  var chart = $("weekChart");
+  days.forEach(function(lbl, i){
+    var col = document.createElement("div");
+    col.className = "bar-col";
+    col.innerHTML = '<div class="bar" style="height:' + Math.round(counts[i]/max*140) + 'px" title="' + counts[i] + ' trades"></div><small>' + lbl + "</small>";
+    chart.appendChild(col);
+  });
+
+  // recent trades
+  var tb = $("recentTable").querySelector("tbody");
+  s.trades.slice().sort(function(a,b){ return b.openedAt - a.openedAt; }).slice(0, 10).forEach(function(t){
+    var tr = document.createElement("tr");
+    tr.innerHTML = "<td>" + TX.fmtTime(t.openedAt) + "</td><td>" + TX.esc(t.userEmail || "") + "</td><td>" + TX.esc(t.assetName) + "</td>" +
+      "<td>" + t.dir.toUpperCase() + "</td><td>" + TX.fmt(t.amount) + "</td>" +
+      "<td>" + ADM.statusPill(t.status) + "</td>" +
+      "<td>" + (t.pl == null ? "—" : ((t.pl > 0 ? "+" : "") + TX.fmt(t.pl))) + "</td>";
+    tb.appendChild(tr);
+  });
+
+  // pending requests
+  var pend = s.requests.filter(function(r){ return r.status === "pending"; });
+  var pb = $("pendingBox");
+  if (!pend.length) { pb.innerHTML = '<div class="empty" style="padding:20px">No pending requests.</div>'; }
+  else {
+    pb.innerHTML = pend.map(function(r){
+      return '<div class="kv"><span>' + TX.esc(r.userEmail) + " · " + r.type + " · " + TX.esc(r.method) + '</span><strong>' + TX.fmt(r.amount) + ' <a href="requests.html" style="color:var(--brand)">review →</a></strong></div>';
+    }).join("");
+  }
+})();
+</script>
+</body>
+</html>

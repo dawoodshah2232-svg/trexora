@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Sign up — Trexora</title>
+<meta name="description" content="Create your free Trexora demo trading account.">
+<meta name="robots" content="noindex">
+<link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
+<link rel="stylesheet" href="../styles.css">
+<link rel="stylesheet" href="app.css">
+<script>try{var t=localStorage.getItem('trexora-theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}</script>
+</head>
+<body class="app-body">
+<header class="app-header">
+  <div class="app-header-inner">
+    <a class="back-link" href="../index.html">← Trexora</a>
+    <a class="brand" href="../index.html" aria-label="Trexora home">
+      <img class="logo logo-dark" src="../assets/logo-dark.svg" alt="Trexora" height="30">
+      <img class="logo logo-light" src="../assets/logo-light.svg" alt="Trexora" height="30">
+    </a>
+    <span style="margin-left:auto"></span>
+    <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme" style="width:36px;height:36px">
+      <svg class="icon-sun" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M2 12h2.5M19.5 12H22M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></svg>
+      <svg class="icon-moon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+    </button>
+  </div>
+</header>
+
+<main class="auth-wrap">
+  <div class="auth-card">
+    <h1>Create free account</h1>
+    <p class="sub">Your demo starts with <strong>$10,000 in virtual funds</strong> — refillable, forever free. <strong>Demo environment — no real money.</strong></p>
+
+    <div class="form-err" id="formErr"></div>
+    <form id="signupForm" novalidate>
+      <div class="field">
+        <label for="name">Full name</label>
+        <input type="text" id="name" name="name" autocomplete="name" placeholder="Your name" required>
+      </div>
+      <div class="field">
+        <label for="email">Email</label>
+        <input type="email" id="email" name="email" autocomplete="email" placeholder="you@example.com" required>
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" autocomplete="new-password" placeholder="Min. 6 characters" required>
+      </div>
+      <button class="btn btn-primary" type="submit" style="width:100%;padding:13px">Create demo account</button>
+    </form>
+
+    <p class="auth-alt">Already have an account? <a href="login.html">Log in</a></p>
+    <p class="auth-alt" style="margin-top:8px"><a href="../index.html">← Back to website</a></p>
+  </div>
+</main>
+
+<script src="../shared/store.js"></script>
+<script>
+(function(){
+  "use strict";
+  var root=document.documentElement;
+  document.getElementById('themeToggle').addEventListener('click',function(){
+    var next=root.getAttribute('data-theme')==='light'?'dark':'light';
+    root.setAttribute('data-theme',next);
+    try{localStorage.setItem('trexora-theme',next);}catch(e){}
+  });
+  if(TX.clientSession()){ window.location.replace('terminal.html'); return; }
+  var s=TX.load();
+  var err=document.getElementById('formErr');
+  function showErr(m){ err.textContent=m; err.style.display='block'; }
+  if(!s.settings.signups){
+    showErr('New registrations are currently paused. Please try again later.');
+    document.getElementById('signupForm').style.display='none';
+    return;
+  }
+  document.getElementById('signupForm').addEventListener('submit',function(e){
+    e.preventDefault(); err.style.display='none';
+    var name=document.getElementById('name').value.trim();
+    var email=document.getElementById('email').value.trim().toLowerCase();
+    var pass=document.getElementById('password').value;
+    if(!name){ showErr('Please enter your name.'); return; }
+    if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){ showErr('Please enter a valid email address.'); return; }
+    if(pass.length<6){ showErr('Password must be at least 6 characters.'); return; }
+    var st=TX.load();
+    for(var i=0;i<st.users.length;i++){
+      if(st.users[i].email.toLowerCase()===email){ showErr('An account with this email already exists. Log in instead.'); return; }
+    }
+    st.users.push({ id:TX.uid('u'), email:email, name:name, password:pass, balance:10000, disabled:false, createdAt:Date.now() });
+    TX.save(st);
+    TX.setClientSession(email);
+    window.location.replace('terminal.html');
+  });
+})();
+</script>
+</body>
+</html>

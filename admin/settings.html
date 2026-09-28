@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Settings — Trexora Admin</title>
+<meta name="robots" content="noindex">
+<link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
+<link rel="stylesheet" href="../styles.css">
+<link rel="stylesheet" href="admin.css">
+<script>try{var t=localStorage.getItem('trexora-theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}</script>
+</head>
+<body class="admin-body" data-page="settings">
+<div class="admin-shell">
+  <aside class="sidebar" id="sidebar">
+    <a class="brand" href="dashboard.html" aria-label="Trexora admin">
+      <img class="logo logo-dark" src="../assets/logo-dark.svg" alt="Trexora" height="32">
+      <img class="logo logo-light" src="../assets/logo-light.svg" alt="Trexora" height="32">
+    </a>
+    <a class="side-link" data-nav="dashboard" href="dashboard.html"><span class="ico">📊</span>Dashboard</a>
+    <a class="side-link" data-nav="users" href="users.html"><span class="ico">👥</span>Users</a>
+    <a class="side-link" data-nav="assets" href="assets.html"><span class="ico">💹</span>Assets</a>
+    <a class="side-link" data-nav="trades" href="trades.html"><span class="ico">📑</span>Trades</a>
+    <a class="side-link" data-nav="requests" href="requests.html"><span class="ico">💸</span>Requests</a>
+    <a class="side-link" data-nav="settings" href="settings.html"><span class="ico">⚙️</span>Settings</a>
+    <div class="side-foot">
+      <a class="side-link" href="../index.html"><span class="ico">🌐</span>View website</a>
+      <a class="side-link" href="../app/terminal.html"><span class="ico">📈</span>Client terminal</a>
+      <button class="side-link" id="logoutBtn" type="button" style="background:none;border:0;width:100%;text-align:left;cursor:pointer;font-family:var(--font)"><span class="ico">⏻</span>Log out</button>
+    </div>
+  </aside>
+
+  <main class="admin-main">
+    <div class="admin-top">
+      <button class="icon-btn mobile-nav-toggle" id="mobileNavToggle" aria-label="Menu">☰</button>
+      <h1>Platform settings</h1>
+      <span class="spacer"></span>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme" style="width:36px;height:36px">
+        <svg class="icon-sun" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M2 12h2.5M19.5 12H22M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+      </button>
+    </div>
+
+    <div class="panel">
+      <h2>Trading limits</h2>
+      <div class="form-grid two">
+        <div class="field"><label>Default payout % (new assets)</label><input class="inline-input" id="setPayout" type="number" min="1" max="100" style="width:100%"></div>
+        <div class="field"><label>Global min / max trade (USD)</label><div style="display:flex;gap:8px"><input class="inline-input" id="setMin" type="number" min="1" style="width:100%"><input class="inline-input" id="setMax" type="number" min="1" style="width:100%"></div></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Feature toggles</h2>
+      <div class="switch-row"><div><div class="lbl">Early close</div><div class="desc">Let traders close positions before expiry at the current market value.</div></div><label class="toggle"><input type="checkbox" id="tglEarly"><span class="track"></span></label></div>
+      <div class="switch-row"><div><div class="lbl">New registrations</div><div class="desc">Allow new demo accounts to be created from the signup page.</div></div><label class="toggle"><input type="checkbox" id="tglSignups"><span class="track"></span></label></div>
+      <div class="switch-row"><div><div class="lbl">Maintenance mode</div><div class="desc">Pause trading in the client terminal and show a banner.</div></div><label class="toggle"><input type="checkbox" id="tglMaint"><span class="track"></span></label></div>
+    </div>
+
+    <div class="panel">
+      <h2>Danger zone</h2>
+      <p style="color:var(--muted);font-size:.88rem;margin-bottom:12px">Reset the entire demo dataset (users, trades, assets, requests, settings) back to the seeded state.</p>
+      <button class="btn btn-ghost btn-sm" id="resetBtn" type="button">Reset demo data</button>
+    </div>
+
+    <button class="btn btn-primary" id="saveBtn" type="button" style="width:100%;padding:13px">Save settings</button>
+  </main>
+</div>
+<div class="toast" id="toast" style="position:fixed;left:50%;bottom:30px;transform:translateX(-50%);background:#1c0d11;color:#fff;border:1px solid var(--brand);padding:12px 20px;border-radius:12px;opacity:0;pointer-events:none;transition:.3s;z-index:200"></div>
+
+<script src="../shared/store.js"></script>
+<script src="admin.js"></script>
+<script>
+(function(){
+  "use strict";
+  var $ = ADM.$;
+  var s = TX.load();
+
+  function fill(){
+    $("setPayout").value = s.settings.defaultPayout;
+    $("setMin").value = s.settings.minTrade;
+    $("setMax").value = s.settings.maxTrade;
+    $("tglEarly").checked = !!s.settings.earlyClose;
+    $("tglSignups").checked = !!s.settings.signups;
+    $("tglMaint").checked = !!s.settings.maintenance;
+  }
+  fill();
+
+  $("saveBtn").addEventListener("click", function(){
+    s.settings.defaultPayout = Math.min(100, Math.max(1, parseInt($("setPayout").value, 10) || 80));
+    s.settings.minTrade = Math.max(1, parseFloat($("setMin").value) || 1);
+    s.settings.maxTrade = Math.max(s.settings.minTrade, parseFloat($("setMax").value) || 5000);
+    s.settings.earlyClose = $("tglEarly").checked;
+    s.settings.signups = $("tglSignups").checked;
+    s.settings.maintenance = $("tglMaint").checked;
+    TX.save(s);
+    ADM.toast("Settings saved — the client terminal reads them immediately.");
+  });
+
+  $("resetBtn").addEventListener("click", function(){
+    if (!confirm("Reset ALL demo data to the seeded state? This cannot be undone.")) return;
+    s = TX.resetDemo();
+    fill();
+    ADM.toast("Demo data has been reset.");
+  });
+})();
+</script>
+</body>
+</html>

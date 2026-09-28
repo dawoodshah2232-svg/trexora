@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Terminal — Trexora</title>
+<meta name="description" content="Trexora demo trading terminal with live charts.">
+<meta name="robots" content="noindex">
+<link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
+<link rel="stylesheet" href="../styles.css">
+<link rel="stylesheet" href="app.css">
+<script>try{var t=localStorage.getItem('trexora-theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}</script>
+<script src="https://s3.tradingview.com/tv.js"></script>
+</head>
+<body class="app-body">
+<header class="app-header">
+  <div class="app-header-inner">
+    <a class="back-link" href="../index.html">← Site</a>
+    <a class="brand" href="terminal.html" aria-label="Trexora terminal">
+      <img class="logo logo-dark" src="../assets/logo-dark.svg" alt="Trexora" height="30">
+      <img class="logo logo-light" src="../assets/logo-light.svg" alt="Trexora" height="30">
+    </a>
+    <div class="balance-pill"><small>DEMO</small><span id="balanceVal">$10,000.00</span></div>
+    <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme" style="width:36px;height:36px">
+      <svg class="icon-sun" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M2 12h2.5M19.5 12H22M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></svg>
+      <svg class="icon-moon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+    </button>
+    <button class="icon-btn" id="logoutBtn" title="Log out" aria-label="Log out">⏻</button>
+  </div>
+</header>
+<div class="maint-banner" id="maintBanner" hidden>⚠ Platform maintenance is in progress — trading is temporarily paused.</div>
+
+<main class="terminal">
+  <nav class="bottom-nav" id="viewNav" aria-label="Terminal sections" style="margin-bottom:14px">
+    <button data-view="trade" class="active"><span class="ico">📈</span>Trade</button>
+    <button data-view="positions"><span class="ico">⏳</span>Positions <span id="posCount"></span></button>
+    <button data-view="history"><span class="ico">🕘</span>History</button>
+    <button data-view="wallet"><span class="ico">👛</span>Wallet</button>
+  </nav>
+
+  <!-- TRADE -->
+  <section class="view active" id="view-trade">
+    <div class="trade-layout">
+      <div>
+        <div class="asset-bar">
+          <input class="asset-search" id="assetSearch" type="search" placeholder="Search assets…" aria-label="Search assets">
+          <div class="asset-chips" id="assetChips"></div>
+        </div>
+        <div class="chart-wrap">
+          <div id="tv_chart"></div>
+          <div class="price-line">
+            <span class="live-price" id="livePrice">—</span>
+            <span class="badge stale" id="feedBadge">connecting…</span>
+          </div>
+          <div class="chart-fallback" id="chartFallback" hidden>Chart could not load.<br>Check your connection and reload.</div>
+        </div>
+      </div>
+      <div class="trade-panel">
+        <h3>New position</h3>
+        <div class="field" style="margin-bottom:10px">
+          <label>Asset</label>
+          <div style="font-weight:750" id="selAssetName">—</div>
+        </div>
+        <div class="field">
+          <label for="amount">Amount (USD)</label>
+          <div class="amount-row">
+            <button class="step-btn" id="amtDown" type="button" aria-label="Decrease amount">−</button>
+            <input id="amount" type="number" value="10" min="1" step="1" inputmode="decimal">
+            <button class="step-btn" id="amtUp" type="button" aria-label="Increase amount">+</button>
+          </div>
+        </div>
+        <div class="field">
+          <label>Expiry</label>
+          <div class="exp-row" id="expRow">
+            <button class="exp-pill active" data-sec="60" type="button">1m</button>
+            <button class="exp-pill" data-sec="300" type="button">5m</button>
+            <button class="exp-pill" data-sec="900" type="button">15m</button>
+            <button class="exp-pill" data-sec="3600" type="button">1h</button>
+            <button class="exp-pill" data-sec="14400" type="button">4h</button>
+          </div>
+        </div>
+        <div class="payout-preview"><span>Payout if you win</span><strong id="payoutPreview">—</strong></div>
+        <div class="trade-btns">
+          <button class="btn-trade up" id="btnUp" type="button">▲ Up<small id="upReturn"></small></button>
+          <button class="btn-trade down" id="btnDown" type="button">▼ Down<small id="downReturn"></small></button>
+        </div>
+        <p class="fine-print">Settles against the live market quote at expiry. Ties refund the stake. Early close: winners keep stake + up to 50% of profit (pro-rata by elapsed time); losers recover part of the stake (pro-rata). Demo funds only.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- POSITIONS -->
+  <section class="view" id="view-positions">
+    <div id="openList"></div>
+  </section>
+
+  <!-- HISTORY -->
+  <section class="view" id="view-history">
+    <div class="tbl-wrap"><table class="data" id="histTable">
+      <thead><tr><th>Time</th><th>Asset</th><th>Dir</th><th>Amount</th><th>Entry</th><th>Exit</th><th>P/L</th></tr></thead>
+      <tbody></tbody>
+    </table></div>
+    <div class="empty" id="histEmpty" hidden>No closed trades yet. Your history will appear here.</div>
+  </section>
+
+  <!-- WALLET -->
+  <section class="view" id="view-wallet">
+    <div class="wallet-grid">
+      <div class="wallet-bal"><small>Demo balance</small><div class="big" id="walletBal">$0.00</div></div>
+      <div class="req-form">
+        <h3>Fund your demo</h3>
+        <p class="sub" style="color:var(--muted);font-size:.85rem;margin-bottom:12px">Requests go to the admin for approval. Demo funds only.</p>
+        <div class="two-col">
+          <div class="req-form" style="padding:0;border:0">
+            <div class="field"><label for="depAmt">Deposit amount (USD)</label><input id="depAmt" type="number" min="10" value="100"></div>
+            <div class="field"><label for="depMethod">Method</label><select id="depMethod"><option>Visa</option><option>Mastercard</option><option>Bank transfer</option><option>Crypto</option></select></div>
+            <button class="btn btn-primary btn-sm" id="depBtn" type="button" style="width:100%">Request deposit</button>
+          </div>
+          <div class="req-form" style="padding:0;border:0">
+            <div class="field"><label for="wdAmt">Withdraw amount (USD)</label><input id="wdAmt" type="number" min="10" value="100"></div>
+            <div class="field"><label for="wdMethod">Method</label><select id="wdMethod"><option>Visa</option><option>Mastercard</option><option>Bank transfer</option><option>Crypto</option></select></div>
+            <button class="btn btn-ghost btn-sm" id="wdBtn" type="button" style="width:100%">Request withdrawal</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <h3 style="margin:6px 0 10px">My requests</h3>
+    <div class="tbl-wrap"><table class="data" id="reqTable">
+      <thead><tr><th>Time</th><th>Type</th><th>Amount</th><th>Method</th><th>Status</th></tr></thead>
+      <tbody></tbody>
+    </table></div>
+    <div class="empty" id="reqEmpty" hidden>No requests yet.</div>
+  </section>
+</main>
+
+<nav class="bottom-nav" id="viewNavMobile" aria-label="Terminal sections">
+  <button data-view="trade" class="active"><span class="ico">📈</span>Trade</button>
+  <button data-view="positions"><span class="ico">⏳</span>Positions</button>
+  <button data-view="history"><span class="ico">🕘</span>History</button>
+  <button data-view="wallet"><span class="ico">👛</span>Wallet</button>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<script src="../shared/store.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
