@@ -36,6 +36,7 @@
       <a href="#platform">Platform</a>
       <a href="#signals">Signals</a>
       <a href="#indicators">Indicators</a>
+      <a href="#mobile">Mobile app</a>
       <a href="#faq">FAQ</a>
     </nav>
     <div class="header-actions">
@@ -69,10 +70,13 @@
           <li><strong>$10</strong> min. deposit</li>
           <li><strong>Free</strong> demo account</li>
         </ul>
-        <div class="pay-chips" aria-label="Accepted payment methods">
-          <span class="pay-chip">Visa</span>
-          <span class="pay-chip">Mastercard</span>
+        <div class="pay-badges" aria-label="Accepted payment methods">
+          <span class="pay-badge pay-visa">VISA</span>
+          <span class="pay-badge pay-mc"><i></i><i></i><em>Mastercard</em></span>
+          <span class="pay-badge pay-btc"><b>₿</b><em>Bitcoin</em></span>
+          <span class="pay-badge pay-usdt"><b>₮</b><em>USDT</em></span>
         </div>
+        <p class="pay-note">Cards, crypto and bank transfer at the cashier — more providers connect as we launch.</p>
       </div>
       <div class="hero-visual reveal">
         <div class="terminal-card" aria-label="Trexora trading terminal preview">
@@ -97,6 +101,42 @@
           </div>
         </div>
       </div>
+    </div>
+  </section>
+
+  <!-- LIVE MARKET TICKER (real TradingView data) -->
+  <div class="ticker-tape" aria-label="Live market prices">
+    <div class="tradingview-widget-container">
+      <div class="tradingview-widget-container__widget"></div>
+      <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js" async>
+      {
+        "symbols": [
+          {"proName": "FOREXCOM:EURUSD", "title": "EUR/USD"},
+          {"proName": "FOREXCOM:GBPUSD", "title": "GBP/USD"},
+          {"proName": "FOREXCOM:USDJPY", "title": "USD/JPY"},
+          {"proName": "OANDA:XAUUSD", "title": "Gold"},
+          {"proName": "BITSTAMP:BTCUSD", "title": "Bitcoin"},
+          {"proName": "BITSTAMP:ETHUSD", "title": "Ethereum"},
+          {"proName": "TVC:USOIL", "title": "Crude Oil"},
+          {"proName": "FOREXCOM:US30", "title": "US 30"}
+        ],
+        "showSymbolLogo": true,
+        "colorTheme": "dark",
+        "isTransparent": true,
+        "displayMode": "adaptive",
+        "locale": "en"
+      }
+      </script>
+    </div>
+  </div>
+
+  <!-- STATS BAND -->
+  <section class="stats-band">
+    <div class="wrap stats-grid">
+      <div class="stat reveal"><strong>410+</strong><span>tradable instruments</span></div>
+      <div class="stat reveal"><strong>$10</strong><span>minimum deposit</span></div>
+      <div class="stat reveal"><strong>$10</strong><span>minimum withdrawal</span></div>
+      <div class="stat reveal"><strong>$0</strong><span>platform fees</span></div>
     </div>
   </section>
 
@@ -203,13 +243,67 @@
     </div>
   </section>
 
-  <!-- UP OR DOWN PITCH -->
+  <!-- UP OR DOWN PITCH + LIVE DEMO CHART -->
   <section class="pitch">
-    <div class="wrap narrow reveal">
-      <h2>To earn more,<br>make the right call.</h2>
-      <p class="pitch-q">Will the price go <span class="up-word">Up</span> or <span class="down-word">Down</span>?</p>
-      <p class="section-sub">Pick a direction before expiry. If you're right, you earn the fixed payout. If not, you lose the stake — never more. Click below and see the result on a free demo.</p>
-      <a class="btn btn-primary btn-lg" href="app/signup.html">Try it on demo</a>
+    <div class="wrap pitch-grid">
+      <div class="pitch-copy reveal">
+        <h2>To earn more,<br>make the right call.</h2>
+        <p class="pitch-q">Will the price go <span class="up-word">Up</span> or <span class="down-word">Down</span>?</p>
+        <p class="pitch-sub">This is a live chart — real market data, streaming now. Pick a direction before expiry: if you're right, you earn the fixed payout. If not, you lose the stake — never more.</p>
+        <a class="btn btn-lg pitch-cta" href="app/signup.html">Try it on a free demo</a>
+      </div>
+      <div class="demo-frame reveal" aria-label="Live demo chart">
+        <div class="demo-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><em>EUR/USD · Live</em><b class="live-badge sm"><span class="pulse"></span>Live</b></div>
+        <div id="pitchChart" class="demo-chart"></div>
+        <div class="demo-actions">
+          <a class="btn-trade up" href="app/signup.html">▲ Up</a>
+          <a class="btn-trade down" href="app/signup.html">▼ Down</a>
+        </div>
+        <p class="demo-note">Demo preview — open a free account to trade for real.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- MOBILE APP -->
+  <section class="appsec" id="mobile">
+    <div class="wrap split reverse">
+      <div class="split-copy reveal">
+        <p class="eyebrow">Trexora on your phone</p>
+        <h2>The full terminal, in your pocket</h2>
+        <p>No downloads, no lite version, no missing features. The complete Trexora terminal runs in your mobile browser — charts, signals, one-tap execution and your full history, wherever you are.</p>
+        <ul class="check-list">
+          <li>Identical terminal on phone, tablet and desktop</li>
+          <li>Touch-optimized Up / Down execution</li>
+          <li>Native iOS &amp; Android apps coming soon</li>
+        </ul>
+        <div class="store-badges">
+          <span class="store-badge">
+            <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor" aria-hidden="true"><path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.86-.84 1.58.13 2.77.75 3.55 1.9-3.27 1.96-2.5 6.24.58 7.45-.72 1.7-1.65 3.38-3.07 3.66zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/></svg>
+            <span class="store-text"><small>Download on the</small><strong>App Store</strong></span>
+            <span class="soon">Soon</span>
+          </span>
+          <span class="store-badge">
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor" aria-hidden="true"><path d="M3.6 2.3c-.3.3-.5.8-.5 1.4v16.6c0 .6.2 1.1.5 1.4l.1.1 9.3-9.3v-.2L3.7 2.2l-.1.1zM16.8 15.9l-3.8-3.8v-.2l3.8-3.8 4.6 2.6c1.3.7 1.3 2 0 2.7l-4.6 2.5zM5.5 2.7l8.4 8.4-3.1 3.1L5.5 2.7zm0 18.6l5.3-11.5 3.1 3.1-8.4 8.4z"/></svg>
+            <span class="store-text"><small>Get it on</small><strong>Google Play</strong></span>
+            <span class="soon">Soon</span>
+          </span>
+        </div>
+      </div>
+      <div class="split-visual reveal">
+        <div class="phone-mock" aria-label="Trexora mobile terminal preview">
+          <div class="phone-notch"></div>
+          <div class="phone-screen">
+            <div class="phone-asset"><span>BTC/USD</span><em>85%</em></div>
+            <svg class="chart" id="appChart" viewBox="0 0 300 150" role="img" aria-label="Mini candlestick chart illustration"></svg>
+            <div class="phone-row"><span>Expiry</span><strong>15 min</strong></div>
+            <div class="phone-row"><span>Amount</span><strong>$100</strong></div>
+            <div class="phone-actions">
+              <button type="button" class="btn-trade up sm">▲ $185.00</button>
+              <button type="button" class="btn-trade down sm">▼ $100.00</button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -283,8 +377,18 @@
 
   <!-- FAQ -->
   <section class="faq" id="faq">
-    <div class="wrap narrow">
-      <h2 class="section-title reveal">Frequently asked questions</h2>
+    <div class="wrap faq-grid">
+      <div class="faq-side reveal">
+        <p class="eyebrow">FAQ</p>
+        <h2>Frequently asked<br>questions</h2>
+        <p class="faq-side-sub">Everything you need to know before your first trade. Start on a free demo — it costs nothing to learn.</p>
+        <a class="btn btn-primary" href="app/signup.html">Open free demo account</a>
+        <div class="support-card">
+          <h3>Still have questions?</h3>
+          <p>Read the full risk disclosure before funding an account, and never trade with money you can't afford to lose.</p>
+          <a href="#faq" class="support-link">Read risk disclosure →</a>
+        </div>
+      </div>
       <div class="accordion">
         <div class="acc-item reveal">
           <button class="acc-head" aria-expanded="false">How to learn?<span class="acc-icon">+</span></button>
@@ -303,6 +407,10 @@
           <div class="acc-body"><p>You don't need a large amount to start. The advantage of Trexora is that you can begin trading with a small deposit — the minimum deposit amount is $10.</p></div>
         </div>
         <div class="acc-item reveal">
+          <button class="acc-head" aria-expanded="false">Can I refill the demo account?<span class="acc-icon">+</span></button>
+          <div class="acc-body"><p>Yes — your $10,000 demo balance refills automatically whenever it runs low. The demo never expires, so you can practice as long as you need before trading real funds.</p></div>
+        </div>
+        <div class="acc-item reveal">
           <button class="acc-head" aria-expanded="false">What are the risks?<span class="acc-icon">+</span></button>
           <div class="acc-body"><p>Binary options are high-risk: you can lose your entire stake on a trade, and most retail traders lose money overall. Trade only with money you can afford to lose, use the demo first, and never treat trading as income you depend on.</p></div>
         </div>
@@ -313,9 +421,15 @@
   <!-- FINAL CTA -->
   <section class="cta">
     <div class="wrap narrow reveal">
+      <div class="cta-chips" aria-hidden="true">
+        <span>EUR/USD</span><span>XAU/USD</span><span>BTC/USD</span><span>US30</span><span>GBP/JPY</span>
+      </div>
       <h2>Your first trade is one tap away.</h2>
       <p class="section-sub">Free demo. No deposit. No card required.</p>
-      <a class="btn btn-primary btn-lg" href="app/signup.html">Create free account</a>
+      <div class="hero-ctas center">
+        <a class="btn btn-primary btn-lg" href="app/signup.html">Create free account</a>
+        <a class="btn btn-outline btn-lg" href="app/login.html">Log in to demo</a>
+      </div>
     </div>
   </section>
 </main>
@@ -328,11 +442,19 @@
         <img class="logo logo-light" src="assets/logo-light.svg" alt="Trexora" width="120" height="34">
         <p>A modern binary options trading platform.</p>
       </div>
-      <nav aria-label="Footer">
+      <nav aria-label="Platform">
         <h4>Platform</h4>
         <a href="#platform">Trading terminal</a>
         <a href="#signals">Signals</a>
         <a href="#indicators">Indicators</a>
+        <a href="#mobile">Mobile app</a>
+      </nav>
+      <nav aria-label="Markets">
+        <h4>Markets</h4>
+        <a href="#platform">Forex pairs</a>
+        <a href="#platform">Crypto</a>
+        <a href="#platform">Gold &amp; metals</a>
+        <a href="#platform">Stocks &amp; indices</a>
       </nav>
       <nav aria-label="Company">
         <h4>Company</h4>
@@ -357,6 +479,7 @@
   </div>
 </footer>
 
+<script src="https://s3.tradingview.com/tv.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

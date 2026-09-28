@@ -115,4 +115,25 @@
   }
   drawCandles(document.getElementById('heroChart'), 20260929, 560, 220, 34);
   drawCandles(document.getElementById('phoneChart'), 777, 300, 150, 22);
+  drawCandles(document.getElementById('appChart'), 4242, 300, 150, 22);
+
+  /* Live TradingView chart in the pitch demo frame */
+  try{
+    var pitchEl = document.getElementById('pitchChart');
+    if(pitchEl && typeof TradingView !== 'undefined'){
+      new TradingView.widget({
+        autosize: true,
+        symbol: 'FOREXCOM:EURUSD',
+        interval: '5',
+        timezone: 'Asia/Dubai',
+        theme: 'dark',
+        style: '1',
+        locale: 'en',
+        enable_publishing: false,
+        allow_symbol_change: true,
+        hide_volume: true,
+        container_id: 'pitchChart'
+      });
+    }
+  }catch(e){/* demo frame stays as a styled placeholder */}
 })();
