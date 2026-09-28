@@ -216,6 +216,8 @@ h3{font-size:1.1rem;font-weight:650}
 
 /* Footer */
 .site-footer{background:#0D0709;color:#EDE4E6;padding:56px 0 28px;border-top:1px solid rgba(255,255,255,.06)}
+.site-footer .logo-dark{display:block}
+.site-footer .logo-light{display:none}
 .footer-grid{display:grid;gap:28px;margin-bottom:32px}
 .footer-brand p{color:#A68E94;font-size:.9rem;margin-top:12px;max-width:260px}
 .site-footer nav h4{color:#fff;font-size:.85rem;text-transform:uppercase;letter-spacing:.1em;margin-bottom:14px}
