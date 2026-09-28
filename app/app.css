@@ -43,6 +43,8 @@
 .auth-alt{margin-top:16px;text-align:center;font-size:.88rem;color:var(--muted)}
 .auth-alt a{color:var(--brand);font-weight:700}
 [data-theme="dark"] .auth-alt a{color:#E5485B}
+.auth-divider{display:flex;align-items:center;gap:12px;margin:18px 0 14px;color:var(--muted);font-size:.8rem}
+.auth-divider::before,.auth-divider::after{content:"";flex:1;height:1px;background:var(--line)}
 
 /* Terminal */
 .terminal{width:min(1200px,100%);margin:0 auto;padding:14px 14px 90px;flex:1}
