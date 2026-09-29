@@ -69,7 +69,7 @@
     root.setAttribute('data-theme',next);
     try{localStorage.setItem('trexora-theme',next);}catch(e){}
   });
-  if(TX.clientSession()){ window.location.replace('terminal.html?v=20260929l'); return; }
+  if(TX.clientSession()){ window.location.replace('terminal.html?v=20260929n'); return; }
   document.getElementById('fillDemo').addEventListener('click',function(){
     document.getElementById('email').value=TX.DEMO_CLIENT.email;
     document.getElementById('password').value=TX.DEMO_CLIENT.password;
@@ -88,7 +88,7 @@
     if(u.password!==pass){ showErr('Incorrect password.'); return; }
     if(u.disabled){ showErr('This account has been disabled. Contact support.'); return; }
     TX.setClientSession(u.email);
-    window.location.replace('terminal.html?v=20260929l');
+    window.location.replace('terminal.html?v=20260929n');
   });
 })();
 </script>

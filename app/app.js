@@ -218,6 +218,7 @@
     renderTabs();
     updatePreview();
     loadChart();
+    drawMini();
     renderTradeBar();
   }
 
@@ -276,12 +277,82 @@
   function refreshPrices() {
     TX.refreshPrices(false).then(function () {
       refreshPx();
+      drawMini();
       if (!$("assetSheet").hidden) renderSheetList();
       if ($("view-markets").classList.contains("active")) renderMarkets();
       renderSentiment();
     });
   }
   setInterval(refreshPrices, 60000);
+
+  /* ---------- mini live chart in ticket (real quote trail only) ---------- */
+  var pxHist = {};
+  function pushPx(id, px) {
+    if (px == null || !isFinite(px)) return;
+    var h = pxHist[id] || (pxHist[id] = []);
+    if (h.length && h[h.length - 1] === px) return;
+    h.push(px);
+    if (h.length > 90) h.shift();
+  }
+  function drawMini() {
+    var cv = $("qpMiniCv");
+    if (!cv) return;
+    var a = getAsset(state.assetId);
+    if (!a) return;
+    var px = TX.priceOf(a);
+    if (px != null) pushPx(a.id, px);
+    var h = pxHist[a.id] || [];
+    var pxEl = $("qpMiniPx"), chgEl = $("qpMiniChg");
+    if (pxEl) pxEl.textContent = px != null ? fmtPrice(a, px) : "—";
+    if (chgEl) {
+      if (h.length > 1 && h[0]) {
+        var ch = (h[h.length - 1] - h[0]) / h[0] * 100;
+        chgEl.textContent = (ch >= 0 ? "+" : "") + ch.toFixed(2) + "%";
+        chgEl.className = "qp-mini-chg " + (ch >= 0 ? "up" : "dn");
+      } else { chgEl.textContent = "—"; chgEl.className = "qp-mini-chg"; }
+    }
+    var dpr = window.devicePixelRatio || 1;
+    var W = cv.clientWidth, H = cv.clientHeight;
+    if (!W || !H) return;
+    if (cv.width !== Math.round(W * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
+    var ctx = cv.getContext("2d");
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, W, H);
+    if (h.length < 2) {
+      ctx.strokeStyle = "rgba(148,163,184,.25)";
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath(); ctx.moveTo(0, H / 2); ctx.lineTo(W, H / 2); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = "rgba(148,163,184,.65)";
+      ctx.font = "11px sans-serif"; ctx.textAlign = "center";
+      ctx.fillText("Building live trail…", W / 2, H / 2 - 10);
+      return;
+    }
+    var min = Math.min.apply(null, h), max = Math.max.apply(null, h);
+    if (max === min) max = min * 1.001 + 1e-9;
+    var pad = 8;
+    function X(i) { return pad + i * (W - 2 * pad) / (h.length - 1); }
+    function Y(v) { return H - pad - (v - min) / (max - min) * (H - 2 * pad); }
+    var up = h[h.length - 1] >= h[0];
+    var col = up ? "#22c55e" : "#f23645";
+    var gr = ctx.createLinearGradient(0, 0, 0, H);
+    gr.addColorStop(0, up ? "rgba(34,197,94,.30)" : "rgba(242,54,69,.30)");
+    gr.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.beginPath();
+    ctx.moveTo(X(0), Y(h[0]));
+    for (var i = 1; i < h.length; i++) ctx.lineTo(X(i), Y(h[i]));
+    ctx.lineTo(X(h.length - 1), H); ctx.lineTo(X(0), H); ctx.closePath();
+    ctx.fillStyle = gr; ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(X(0), Y(h[0]));
+    for (i = 1; i < h.length; i++) ctx.lineTo(X(i), Y(h[i]));
+    ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.lineJoin = "round"; ctx.lineCap = "round";
+    ctx.stroke();
+    var lx = X(h.length - 1), ly = Y(h[h.length - 1]);
+    ctx.beginPath(); ctx.arc(lx - 1, ly, 7, 0, 7); ctx.fillStyle = up ? "rgba(34,197,94,.22)" : "rgba(242,54,69,.22)"; ctx.fill();
+    ctx.beginPath(); ctx.arc(lx - 1, ly, 3.2, 0, 7); ctx.fillStyle = col; ctx.fill();
+  }
+  window.addEventListener("resize", function () { drawMini(); });
 
   /* ---------- demo book sentiment ---------- */
   function renderSentiment() {

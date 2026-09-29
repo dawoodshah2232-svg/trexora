@@ -118,9 +118,9 @@
     }
     /* seed default promos/tournaments/admin role once on old stores */
     var fresh = seed();
-    if (!s.promos.length) { s.promos = fresh.promos; changed = true; }
-    if (!s.tournaments.length) { s.tournaments = fresh.tournaments; changed = true; }
-    if (!s.roles.length) { s.roles = fresh.roles; changed = true; }
+    if (!Array.isArray(s.promos)) { s.promos = fresh.promos; changed = true; }
+    if (!Array.isArray(s.tournaments)) { s.tournaments = fresh.tournaments; changed = true; }
+    if (!Array.isArray(s.roles)) { s.roles = fresh.roles; changed = true; }
     if (s.v !== 4) { s.v = 4; changed = true; }
     if (changed) save(s);
     return s;
