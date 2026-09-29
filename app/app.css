@@ -543,7 +543,7 @@ table.data tr:last-child td{border-bottom:0}
 .tx-card{position:relative;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;overflow:hidden;animation:rise .4s both}
 .tx-card::before{content:'🏆';position:absolute;right:8px;top:-6px;font-size:7rem;opacity:.06;pointer-events:none}
 /* winner's card: rich 3D golden trophy melts into the card behind the text */
-.tx-card.won::before{content:'';right:-16px;top:-16px;width:200px;height:200px;background:url('../assets/trophy-gold-3d.png') center/contain no-repeat;opacity:.9;mix-blend-mode:screen}
+.tx-card.won::before{content:'';right:-16px;top:-16px;width:200px;height:200px;background:url('../assets/trophy-gold-3d.webp') center/contain no-repeat;opacity:.9;mix-blend-mode:screen}
 .tx-cd{display:inline-flex;align-items:center;gap:6px;background:#2563eb;color:#fff;font-size:.7rem;font-weight:800;letter-spacing:.04em;border-radius:8px;padding:7px 12px;margin-bottom:12px;font-variant-numeric:tabular-nums}
 .tx-cd.live{background:#22c55e}
 .tx-card h4{font-size:1.35rem;margin-bottom:8px}

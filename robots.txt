@@ -3,4 +3,4 @@ Allow: /
 Disallow: /app/
 Disallow: /admin/
 
-Sitemap: https://trexora.flexspot.lol/sitemap.xml
+Sitemap: https://trexora.pdfedit.website/sitemap.xml

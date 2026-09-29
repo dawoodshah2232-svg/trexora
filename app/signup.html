@@ -46,6 +46,10 @@
         <label for="password">Password</label>
         <input type="password" id="password" name="password" autocomplete="new-password" placeholder="Min. 6 characters" required>
       </div>
+      <div class="field" style="position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden" aria-hidden="true">
+        <label for="website">Website</label>
+        <input type="text" id="website" name="website" autocomplete="off" tabindex="-1" placeholder="Leave empty">
+      </div>
       <button class="btn btn-primary" type="submit" style="width:100%;padding:13px">Create demo account</button>
     </form>
 
@@ -75,6 +79,8 @@
   }
   document.getElementById('signupForm').addEventListener('submit',function(e){
     e.preventDefault(); err.style.display='none';
+    var hp=document.getElementById('website');
+    if(hp && hp.value){ showErr('Something went wrong. Please try again.'); return; } // honeypot: bots fill this
     var name=document.getElementById('name').value.trim();
     var email=document.getElementById('email').value.trim().toLowerCase();
     var pass=document.getElementById('password').value;
