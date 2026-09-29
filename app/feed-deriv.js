@@ -312,10 +312,19 @@
       gran = gran || 60;
       if (!SYMBOLS[assetId]) return false;
       watched[assetId] = watched[assetId] || {};
+      var first = !watched[assetId][gran];
       watched[assetId][gran] = (watched[assetId][gran] || 0) + 1;
-      storeFor(assetId, gran, true);
-      if (marketClosedNow(SYMBOLS[assetId])) setState(assetId, gran, "CLOSED");
-      connect();
+      var g = storeFor(assetId, gran, true);
+      if (marketClosedNow(SYMBOLS[assetId])) { setState(assetId, gran, "CLOSED"); return true; }
+      if (first) {
+        // Fresh (asset,timeframe) subscription. If the socket is already open,
+        // connect() would return early and the new timeframe would NEVER get
+        // its ticks_history subscription — blank chart forever. Subscribe now.
+        setState(assetId, gran, "LOADING");
+        g.attempts += 1;
+        if (ws && ws.readyState === 1) subscribeCandles(assetId, gran);
+        else connect(); // connecting/opening socket picks this up via resubscribeAll
+      }
       return true;
     },
     unwatch: function (assetId, gran) {
