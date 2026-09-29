@@ -22,9 +22,9 @@
       { id: "audusd", name: "AUD/USD", tv: "FX:AUDUSD", kind: "fiat", base: "AUD", quote: "USD", payout: 78, min: 1, max: 1000, enabled: true },
       { id: "gbpjpy", name: "GBP/JPY", tv: "FX:GBPJPY", kind: "fiat", base: "GBP", quote: "JPY", payout: 77, min: 1, max: 1000, enabled: true },
       { id: "usdchf", name: "USD/CHF", tv: "FX:USDCHF", kind: "fiat", base: "USD", quote: "CHF", payout: 76, min: 1, max: 1000, enabled: true },
-      { id: "xauusd", name: "XAU/USD · Gold", tv: "OANDA:XAUUSD", kind: "crypto", code: "pax-gold", payout: 78, min: 1, max: 1000, enabled: true },
-      { id: "btcusd", name: "BTC/USD", tv: "BITSTAMP:BTCUSD", kind: "crypto", code: "bitcoin", payout: 84, min: 1, max: 1000, enabled: true },
-      { id: "ethusd", name: "ETH/USD", tv: "BITSTAMP:ETHUSD", kind: "crypto", code: "ethereum", payout: 82, min: 1, max: 1000, enabled: true }
+      { id: "xauusd", name: "XAU/USD · Gold", tv: "OANDA:XAUUSD", kind: "crypto", code: "pax-gold", base: "XAU", quote: "USD", payout: 78, min: 1, max: 1000, enabled: true },
+      { id: "btcusd", name: "BTC/USD", tv: "BITSTAMP:BTCUSD", kind: "crypto", code: "bitcoin", base: "BTC", quote: "USD", payout: 84, min: 1, max: 1000, enabled: true },
+      { id: "ethusd", name: "ETH/USD", tv: "BITSTAMP:ETHUSD", kind: "crypto", code: "ethereum", base: "ETH", quote: "USD", payout: 82, min: 1, max: 1000, enabled: true }
     ];
   }
 

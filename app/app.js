@@ -147,29 +147,47 @@
   }
 
   /* ---------- TradingView chart ---------- */
+  var tvLoading = false;
+  function ensureTV(cb) {
+    if (typeof TradingView !== "undefined") { cb(true); return; }
+    if (tvLoading) return;
+    tvLoading = true;
+    var done = false;
+    function fin(ok) { if (!done) { done = true; tvLoading = false; cb(ok); } }
+    var s = document.createElement("script");
+    s.src = "https://s3.tradingview.com/tv.js";
+    s.async = true;
+    s.onload = function () { fin(typeof TradingView !== "undefined"); };
+    s.onerror = function () { fin(false); };
+    document.head.appendChild(s);
+    setTimeout(function () { fin(typeof TradingView !== "undefined"); }, 15000);
+  }
   function loadChart() {
     var a = getAsset(state.assetId);
     if (!a) return;
     var el = $("tv_chart");
     $("chartFallback").hidden = true;
-    if (typeof TradingView === "undefined") { $("chartFallback").hidden = false; return; }
-    try {
-      el.innerHTML = "";
-      new TradingView.widget({
-        autosize: true,
-        symbol: a.tv,
-        interval: "5",
-        timezone: "Asia/Dubai",
-        theme: root.getAttribute("data-theme") === "light" ? "light" : "dark",
-        style: "1",
-        locale: "en",
-        enable_publishing: false,
-        allow_symbol_change: false,
-        hide_volume: false,
-        container_id: "tv_chart"
-      });
-      state.tvReady = true;
-    } catch (e) { $("chartFallback").hidden = false; }
+    el.innerHTML = '<div class="chart-loading"><span class="spin"></span>Loading live chart…</div>';
+    ensureTV(function (ok) {
+      if (!ok || getAsset(state.assetId) !== a) { if (!ok) { el.innerHTML = ""; $("chartFallback").hidden = false; } return; }
+      try {
+        el.innerHTML = "";
+        new TradingView.widget({
+          autosize: true,
+          symbol: a.tv,
+          interval: "5",
+          timezone: "Asia/Dubai",
+          theme: root.getAttribute("data-theme") === "light" ? "light" : "dark",
+          style: "1",
+          locale: "en",
+          enable_publishing: false,
+          allow_symbol_change: false,
+          hide_volume: false,
+          container_id: "tv_chart"
+        });
+        state.tvReady = true;
+      } catch (e) { el.innerHTML = ""; $("chartFallback").hidden = false; }
+    });
   }
 
   /* ---------- live price line ---------- */
