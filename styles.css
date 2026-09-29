@@ -383,6 +383,10 @@ h3{font-size:1.1rem;font-weight:650}
   .faq-grid{grid-template-columns:.85fr 1.15fr;align-items:start}
   body:not(.qx):not(.app-body):not(.admin-body) section{padding:96px 0}
 }
+@media(min-width:768px){
+  /* Sub-pages: calmer rhythm than the 96px marketing blanket (kills dead gaps) */
+  body[class*="page-"] section.page-section.page-section{padding:60px 0}
+}
 /* Nav pill + hamburger breakpoint: below 1025px the pill would collide with
    the header actions, so the drawer takes over (desktop pill only ≥1025px). */
 @media(min-width:1025px){
@@ -495,11 +499,11 @@ table.data tr:last-child td{border-bottom:0}
 .mk-i3{--fi1:#C9A227;--fi2:#F3D27A;--fi-glow:rgba(201,162,39,.38)}
 
 /* Premium CTA band (all inner pages) */
-.page-cta{position:relative;overflow:hidden;background:linear-gradient(135deg,#0C1E42 0%,#14305F 55%,#0A1832 100%);border:1px solid rgba(120,170,255,.22);box-shadow:0 24px 60px rgba(0,0,0,.42),inset 0 1px 0 rgba(255,255,255,.09)}
+.page-cta{position:relative;overflow:hidden;background:linear-gradient(135deg,#0C1E42 0%,#14305F 55%,#0A1832 100%);border:1px solid rgba(120,170,255,.22);box-shadow:0 24px 60px rgba(0,0,0,.42),inset 0 1px 0 rgba(255,255,255,.09);padding:clamp(40px,5vw,64px) clamp(24px,4vw,60px);border-radius:22px;text-align:center}
 .page-cta::before{content:"";position:absolute;inset:0;background:radial-gradient(ellipse 70% 100% at 50% 0%,rgba(47,128,255,.28),transparent 70%);pointer-events:none}
 .page-cta>*{position:relative}
 .page-cta h2{color:#fff}
-.page-cta p{color:rgba(214,228,255,.85)}
+.page-cta p{color:rgba(214,228,255,.85);margin:0 auto 26px;max-width:640px}
 .page-cta .btn-primary{box-shadow:0 12px 32px rgba(47,128,255,.45)}
 
 /* Per-page accent themes for icon tiles */
