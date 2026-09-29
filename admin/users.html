@@ -85,7 +85,7 @@
     var fs = $("fStatus").value;
     var tb = $("usersTable").querySelector("tbody"); tb.innerHTML = "";
     s.users.filter(function(u){
-      if (q && u.name.toLowerCase().indexOf(q) === -1 && u.email.toLowerCase().indexOf(q) === -1) return false;
+      if (q && String(u.name || "").toLowerCase().indexOf(q) === -1 && String(u.email || "").toLowerCase().indexOf(q) === -1) return false;
       if (fs === "active" && u.disabled) return false;
       if (fs === "disabled" && !u.disabled) return false;
       return true;

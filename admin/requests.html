@@ -76,7 +76,7 @@
     if (approve && u) {
       if (r.type === "deposit") {
         u.balance = Math.round((u.balance + r.amount) * 100) / 100;
-      } else {
+      } else if (r.type === "withdrawal") {
         if (r.amount > u.balance) { ADM.toast("Insufficient balance — cannot approve."); return; }
         u.balance = Math.round((u.balance - r.amount) * 100) / 100;
       }
