@@ -16,15 +16,10 @@
 <meta name="twitter:title" content="Trexora — Binary Options Trading Platform">
 <meta name="twitter:description" content="Up or Down. You call it. 410+ instruments, free demo, fast withdrawals.">
 <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
-<link rel="stylesheet" href="styles.css?v=20260929t3">
+<link rel="stylesheet" href="styles.css?v=20260929t5">
 <script>try{var t=localStorage.getItem('trexora-theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}</script>
 </head>
 <body>
-
-<div class="risk-strip" role="note">
-  <span class="risk-dot" aria-hidden="true"></span>
-  <p>Risk warning: binary options are high-risk. Most retail traders lose money. Never trade with money you can't afford to lose. No profit is ever guaranteed.</p>
-</div>
 
 <!--HEADER-->
 <header class="site-header" id="top">
@@ -95,26 +90,7 @@
         <p class="pay-note">Cards, crypto and bank transfer at the cashier — more providers connect as we launch.</p>
       </div>
       <div class="hero-visual reveal">
-        <div class="phone-mock hero-phone" id="heroPhone" aria-label="Trexora terminal preview">
-          <div class="phone-notch"></div>
-          <div class="phone-screen">
-            <div class="hp-top">
-              <div class="hp-asset"><span class="hp-pair">EUR/USD</span><span class="hp-pay">82%</span></div>
-              <div class="live-badge"><span class="pulse"></span>Live</div>
-            </div>
-            <div class="hp-chart-wrap"><canvas id="heroPhoneChart" aria-hidden="true"></canvas></div>
-            <div class="hp-grid">
-              <div><small>Expiry</small><strong>1 min</strong></div>
-              <div><small>Amount</small><strong>$50</strong></div>
-              <div><small>Payout</small><strong class="hp-win">$91.00</strong></div>
-            </div>
-            <div class="phone-actions">
-              <button type="button" class="btn-trade up sm" tabindex="-1">▲ Up</button>
-              <button type="button" class="btn-trade down sm" tabindex="-1">▼ Down</button>
-            </div>
-            <p class="hp-note">Demo preview — virtual funds</p>
-          </div>
-        </div>
+        <img src="assets/hero-laptop.png" class="hero-device" id="heroDevice" alt="Trexora trading terminal on a laptop">
       </div>
     </div>
     <div class="hero-trust" aria-label="Platform highlights">
@@ -193,20 +169,7 @@
       </div>
       <div class="mkt-stage reveal">
         <div class="mkt-visual">
-          <div class="phone-mock mkt-phone" aria-hidden="true">
-            <div class="phone-notch"></div>
-            <div class="phone-screen">
-              <div class="hp-top">
-                <div class="hp-asset"><span class="hp-pair" id="mktPair">EUR/USD</span><span class="hp-pay" id="mktPay">82%</span></div>
-                <div class="live-badge"><span class="pulse"></span>Live</div>
-              </div>
-              <div class="hp-chart-wrap"><svg class="chart" id="mktChart" viewBox="0 0 300 150" role="img" aria-label="Market chart illustration"></svg></div>
-              <div class="phone-actions">
-                <button type="button" class="btn-trade up sm" tabindex="-1">▲ Up</button>
-                <button type="button" class="btn-trade down sm" tabindex="-1">▼ Down</button>
-              </div>
-            </div>
-          </div>
+          <img src="assets/mkt-phone.png" class="mkt-device" alt="Trexora market chart on a smartphone">
         </div>
         <div class="mkt-info">
           <h3 id="mktName">Forex</h3>
@@ -452,12 +415,12 @@
     <div class="wrap">
       <h2 class="section-title reveal">Everything a trader needs</h2>
       <div class="feat-grid">
-        <div class="feat-card reveal"><h3>410+ instruments</h3><p>Forex pairs, crypto, gold, oil, stocks and indices — one account, every market.</p></div>
-        <div class="feat-card reveal"><h3>Fast deposits and withdrawals</h3><p>Minimum deposit and withdrawal of $10 — with no platform fees, ever.</p></div>
-        <div class="feat-card reveal"><h3>User-friendly interface</h3><p>A simple, intuitive terminal with convenient settings that stay out of your way.</p></div>
-        <div class="feat-card reveal"><h3>Early closing of the deal</h3><p>Close any deal at any time, at the current market value. Lock profit or cut loss.</p></div>
-        <div class="feat-card reveal"><h3>Rating of traders</h3><p>Trade and watch your position in the ranking, among traders from all over the world.</p></div>
-        <div class="feat-card reveal"><h3>Free demo</h3><p>$10,000 in virtual funds, refillable forever. Practice until you're ready.</p></div>
+        <div class="feat-card reveal feat-i1"><span class="feat-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.9 5.7 3.9 9S14.5 18.4 12 21c-2.5-2.6-3.9-5.7-3.9-9S9.5 5.6 12 3z"/></svg></span><h3>410+ instruments</h3><p>Forex pairs, crypto, gold, oil, stocks and indices — one account, every market.</p></div>
+        <div class="feat-card reveal feat-i2"><span class="feat-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L4.5 13.5H11L10 22l8.5-11.5H12L13 2z"/></svg></span><h3>Fast deposits and withdrawals</h3><p>Minimum deposit and withdrawal of $10 — with no platform fees, ever.</p></div>
+        <div class="feat-card reveal feat-i3"><span class="feat-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3l7.5 18 2.5-7.5L22.5 11 5 3z"/><path d="M15 12.5L19 16.5"/></svg></span><h3>User-friendly interface</h3><p>A simple, intuitive terminal with convenient settings that stay out of your way.</p></div>
+        <div class="feat-card reveal feat-i4"><span class="feat-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg></span><h3>Early closing of the deal</h3><p>Close any deal at any time, at the current market value. Lock profit or cut loss.</p></div>
+        <div class="feat-card reveal feat-i5"><span class="feat-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 01-10 0V4z"/><path d="M7 6H4a1 1 0 00-1 1c0 2.5 2 4 4 4M17 6h3a1 1 0 011 1c0 2.5-2 4-4 4"/></svg></span><h3>Rating of traders</h3><p>Trade and watch your position in the ranking, among traders from all over the world.</p></div>
+        <div class="feat-card reveal feat-i6"><span class="feat-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M10 8.5l6 3.5-6 3.5v-7z"/></svg></span><h3>Free demo</h3><p>$10,000 in virtual funds, refillable forever. Practice until you're ready.</p></div>
       </div>
     </div>
   </section>
@@ -579,6 +542,6 @@
 <!--/FOOTER-->
 
 <script src="https://s3.tradingview.com/tv.js"></script>
-<script src="app.js?v=20260929t3"></script>
+<script src="app.js?v=20260929t5"></script>
 </body>
 </html>

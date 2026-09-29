@@ -267,7 +267,7 @@
 
   /* Stats — animated count-up on reveal */
   (function statCount(){
-    var nums = document.querySelectorAll('.stat-card .num[data-count]');
+    var nums = document.querySelectorAll('.stat-card .num[data-count], .count-up[data-count]');
     if(!nums.length) return;
     function fmt(v, el){
       return (el.dataset.prefix || '') + Math.round(v).toLocaleString('en-US') + (el.dataset.suffix || '');
@@ -314,8 +314,10 @@
       });
       document.getElementById('mktName').textContent = m.name;
       document.getElementById('mktDesc').textContent = m.desc;
-      document.getElementById('mktPair').textContent = m.pair;
-      document.getElementById('mktPay').textContent = m.pay;
+      var pairEl = document.getElementById('mktPair');
+      var payEl = document.getElementById('mktPay');
+      if(pairEl) pairEl.textContent = m.pair;
+      if(payEl) payEl.textContent = m.pay;
       document.getElementById('mktPills').innerHTML = m.pills.map(function(p,i){
         return '<span class="mkt-pill" style="animation-delay:' + (i*0.06).toFixed(2) + 's"><b>' + p[1] + '</b>' + p[0] + '</span>';
       }).join('');
@@ -330,60 +332,9 @@
     show('forex'); auto();
   })();
 
-  /* Hero phone — live-animated mini candlesticks (blue up / red down) */
-  (function heroPhoneChart(){
-    var cv = document.getElementById('heroPhoneChart');
-    if(!cv || reduceMotion) return;
-    var ctx = cv.getContext('2d');
-    var W = 0, H = 150, dpr = Math.min(window.devicePixelRatio || 1, 2);
-    var CW = 15, BW = 8, candles = [], price = 100, px = 0, t = 0, visible = true;
-    function newCandle(){
-      var o = price;
-      var c = o + (Math.random() - 0.5) * 3.4 + Math.sin(t / 9) * 0.5;
-      var h = Math.max(o,c) + Math.random() * 1.6, l = Math.min(o,c) - Math.random() * 1.6;
-      price = c; t++;
-      return {o:o,h:h,l:l,c:c};
-    }
-    function seed(){ candles = []; price = 100; t = 0; px = 0; var n = Math.ceil(W / CW) + 4; for(var i=0;i<n;i++) candles.push(newCandle()); }
-    function resize(){
-      W = Math.max(1, cv.parentElement.clientWidth);
-      cv.width = W * dpr; cv.height = H * dpr;
-      ctx.setTransform(dpr,0,0,dpr,0,0);
-      seed();
-    }
-    function frame(){
-      if(!visible || document.hidden){ requestAnimationFrame(frame); return; }
-      px += 0.55;
-      if(px >= CW){ px -= CW; candles.push(newCandle()); }
-      while(candles.length > Math.ceil(W / CW) + 6) candles.shift();
-      var n = candles.length, i, cd, min = Infinity, max = -Infinity;
-      for(i=0;i<n;i++){ cd=candles[i]; if(cd.l<min)min=cd.l; if(cd.h>max)max=cd.h; }
-      var pad = (max-min)*0.35 || 1; min-=pad; max+=pad;
-      function y(p){ return 8 + (1-(p-min)/(max-min)) * (H-16); }
-      ctx.clearRect(0,0,W,H);
-      ctx.strokeStyle = 'rgba(140,175,255,.09)'; ctx.lineWidth = 1;
-      for(var g=1;g<4;g++){ var gy = 8 + g*(H-16)/4; ctx.beginPath(); ctx.moveTo(0,gy); ctx.lineTo(W,gy); ctx.stroke(); }
-      for(i=0;i<n;i++){
-        cd = candles[i];
-        var x = W - (n-1-i)*CW - px, xc = x + BW/2;
-        if(x < -CW || x > W+CW) continue;
-        var up = cd.c >= cd.o, col = up ? '#2F80FF' : '#F23645';
-        ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = 1.4;
-        ctx.beginPath(); ctx.moveTo(xc,y(cd.h)); ctx.lineTo(xc,y(cd.l)); ctx.stroke();
-        var yo=y(cd.o), yc=y(cd.c);
-        ctx.fillRect(x, Math.min(yo,yc), BW, Math.max(2,Math.abs(yc-yo)));
-      }
-      requestAnimationFrame(frame);
-    }
-    resize();
-    window.addEventListener('resize', resize);
-    if('IntersectionObserver' in window){ new IntersectionObserver(function(en){ visible = en[0].isIntersecting; },{threshold:0}).observe(cv); }
-    requestAnimationFrame(frame);
-  })();
-
-  /* Hero phone — subtle mouse parallax (fine pointers only) */
+  /* Hero device — subtle mouse parallax (fine pointers only) */
   (function heroParallaxPhone(){
-    var phone = document.getElementById('heroPhone');
+    var phone = document.getElementById('heroDevice');
     var hero = document.querySelector('.hero');
     if(!phone || !hero || reduceMotion) return;
     if(!window.matchMedia('(pointer:fine)').matches) return;
