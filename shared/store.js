@@ -87,7 +87,7 @@
         sms: { provider: "twilio", apiKey: "", apiSecret: "", senderId: "Trexora" },
         payments: { provider: "manual", apiKey: "", secretKey: "", merchantId: "" },
         api: { enabled: false, key: "", whTrade: "", whDeposit: "", whKyc: "", whWithdraw: "" },
-        chart: { provider: "tradingview", tvStyle: "candles", tvTheme: "auto", tvTf: "5", lwTf: 60, lwUp: "#2F80FF", lwDown: "#F23645" } }
+        chart: { style: "candles", theme: "auto", tf: 60, up: "#2F80FF", down: "#F23645" } }
     };
   }
 
@@ -139,10 +139,29 @@
       s.settings.payments = { provider: "manual", apiKey: "", secretKey: "", merchantId: "" };
       changed = true;
     }
-    /* charts: admin-operated chart provider for the client terminal */
+    /* charts: single Deriv-fed Lightweight chart — admin controls style/theme/timeframe/colors (no provider).
+       Migrates legacy keys (tvStyle/tvTheme/tvTf/lwTf/lwUp/lwDown/provider) to the new schema, preserving values. */
+    var cdef = { style: "candles", theme: "auto", tf: 60, up: "#2F80FF", down: "#F23645" };
     if (s.settings.chart == null || typeof s.settings.chart !== "object") {
-      s.settings.chart = { provider: "tradingview", tvStyle: "candles", tvTheme: "auto", tvTf: "5", lwTf: 60, lwUp: "#2F80FF", lwDown: "#F23645" };
+      s.settings.chart = cdef;
       changed = true;
+    } else {
+      var ch = s.settings.chart, cch = false, hex = /^#[0-9a-fA-F]{6}$/;
+      if (["candles", "line", "area"].indexOf(ch.style) === -1) {
+        ch.style = ["candles", "line", "area"].indexOf(ch.tvStyle) !== -1 ? ch.tvStyle : "candles"; cch = true;
+      }
+      if (["auto", "dark", "light"].indexOf(ch.theme) === -1) {
+        ch.theme = ["auto", "dark", "light"].indexOf(ch.tvTheme) !== -1 ? ch.tvTheme : "auto"; cch = true;
+      }
+      var tfv = parseInt(ch.tf != null ? ch.tf : (ch.tvTf != null ? ch.tvTf : ch.lwTf), 10);
+      var tfm = tfv === 300 ? 300 : tfv === 900 ? 900 : tfv === 1 ? 60 : tfv === 5 ? 300 : tfv === 15 ? 900 : 60;
+      if (ch.tf !== tfm) { ch.tf = tfm; cch = true; }
+      if (!hex.test(ch.up || "")) { ch.up = hex.test(ch.lwUp || "") ? ch.lwUp : "#2F80FF"; cch = true; }
+      if (!hex.test(ch.down || "")) { ch.down = hex.test(ch.lwDown || "") ? ch.lwDown : "#F23645"; cch = true; }
+      ["provider", "tvStyle", "tvTheme", "tvTf", "lwTf", "lwUp", "lwDown"].forEach(function (k) {
+        if (k in ch) { delete ch[k]; cch = true; }
+      });
+      if (cch) changed = true;
     }
     if (s.settings.api == null || typeof s.settings.api !== "object") {
       s.settings.api = { enabled: false, key: "", whTrade: "", whDeposit: "", whKyc: "", whWithdraw: "" };

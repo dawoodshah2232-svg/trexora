@@ -233,205 +233,169 @@
     renderTradeBar();
   }
 
-  /* ---------- chart provider (admin: Settings > Charts & Market Data) ----------
-   * settings.chart = { provider:'tradingview'|'lightweight',
-   *   tvStyle:'candles'|'line'|'area', tvTheme:'auto'|'dark'|'light', tvTf:'5',
-   *   lwTf:15|60, lwUp:'#2F80FF', lwDown:'#F23645' }
-   * Whatever the provider, the Deriv WebSocket feed always powers ticket
-   * prices and trade settlement — the provider only changes how the chart
-   * itself is drawn. The feed badge next to the chart always names Deriv. */
+  /* ---------- live chart: bundled Lightweight Charts v5 + Deriv feed ----------
+   * OWNER CHART STANDARD: one implementation only — no hosted TradingView
+   * widget, no runtime CDN. Lightweight Charts v5 is bundled in app/vendor/.
+   * DerivFeed owns quotes, candles and settlement prices: the chart, the
+   * ticket price and trade settlement all read the same Deriv WebSocket feed.
+   * The chart renders Deriv's own candles (Unix-seconds timestamps) and the
+   * feed badge next to it always tells the truth about the feed state
+   * (LIVE/STALE/RECONNECTING/CLOSED/OFFLINE). Never presents simulated
+   * prices as live.
+   * Admin (Settings > Charts & Market Data) controls: style, theme, default
+   * timeframe and up/down colors — applied to this single chart on next load.
+   * settings.chart = { style:'candles'|'line'|'area', theme:'auto'|'dark'|'light',
+   *   tf:60|300|900, up:'#2F80FF', down:'#F23645' } */
   function chartSettings() {
-    var d = { provider: "tradingview", tvStyle: "candles", tvTheme: "dark", tvTf: "5",
-              lwTf: 60, lwUp: "#2F80FF", lwDown: "#F23645" };
+    var d = { style: "candles", theme: "auto", tf: 60, up: "#2F80FF", down: "#F23645" };
     try {
       var c = (TX.load().settings || {}).chart;
       if (c && typeof c === "object") {
-        if (c.provider === "lightweight" || c.provider === "tradingview") d.provider = c.provider;
-        if (["candles", "line", "area"].indexOf(c.tvStyle) !== -1) d.tvStyle = c.tvStyle;
-        if (["auto", "dark", "light"].indexOf(c.tvTheme) !== -1) d.tvTheme = c.tvTheme;
-        if (c.tvTf) d.tvTf = String(c.tvTf);
-        if (c.lwTf === 15 || c.lwTf === "15") d.lwTf = 15;
-        if (c.lwTf === 60 || c.lwTf === "60") d.lwTf = 60;
-        if (/^#[0-9a-fA-F]{6}$/.test(c.lwUp || "")) d.lwUp = c.lwUp;
-        if (/^#[0-9a-fA-F]{6}$/.test(c.lwDown || "")) d.lwDown = c.lwDown;
+        var st = c.style || c.tvStyle; /* tvStyle = legacy key */
+        if (["candles", "line", "area"].indexOf(st) !== -1) d.style = st;
+        var th = c.theme || c.tvTheme; /* tvTheme = legacy key */
+        if (["auto", "dark", "light"].indexOf(th) !== -1) d.theme = th;
+        var raw = c.tf != null ? c.tf : (c.tvTf != null ? c.tvTf : c.lwTf); /* legacy keys */
+        var tf = parseInt(raw, 10);
+        if (tf === 60 || tf === 300 || tf === 900) d.tf = tf;
+        else if (tf === 1) d.tf = 60;
+        else if (tf === 5) d.tf = 300;
+        else if (tf === 15) d.tf = 900;
+        var up = c.up || c.lwUp, down = c.down || c.lwDown; /* lwUp/lwDown = legacy keys */
+        if (/^#[0-9a-fA-F]{6}$/.test(up || "")) d.up = up;
+        if (/^#[0-9a-fA-F]{6}$/.test(down || "")) d.down = down;
       }
     } catch (e) {}
     return d;
   }
+  var chartCS = null; /* current admin chart settings */
+  var chartTF = 60, chartTFInit = false; /* seconds: 60=M1 300=M5 900=M15 */
+  var lwChart = null, lwSeries = null, chartAssetId = null, chartGran = 0, chartKind = "";
+  var TFS = [{ g: 60, l: "M1" }, { g: 300, l: "M5" }, { g: 900, l: "M15" }];
 
-  /* ----- dynamic CDN loaders (local copy as fallback) ----- */
-  var tvLoading = false, tvQueue = [];
-  function ensureTV(cb) {
-    if (typeof TradingView !== "undefined") { cb(true); return; }
-    tvQueue.push(cb);
-    if (tvLoading) return;
-    tvLoading = true;
-    var done = false;
-    function fin() {
-      if (done) return; done = true; tvLoading = false;
-      var ok = typeof TradingView !== "undefined";
-      var q = tvQueue; tvQueue = [];
-      q.forEach(function (fn) { try { fn(ok); } catch (e) {} });
-    }
-    var s = document.createElement("script");
-    s.src = "https://s3.tradingview.com/tv.js"; s.async = true;
-    s.onload = fin; s.onerror = fin;
-    document.head.appendChild(s);
-    setTimeout(fin, 15000);
+  function seriesKind(cs) {
+    return (cs && (cs.style === "line" || cs.style === "area")) ? cs.style : "candles";
   }
-  var lwLoading = false, lwQueue = [];
-  /* Owner chart standard: Lightweight Charts v5 loads from the local vendor bundle only — no runtime CDN. */
-  var LW_LOCAL = "vendor/lightweight-charts.standalone.production.js";
-  function ensureLW(cb) {
-    if (window.LightweightCharts && window.LightweightCharts.createChart) { cb(true); return; }
-    lwQueue.push(cb);
-    if (lwLoading) return;
-    lwLoading = true;
-    var done = false;
-    function finOk() {
-      if (done) return; done = true; lwLoading = false;
-      var q = lwQueue; lwQueue = [];
-      q.forEach(function (fn) { try { fn(true); } catch (e) {} });
-    }
-    function finFail() {
-      if (done) return; done = true; lwLoading = false;
-      var q = lwQueue; lwQueue = [];
-      q.forEach(function (fn) { try { fn(false); } catch (e) {} });
-    }
-    function fin() {
-      if (done) return;
-      if (window.LightweightCharts && window.LightweightCharts.createChart) { finOk(); return; }
-      finFail();
-    }
-    var s0 = document.createElement("script");
-    s0.src = LW_LOCAL; s0.async = true;
-    s0.onload = fin; s0.onerror = fin;
-    document.head.appendChild(s0);
-    setTimeout(fin, 20000);
+  function hexA(hex, a) {
+    var r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
+    return "rgba(" + r + "," + g + "," + b + "," + a + ")";
   }
-
+  /* Trexora theme: navy #0A1322 chart background in dark mode, #F1F5FB in light — never black. */
   function chartTheme() {
-    var light = root.getAttribute("data-theme") === "light";
+    var siteLight = root.getAttribute("data-theme") === "light";
+    var light = chartCS && chartCS.theme === "dark" ? false : chartCS && chartCS.theme === "light" ? true : siteLight;
     return {
-      layout: { background: { type: "solid", color: "transparent" }, textColor: light ? "#3a3f4b" : "#9aa3b2", attributionLogo: true },
-      grid: { vertLines: { color: light ? "rgba(0,0,0,0.06)" : "rgba(255,255,255,0.06)" }, horzLines: { color: light ? "rgba(0,0,0,0.06)" : "rgba(255,255,255,0.06)" } },
-      timeScale: { borderColor: light ? "rgba(0,0,0,0.12)" : "rgba(255,255,255,0.12)", timeVisible: true, secondsVisible: false },
-      rightPriceScale: { borderColor: light ? "rgba(0,0,0,0.12)" : "rgba(255,255,255,0.12)" },
-      crosshair: { vertLine: { color: light ? "#9aa3b2" : "#5b6472", labelBackgroundColor: "#7a1f2b" }, horzLine: { color: light ? "#9aa3b2" : "#5b6472", labelBackgroundColor: "#7a1f2b" } }
+      layout: { background: { type: "solid", color: light ? "#F1F5FB" : "#0A1322" },
+                textColor: light ? "#4A5B7C" : "#8FA3C7", attributionLogo: true },
+      grid: { vertLines: { color: light ? "rgba(14,27,51,0.07)" : "rgba(143,163,199,0.08)" },
+              horzLines: { color: light ? "rgba(14,27,51,0.07)" : "rgba(143,163,199,0.08)" } },
+      timeScale: { borderColor: light ? "rgba(14,27,51,0.14)" : "rgba(143,163,199,0.16)", timeVisible: true, secondsVisible: false },
+      rightPriceScale: { borderColor: light ? "rgba(14,27,51,0.14)" : "rgba(143,163,199,0.16)" },
+      crosshair: { vertLine: { color: light ? "#8FA3C7" : "#5B6B8C", labelBackgroundColor: light ? "#1B63D6" : "#2F80FF" },
+                   horzLine: { color: light ? "#8FA3C7" : "#5B6B8C", labelBackgroundColor: light ? "#1B63D6" : "#2F80FF" } }
     };
   }
   function applyChartTheme() {
     if (!lwChart) return;
-    try { lwChart.applyOptions(chartTheme()); } catch (e) {}
+    try { chartCS = chartSettings(); lwChart.applyOptions(chartTheme()); } catch (e) {}
   }
-  function hideTfPills() { var p = $("tfPills"); if (p) p.style.display = "none"; }
-
-  /* ----- TradingView path: the advanced widget, admin's style/theme/timeframe ----- */
-  var TV_STYLE = { candles: "1", line: "2", area: "3" };
-  var TV_INTERVAL = { "1": "1", "5": "5", "15": "15", "60": "60", "240": "240", "D": "D" };
-  function loadTVChart(a, cs) {
+  function addChartSeries(cs) {
+    var kind = seriesKind(cs);
+    if (kind === "line") return lwChart.addSeries(LightweightCharts.LineSeries, {
+      color: cs.up, lineWidth: 2, priceLineVisible: true, lastValueVisible: true, crosshairMarkerVisible: true });
+    if (kind === "area") return lwChart.addSeries(LightweightCharts.AreaSeries, {
+      lineColor: cs.up, topColor: hexA(cs.up, 0.35), bottomColor: hexA(cs.up, 0),
+      lineWidth: 2, priceLineVisible: true, lastValueVisible: true, crosshairMarkerVisible: true });
+    return lwChart.addSeries(LightweightCharts.CandlestickSeries, {
+      upColor: cs.up, downColor: cs.down, wickUpColor: cs.up, wickDownColor: cs.down,
+      borderVisible: false, priceLineVisible: true, lastValueVisible: true });
+  }
+  function ensureChart() {
     var el = $("tv_chart");
+    if (!window.LightweightCharts) { el.innerHTML = ""; $("chartFallback").hidden = false; return false; }
     $("chartFallback").hidden = true;
-    $("chartSrcLabel").hidden = true;
-    hideTfPills();
-    el.innerHTML = '<div class="chart-loading"><span class="spin"></span>Loading live chart…</div>';
-    ensureTV(function (ok) {
-      if (!ok || getAsset(state.assetId) !== a) { if (!ok) { el.innerHTML = ""; $("chartFallback").hidden = false; } return; }
-      if (!a.tv) { el.innerHTML = ""; $("chartFallback").hidden = false; return; } /* asset has no TradingView symbol */
-      var theme = cs.tvTheme === "auto" ? (root.getAttribute("data-theme") === "light" ? "light" : "dark") : cs.tvTheme;
-      try {
-        el.innerHTML = "";
-        new TradingView.widget({
-          autosize: true,
-          symbol: a.tv,
-          interval: TV_INTERVAL[cs.tvTf] || "5",
-          timezone: "Asia/Dubai",
-          theme: theme,
-          style: TV_STYLE[cs.tvStyle] || "1",
-          locale: "en",
-          enable_publishing: false,
-          allow_symbol_change: false,
-          hide_volume: false,
-          container_id: "tv_chart"
-        });
-      } catch (e) { el.innerHTML = ""; $("chartFallback").hidden = false; }
-    });
-  }
-
-  /* ----- Lightweight Charts path: candles aggregated from our own live ticks -----
-   * Rolling series built from the Deriv tick stream (the same feed that prices
-   * tickets and settles trades). Never presented as exchange history. */
-  var lwChart = null, lwSeries = null, lwAggAsset = null, lwAggSec = 60, lwAggCur = null;
-  var LW_MAX_BARS = 300;
-  function lwTick(assetId, tsSec, price) {
-    if (!lwSeries || assetId !== lwAggAsset || !isFinite(price)) return;
-    var b = Math.floor(tsSec / lwAggSec) * lwAggSec;
-    var c = lwAggCur;
-    if (!c || c.time !== b) {
-      c = { time: b, open: price, high: price, low: price, close: price };
-      lwAggCur = c;
-    } else {
-      if (price > c.high) c.high = price;
-      if (price < c.low) c.low = price;
-      c.close = price;
-    }
-    try { lwSeries.update(c); } catch (e) {}
-  }
-  function lwSeed(assetId) {
-    /* seed from recent ticks: Deriv M1 closes, minute-sampled, bucketed */
-    var out = [], byB = {};
+    var kind = seriesKind(chartCS);
+    if (lwChart && chartAssetId === state.assetId && chartGran === chartTF && chartKind === kind) return true;
+    try { if (lwChart) { lwChart.remove(); } } catch (e) {}
+    lwChart = null; lwSeries = null;
+    el.innerHTML = "";
     try {
-      var m1 = (window.DerivFeed && DerivFeed.candlesOf(assetId, 60)) || [];
-      m1.slice(-240).forEach(function (k) {
-        if (!k || !isFinite(k.close) || !k.time) return;
-        var b = Math.floor((k.time + 60) / lwAggSec) * lwAggSec;
-        var c = byB[b] || (byB[b] = { time: b, open: k.close, high: k.close, low: k.close, close: k.close });
-        if (k.close > c.high) c.high = k.close;
-        if (k.close < c.low) c.low = k.close;
-        c.close = k.close;
-      });
-      Object.keys(byB).forEach(function (k) { out.push(byB[k]); });
-      out.sort(function (x, y) { return x.time - y.time; });
-      out = out.slice(-LW_MAX_BARS);
-    } catch (e) {}
-    return out;
+      lwChart = LightweightCharts.createChart(el, Object.assign({ width: el.clientWidth || 320, height: el.clientHeight || 300 }, chartTheme()));
+      lwSeries = addChartSeries(chartCS || chartSettings());
+      chartKind = kind;
+      lwChart.timeScale().scrollToRealTime();
+      new ResizeObserver(function () {
+        try { lwChart.applyOptions({ width: el.clientWidth, height: el.clientHeight }); } catch (e2) {}
+      }).observe(el);
+    } catch (e) { el.innerHTML = ""; $("chartFallback").hidden = false; return false; }
+    chartAssetId = state.assetId; chartGran = chartTF;
+    renderTfPills();
+    return true;
   }
-  function loadLWChart(a, cs) {
-    var el = $("tv_chart");
-    if (!window.DerivFeed || !DerivFeed.symbols[a.id]) {
-      el.innerHTML = ""; $("chartFallback").hidden = false; return;
-    }
-    $("chartFallback").hidden = true;
-    hideTfPills();
-    var lbl = $("chartSrcLabel");
-    lbl.hidden = false;
-    lbl.textContent = "Live · built from tick feed";
-    el.innerHTML = '<div class="chart-loading"><span class="spin"></span>Loading live chart…</div>';
-    ensureLW(function (ok) {
-      if (!ok || getAsset(state.assetId) !== a) { if (!ok) { el.innerHTML = ""; $("chartFallback").hidden = false; } return; }
-      try { if (lwChart) lwChart.remove(); } catch (e) {}
-      lwChart = null; lwSeries = null; lwAggCur = null;
-      el.innerHTML = "";
-      lwAggSec = cs.lwTf === 15 ? 15 : 60;
-      lwAggAsset = a.id;
-      try {
-        lwChart = LightweightCharts.createChart(el, Object.assign({ width: el.clientWidth || 320, height: el.clientHeight || 300 }, chartTheme()));
-        lwSeries = lwChart.addSeries(LightweightCharts.CandlestickSeries, {
-          upColor: cs.lwUp, downColor: cs.lwDown,
-          wickUpColor: cs.lwUp, wickDownColor: cs.lwDown,
-          borderVisible: false, priceLineVisible: true, lastValueVisible: true
-        });
-        var seed = lwSeed(a.id);
-        if (seed.length) { lwSeries.setData(seed); lwAggCur = seed[seed.length - 1]; }
-        lwChart.timeScale().scrollToRealTime();
-        new ResizeObserver(function () {
-          try { lwChart.applyOptions({ width: el.clientWidth, height: el.clientHeight }); } catch (e2) {}
-        }).observe(el);
-      } catch (e) { el.innerHTML = ""; $("chartFallback").hidden = false; return; }
+  function renderTfPills() {
+    var box = $("tfPills");
+    if (!box) return;
+    box.style.display = "";
+    box.innerHTML = "";
+    TFS.forEach(function (t) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "tf-pill" + (t.g === chartTF ? " on" : "");
+      b.textContent = t.l;
+      b.addEventListener("click", function () {
+        if (chartTF === t.g) return;
+        if (chartAssetId) DerivFeed.unwatch(chartAssetId, chartTF);
+        chartTF = t.g;
+        loadChart();
+      });
+      box.appendChild(b);
     });
   }
-
-  /* ----- price watch: Deriv always feeds ticket + settlement, any provider ----- */
+  function paintCandles(assetId, gran, candles, full) {
+    if (!lwSeries || assetId !== chartAssetId || gran !== chartGran) return;
+    try {
+      var data = candles;
+      if (chartKind !== "candles") {
+        data = [];
+        for (var i = 0; i < candles.length; i++) {
+          var k = candles[i];
+          if (k && isFinite(k.close)) data.push({ time: k.time, value: k.close });
+        }
+      }
+      if (full) { lwSeries.setData(data); }
+      else if (data.length) { lwSeries.update(data[data.length - 1]); }
+    } catch (e) {}
+  }
+  function loadChart() {
+    var a = getAsset(state.assetId);
+    if (!a || !window.DerivFeed) return;
+    chartCS = chartSettings();
+    if (!chartTFInit) { chartTF = chartCS.tf; chartTFInit = true; }
+    var sl = $("chartSrcLabel"); if (sl) sl.hidden = true;
+    if (!DerivFeed.symbols[a.id]) { /* asset without a Deriv mapping: honest fallback */
+      var el = $("tv_chart");
+      el.innerHTML = "";
+      $("chartFallback").hidden = false;
+      renderFeedBadge(a.id, chartTF, { state: "OFFLINE", source: "Deriv", updatedAt: 0 });
+      return;
+    }
+    ensurePriceWatch(a.id);
+    var prevId = chartAssetId, prevGran = chartGran;
+    if (!ensureChart()) return;
+    if (prevId && (prevId !== a.id || prevGran !== chartTF)) DerivFeed.unwatch(prevId, prevGran);
+    // seed instantly from cache, then live
+    var cached = DerivFeed.candlesOf(a.id, chartTF);
+    if (cached.length) paintCandles(a.id, chartTF, cached, true);
+    DerivFeed.watch(a.id, chartTF);
+    chartAssetId = a.id; chartGran = chartTF;
+    var st = DerivFeed.stateOf(a.id, chartTF);
+    renderFeedBadge(a.id, chartTF, st);
+    if (st.state === "LIVE") {
+      var live = DerivFeed.candlesOf(a.id, chartTF);
+      if (live.length) paintCandles(a.id, chartTF, live, true);
+    }
+  }
+  /* ----- price watch: Deriv always feeds ticket + settlement ----- */
   var priceWatchId = null;
   function ensurePriceWatch(assetId) {
     if (!window.DerivFeed || !DerivFeed.symbols[assetId]) return;
@@ -439,20 +403,14 @@
     if (priceWatchId !== assetId) { DerivFeed.watch(assetId, 60); priceWatchId = assetId; }
   }
 
-  /* feed -> chart ticks + price displays */
+  /* feed -> chart + price displays */
   if (window.DerivFeed) {
     DerivFeed.on("candles", function (ev) {
-      if (ev.gran === 60 && ev.assetId === lwAggAsset && lwSeries) {
-        var cs = ev.candles;
-        if (cs && cs.length) {
-          var last = cs[cs.length - 1];
-          if (last && isFinite(last.close)) lwTick(ev.assetId, Math.floor(Date.now() / 1000), last.close);
-        }
-      }
+      paintCandles(ev.assetId, ev.gran, ev.candles, ev.full);
       if (ev.assetId === state.assetId) refreshPx();
     });
     DerivFeed.on("state", function (ev) {
-      if (ev.assetId === state.assetId && ev.gran === 60) renderFeedBadge(ev.assetId, ev.gran, ev);
+      if (ev.assetId === state.assetId && ev.gran === chartTF) renderFeedBadge(ev.assetId, ev.gran, ev);
     });
   }
   var BADGE_TXT = { LOADING: "Connecting…", LIVE: "LIVE", STALE: "STALE", RECONNECTING: "RECONNECTING", CLOSED: "CLOSED", OFFLINE: "OFFLINE" };
@@ -472,20 +430,11 @@
     b.title = "Price source: " + (st.source || "Deriv") + (st.updatedAt ? " · last update " + new Date(st.updatedAt).toLocaleTimeString("en-GB") : "");
   }
   setInterval(function () {
-    if (state.assetId && window.DerivFeed) renderFeedBadge(state.assetId, 60, DerivFeed.stateOf(state.assetId, 60));
+    if (state.assetId && window.DerivFeed) renderFeedBadge(state.assetId, chartTF, DerivFeed.stateOf(state.assetId, chartTF));
   }, 2000);
-
-  function loadChart() {
-    var a = getAsset(state.assetId);
-    if (!a) return;
-    var cs = chartSettings();
-    ensurePriceWatch(a.id);
-    renderFeedBadge(a.id, 60, window.DerivFeed ? DerivFeed.stateOf(a.id, 60) : null);
-    if (cs.provider === "lightweight") loadLWChart(a, cs);
-    else loadTVChart(a, cs);
-  }
   $("chartRetry").addEventListener("click", loadChart);
   $("chartReload").addEventListener("click", loadChart);
+
 
   /* ---------- live prices ---------- */
   function refreshPx() {

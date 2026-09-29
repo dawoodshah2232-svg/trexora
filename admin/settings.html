@@ -61,60 +61,34 @@
 
     <div class="panel">
       <h2>Charts &amp; Market Data</h2>
-      <p style="color:var(--muted);font-size:.85rem;margin-bottom:14px">Live data feed: <b style="color:var(--text)">Deriv live quotes</b> — ticket prices and trade settlements always use the Deriv WebSocket feed. The chart provider below only changes how the chart is drawn in the client terminal, on next load.</p>
+      <p style="color:var(--muted);font-size:.85rem;margin-bottom:14px">Live data feed: <b style="color:var(--text)">Deriv live quotes</b> — the chart, ticket prices and trade settlements all use this one feed. The options below control how the chart is drawn in the client terminal (Lightweight Charts, bundled locally), applied on next load.</p>
       <div class="form-grid two">
-        <div class="field"><label>Chart provider</label>
-          <select class="inline-input" id="setChartProvider" style="width:100%">
-            <option value="tradingview">TradingView</option>
-            <option value="lightweight">Lightweight Charts</option>
+        <div class="field"><label>Chart style</label>
+          <select class="inline-input" id="setChartStyle" style="width:100%">
+            <option value="candles">Candles</option>
+            <option value="line">Line</option>
+            <option value="area">Area</option>
           </select>
         </div>
-      </div>
-      <div id="chartTvOpts">
-        <h3 style="font-size:.95rem;margin:14px 0 10px">TradingView options</h3>
-        <div class="form-grid two">
-          <div class="field"><label>Chart style</label>
-            <select class="inline-input" id="setTvStyle" style="width:100%">
-              <option value="candles">Candles</option>
-              <option value="line">Line</option>
-              <option value="area">Area</option>
-            </select>
-          </div>
-          <div class="field"><label>Theme</label>
-            <select class="inline-input" id="setTvTheme" style="width:100%">
-              <option value="auto">Auto (site theme)</option>
-              <option value="dark">Dark</option>
-              <option value="light">Light</option>
-            </select>
-          </div>
-          <div class="field"><label>Default timeframe</label>
-            <select class="inline-input" id="setTvTf" style="width:100%">
-              <option value="1">1m</option>
-              <option value="5">5m</option>
-              <option value="15">15m</option>
-              <option value="60">1h</option>
-              <option value="240">4h</option>
-              <option value="D">1D</option>
-            </select>
-          </div>
+        <div class="field"><label>Theme</label>
+          <select class="inline-input" id="setChartTheme" style="width:100%">
+            <option value="auto">Auto (site theme)</option>
+            <option value="dark">Dark</option>
+            <option value="light">Light</option>
+          </select>
         </div>
-      </div>
-      <div id="chartLwOpts" hidden>
-        <h3 style="font-size:.95rem;margin:14px 0 10px">Lightweight Charts options</h3>
-        <p style="color:var(--muted);font-size:.82rem;margin-bottom:10px">Candles are aggregated live from the terminal's own Deriv tick stream — labeled in the terminal as “Live · built from tick feed”, never as exchange history.</p>
-        <div class="form-grid two">
-          <div class="field"><label>Candle timeframe (tick aggregation)</label>
-            <select class="inline-input" id="setLwTf" style="width:100%">
-              <option value="15">15 seconds</option>
-              <option value="60">1 minute</option>
-            </select>
-          </div>
-          <div class="field"><label>Up / down colors</label>
-            <div style="display:flex;gap:8px;align-items:center">
-              <input type="color" id="setLwUp" value="#2F80FF" title="Up color" style="width:44px;height:38px;border:1px solid var(--line);border-radius:8px;background:none;padding:2px">
-              <input type="color" id="setLwDown" value="#F23645" title="Down color" style="width:44px;height:38px;border:1px solid var(--line);border-radius:8px;background:none;padding:2px">
-              <span style="font-size:.8rem;color:var(--muted)">up / down</span>
-            </div>
+        <div class="field"><label>Default timeframe</label>
+          <select class="inline-input" id="setChartTf" style="width:100%">
+            <option value="60">1m</option>
+            <option value="300">5m</option>
+            <option value="900">15m</option>
+          </select>
+        </div>
+        <div class="field"><label>Up / down colors</label>
+          <div style="display:flex;gap:8px;align-items:center">
+            <input type="color" id="setChartUp" value="#2F80FF" title="Up color" style="width:44px;height:38px;border:1px solid var(--line);border-radius:8px;background:none;padding:2px">
+            <input type="color" id="setChartDown" value="#F23645" title="Down color" style="width:44px;height:38px;border:1px solid var(--line);border-radius:8px;background:none;padding:2px">
+            <span style="font-size:.8rem;color:var(--muted)">up / down</span>
           </div>
         </div>
       </div>
@@ -131,7 +105,7 @@
 </div>
 <div class="toast" id="toast" style="position:fixed;left:50%;bottom:30px;transform:translateX(-50%);background:#0D1830;color:#fff;border:1px solid var(--brand);padding:12px 20px;border-radius:12px;opacity:0;pointer-events:none;transition:.3s;z-index:200"></div>
 
-<script src="../shared/store.js?v=20260929r"></script>
+<script src="../shared/store.js?v=20260929t"></script>
 <script src="admin.js?v=20260929e"></script>
 <script>
 (function(){
@@ -154,37 +128,34 @@
   }
   fill();
 
-  /* ----- Charts & Market Data ----- */
+  /* ----- Charts & Market Data (single Deriv-fed chart, no provider) ----- */
   function chartDef() {
-    return { provider: "tradingview", tvStyle: "candles", tvTheme: "auto", tvTf: "5",
-             lwTf: 60, lwUp: "#2F80FF", lwDown: "#F23645" };
+    return { style: "candles", theme: "auto", tf: 60, up: "#2F80FF", down: "#F23645" };
   }
   function getChart() {
     if (!s.settings.chart || typeof s.settings.chart !== "object") s.settings.chart = chartDef();
-    var c = s.settings.chart, d = chartDef();
+    var c = s.settings.chart, d = chartDef(), hex = /^#[0-9a-fA-F]{6}$/;
+    /* migrate legacy keys, preserving admin values */
+    if (["candles", "line", "area"].indexOf(c.style) === -1)
+      c.style = ["candles", "line", "area"].indexOf(c.tvStyle) !== -1 ? c.tvStyle : "candles";
+    if (["auto", "dark", "light"].indexOf(c.theme) === -1)
+      c.theme = ["auto", "dark", "light"].indexOf(c.tvTheme) !== -1 ? c.tvTheme : "auto";
+    var tfv = parseInt(c.tf != null ? c.tf : (c.tvTf != null ? c.tvTf : c.lwTf), 10);
+    c.tf = tfv === 300 ? 300 : tfv === 900 ? 900 : tfv === 1 ? 60 : tfv === 5 ? 300 : tfv === 15 ? 900 : 60;
+    if (!hex.test(c.up || "")) c.up = hex.test(c.lwUp || "") ? c.lwUp : "#2F80FF";
+    if (!hex.test(c.down || "")) c.down = hex.test(c.lwDown || "") ? c.lwDown : "#F23645";
+    ["provider", "tvStyle", "tvTheme", "tvTf", "lwTf", "lwUp", "lwDown"].forEach(function (k) { delete c[k]; });
     Object.keys(d).forEach(function (k) { if (c[k] == null) c[k] = d[k]; });
     return c;
   }
-  function paintChartOpts() {
-    var c = getChart();
-    $("chartTvOpts").hidden = c.provider !== "tradingview";
-    $("chartLwOpts").hidden = c.provider !== "lightweight";
-  }
   function fillChart() {
     var c = getChart();
-    $("setChartProvider").value = c.provider === "lightweight" ? "lightweight" : "tradingview";
-    $("setTvStyle").value = c.tvStyle;
-    $("setTvTheme").value = c.tvTheme;
-    $("setTvTf").value = String(c.tvTf);
-    $("setLwTf").value = String(c.lwTf);
-    $("setLwUp").value = /^#[0-9a-fA-F]{6}$/.test(c.lwUp || "") ? c.lwUp : "#2F80FF";
-    $("setLwDown").value = /^#[0-9a-fA-F]{6}$/.test(c.lwDown || "") ? c.lwDown : "#F23645";
-    paintChartOpts();
+    $("setChartStyle").value = c.style;
+    $("setChartTheme").value = c.theme;
+    $("setChartTf").value = String(c.tf);
+    $("setChartUp").value = /^#[0-9a-fA-F]{6}$/.test(c.up || "") ? c.up : "#2F80FF";
+    $("setChartDown").value = /^#[0-9a-fA-F]{6}$/.test(c.down || "") ? c.down : "#F23645";
   }
-  $("setChartProvider").addEventListener("change", function () {
-    getChart().provider = $("setChartProvider").value === "lightweight" ? "lightweight" : "tradingview";
-    paintChartOpts();
-  });
 
   $("saveBtn").addEventListener("click", function(){
     s.settings.defaultPayout = Math.min(100, Math.max(1, parseInt($("setPayout").value, 10) || 80));
@@ -197,15 +168,14 @@
     s.settings.earlyClose = $("tglEarly").checked;
     s.settings.signups = $("tglSignups").checked;
     s.settings.maintenance = $("tglMaint").checked;
-    /* charts & market data */
+    /* charts & market data (single chart: style/theme/default timeframe/colors) */
     var ch = getChart();
-    ch.provider = $("setChartProvider").value === "lightweight" ? "lightweight" : "tradingview";
-    ch.tvStyle = $("setTvStyle").value;
-    ch.tvTheme = $("setTvTheme").value;
-    ch.tvTf = $("setTvTf").value;
-    ch.lwTf = $("setLwTf").value === "15" ? 15 : 60;
-    ch.lwUp = $("setLwUp").value;
-    ch.lwDown = $("setLwDown").value;
+    ch.style = $("setChartStyle").value;
+    ch.theme = $("setChartTheme").value;
+    var tfv = parseInt($("setChartTf").value, 10);
+    ch.tf = tfv === 300 ? 300 : tfv === 900 ? 900 : 60;
+    ch.up = $("setChartUp").value;
+    ch.down = $("setChartDown").value;
     TX.save(s);
     ADM.toast("Settings saved — the client terminal reads them immediately.");
   });

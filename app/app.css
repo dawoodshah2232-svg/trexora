@@ -953,5 +953,5 @@ table.data tr:last-child td{border-bottom:0}
 @keyframes blink{50%{opacity:.25}}
 .tf-pills{pointer-events:auto;display:flex;gap:6px}
 .tf-pill{border:1px solid var(--line);background:rgba(10,12,18,.72);color:#cdd3e0;font-size:11px;font-weight:700;padding:5px 11px;border-radius:999px;cursor:pointer;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
-.tf-pill.on{background:#7a1f2b;border-color:#a02c3d;color:#fff}
-@media (hover:hover){.tf-pill:hover{border-color:#a02c3d}}
+.tf-pill.on{background:#2F80FF;border-color:#2F80FF;color:#fff}
+@media (hover:hover){.tf-pill:hover{border-color:#2F80FF}}
