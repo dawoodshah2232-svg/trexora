@@ -320,7 +320,8 @@
         // Fresh (asset,timeframe) subscription. If the socket is already open,
         // connect() would return early and the new timeframe would NEVER get
         // its ticks_history subscription — blank chart forever. Subscribe now.
-        setState(assetId, gran, "LOADING");
+        // Cached candles on screen = we are refreshing, not cold-connecting.
+        setState(assetId, gran, g.candles.length ? "RECONNECTING" : "LOADING");
         g.attempts += 1;
         if (ws && ws.readyState === 1) subscribeCandles(assetId, gran);
         else connect(); // connecting/opening socket picks this up via resubscribeAll
