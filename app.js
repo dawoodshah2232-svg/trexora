@@ -38,6 +38,7 @@
   document.querySelectorAll('.acc-item').forEach(function(item){
     var head = item.querySelector('.acc-head');
     var body = item.querySelector('.acc-body');
+    if (!head || !body) return;
     head.addEventListener('click', function(){
       var isOpen = item.classList.contains('open');
       document.querySelectorAll('.acc-item.open').forEach(function(o){

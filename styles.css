@@ -9,6 +9,7 @@
   --text:#F8F3F4; --muted:#C7B4B9; --faint:#8E767C;
   --brand:#A31628; --brand-deep:#6B0F1A; --brand-soft:rgba(163,22,40,.16);
   --gold:#D9A441; --gold-soft:rgba(217,164,65,.14);
+  --accent:var(--gold); --border:var(--line);
   --green:#22C55E; --red:#F23645;
   --shadow:0 24px 60px rgba(0,0,0,.45);
   --header-bg:rgba(11,6,8,.82);
@@ -20,6 +21,7 @@
   --text:#221014; --muted:#6E565C; --faint:#9A8288;
   --brand:#8E1220; --brand-deep:#6B0F1A; --brand-soft:rgba(142,18,32,.09);
   --gold:#B07A24; --gold-soft:rgba(176,122,36,.12);
+  --accent:var(--gold); --border:var(--line);
   --green:#16A34A; --red:#DC2626;
   --shadow:0 24px 60px rgba(107,15,26,.12);
   --header-bg:rgba(250,247,248,.85);
@@ -66,9 +68,9 @@ h3{font-size:1.1rem;font-weight:650}
 .theme-toggle{width:38px;height:38px;flex:none;aspect-ratio:1/1;padding:0;border-radius:50%;border:1px solid var(--line);background:transparent;color:var(--text);display:grid;place-items:center;cursor:pointer;transition:border-color .2s,transform .2s;-webkit-tap-highlight-color:transparent}
 @media(hover:hover){.theme-toggle:hover{border-color:var(--brand);transform:rotate(12deg)}}
 .theme-toggle:active{transform:scale(.92)}
-.icon-moon{display:none}
-[data-theme="light"] .icon-sun{display:none}
-[data-theme="light"] .icon-moon{display:block}
+.icon-moon,.theme-toggle .moon{display:none}
+[data-theme="light"] .icon-sun,[data-theme="light"] .theme-toggle .sun{display:none}
+[data-theme="light"] .icon-moon,[data-theme="light"] .theme-toggle .moon{display:block}
 .btn{display:inline-flex;align-items:center;justify-content:center;font-weight:650;font-size:.92rem;padding:10px 20px;border-radius:12px;border:1px solid transparent;background:transparent;cursor:pointer;transition:transform .15s,box-shadow .2s,background .2s;white-space:nowrap}
 .btn:active{transform:scale(.97)}
 .btn-primary{background:linear-gradient(135deg,var(--brand),var(--brand-deep));color:#fff;box-shadow:0 8px 24px rgba(163,22,40,.35)}
@@ -196,6 +198,7 @@ h3{font-size:1.1rem;font-weight:650}
 .features{background:var(--bg-soft);border-top:1px solid var(--line-soft);border-bottom:1px solid var(--line-soft)}
 .feat-grid{display:grid;gap:14px;margin-top:36px}
 .feat-card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:24px;transition:transform .25s,border-color .25s}
+.feat-ic{width:44px;height:44px;border-radius:13px;display:grid;place-items:center;font-size:1.25rem;margin-bottom:14px;background:var(--gold-soft);color:var(--gold)}
 .feat-card:hover{transform:translateY(-4px);border-color:var(--brand)}
 .feat-card h3{margin-bottom:6px}
 .feat-card p{color:var(--muted);font-size:.9rem}
@@ -236,9 +239,9 @@ h3{font-size:1.1rem;font-weight:650}
 /* ---- Richness pass: ticker, stats, pay badges, demo chart, app, faq, cta ---- */
 
 /* Live ticker tape */
-.ticker-tape{border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:var(--bg-soft);overflow:hidden}
-.ticker-tape .tradingview-widget-container{height:46px}
-.ticker-tape iframe{height:46px}
+.ticker-tape{border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:#0B0608;overflow:hidden}
+.ticker-tape .tradingview-widget-container{height:46px;background:#0B0608}
+.ticker-tape iframe{height:46px;background:#0B0608}
 
 /* Stats band */
 .stats-band{padding:44px 0;border-bottom:1px solid var(--line-soft)}
