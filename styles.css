@@ -423,13 +423,21 @@ table.data tr:last-child td{border-bottom:0}
 .reveal{transition:opacity .6s ease,transform .6s ease;transition-delay:var(--d,0s)}
 @media (prefers-reduced-motion:reduce){.reveal{transition:none}}
 
-/* Vertical stat ticker */
-.vticker{display:flex;justify-content:center;padding:6px 0}
-.vticker-window{height:68px;overflow:hidden;-webkit-mask-image:linear-gradient(transparent,#000 28%,#000 72%,transparent);mask-image:linear-gradient(transparent,#000 28%,#000 72%,transparent)}
-.vticker-list{list-style:none;transition:transform .65s cubic-bezier(.4,0,.2,1)}
-.vticker-list li{height:68px;display:flex;align-items:center;justify-content:center;gap:14px}
-.vticker-list strong{font-size:clamp(1.7rem,4vw,2.3rem);font-weight:800;color:var(--brand);letter-spacing:-.02em;font-variant-numeric:tabular-nums}
-.vticker-list span{font-size:1rem;color:var(--muted);font-weight:550}
+/* Stats — four-up animated band */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;padding:6px 0}
+.stat-card{position:relative;display:flex;flex-direction:column;align-items:center;gap:9px;text-align:center;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:26px 16px;overflow:hidden;transition:transform .3s,box-shadow .3s,border-color .3s}
+.stat-card::before{content:'';position:absolute;inset:0;background:radial-gradient(220px 130px at 50% -20%,rgba(47,128,255,.18),transparent 70%);opacity:0;transition:opacity .3s;pointer-events:none}
+.stat-card:hover{transform:translateY(-4px);border-color:rgba(47,128,255,.45);box-shadow:0 14px 34px rgba(47,128,255,.16)}
+.stat-card:hover::before{opacity:1}
+.stat-ico{display:grid;place-items:center;width:48px;height:48px;border-radius:15px;background:linear-gradient(135deg,rgba(47,128,255,.2),rgba(47,128,255,.05));border:1px solid rgba(47,128,255,.32);color:var(--brand);animation:icoFloat 3.6s ease-in-out infinite}
+.stat-card:nth-child(2) .stat-ico{animation-delay:.5s}
+.stat-card:nth-child(3) .stat-ico{animation-delay:1s}
+.stat-card:nth-child(4) .stat-ico{animation-delay:1.5s}
+@keyframes icoFloat{50%{transform:translateY(-4px)}}
+.stat-ico svg{width:24px;height:24px}
+.stat-card .num{font-size:clamp(1.8rem,4vw,2.4rem);font-weight:800;letter-spacing:-.02em;color:var(--brand);font-variant-numeric:tabular-nums}
+.stat-card>span:last-child{font-size:.95rem;color:var(--muted);font-weight:550}
+@media(max-width:760px){.stats-grid{grid-template-columns:repeat(2,1fr);gap:10px}.stat-card{padding:20px 10px}}
 
 /* Markets — auto-rotating tabs */
 .markets{background:var(--bg-soft);border-top:1px solid var(--line-soft);border-bottom:1px solid var(--line-soft)}

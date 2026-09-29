@@ -16,7 +16,7 @@
 <meta name="twitter:title" content="Trexora — Binary Options Trading Platform">
 <meta name="twitter:description" content="Up or Down. You call it. 410+ instruments, free demo, fast withdrawals.">
 <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
-<link rel="stylesheet" href="styles.css?v=20260929t2">
+<link rel="stylesheet" href="styles.css?v=20260929t3">
 <script>try{var t=localStorage.getItem('trexora-theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}</script>
 </head>
 <body>
@@ -151,17 +151,29 @@
     </div>
   </div>
 
-  <!-- STAT TICKER — honest platform highlights, auto-cycling -->
+  <!-- STATS — all four platform highlights, animated count-up -->
   <section class="stats-band">
     <div class="wrap">
-      <div class="vticker reveal" id="vTicker" aria-label="Platform highlights">
-        <div class="vticker-window">
-          <ul class="vticker-list">
-            <li><strong>410+</strong><span>instruments to trade</span></li>
-            <li><strong>$10</strong><span>minimum deposit</span></li>
-            <li><strong>Free</strong><span>$10,000 demo account</span></li>
-            <li><strong>24/7</strong><span>crypto markets</span></li>
-          </ul>
+      <div class="stats-grid" aria-label="Platform highlights">
+        <div class="stat-card reveal">
+          <span class="stat-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 20v-6M10 20V5M16 20v-9M22 20H2"/></svg></span>
+          <strong class="num" data-count="410" data-suffix="+">410+</strong>
+          <span>instruments to trade</span>
+        </div>
+        <div class="stat-card reveal">
+          <span class="stat-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 7H6a2 2 0 0 1 0-4h12v4"/><path d="M19 7a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5"/><circle cx="16.5" cy="14" r="1.3" fill="currentColor" stroke="none"/></svg></span>
+          <strong class="num" data-count="10" data-prefix="$">$10</strong>
+          <span>minimum deposit</span>
+        </div>
+        <div class="stat-card reveal">
+          <span class="stat-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="9" width="16" height="11" rx="1.5"/><path d="M12 9v11M4 13.5h16M12 9S8.5 9 7 7.3 7.3 4 9.2 4.6 12 9 12 9s2.3-4.4 4.1-4.4S17 7.3 15.5 9"/></svg></span>
+          <strong class="num" data-count="10000" data-prefix="$">$10,000</strong>
+          <span>free demo account</span>
+        </div>
+        <div class="stat-card reveal">
+          <span class="stat-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3.5 2"/></svg></span>
+          <strong class="num" data-count="24" data-suffix="/7">24/7</strong>
+          <span>crypto markets</span>
         </div>
       </div>
     </div>
@@ -567,6 +579,6 @@
 <!--/FOOTER-->
 
 <script src="https://s3.tradingview.com/tv.js"></script>
-<script src="app.js?v=20260929t2"></script>
+<script src="app.js?v=20260929t3"></script>
 </body>
 </html>

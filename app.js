@@ -265,25 +265,33 @@
     });
   });
 
-  /* Vertical stat ticker — seamless loop */
-  (function vTicker(){
-    var list = document.querySelector('.vticker-list');
-    if(!list || reduceMotion) return;
-    var n = list.children.length, i = 0, H = 68;
-    list.innerHTML += list.innerHTML;
-    setInterval(function(){
-      i++;
-      list.style.transform = 'translateY(' + (-i * H) + 'px)';
-      if(i >= n){
-        setTimeout(function(){
-          list.style.transition = 'none';
-          i = 0;
-          list.style.transform = 'translateY(0)';
-          void list.offsetHeight;
-          list.style.transition = '';
-        }, 700);
+  /* Stats — animated count-up on reveal */
+  (function statCount(){
+    var nums = document.querySelectorAll('.stat-card .num[data-count]');
+    if(!nums.length) return;
+    function fmt(v, el){
+      return (el.dataset.prefix || '') + Math.round(v).toLocaleString('en-US') + (el.dataset.suffix || '');
+    }
+    function run(el){
+      if(el.dataset.done) return;
+      el.dataset.done = '1';
+      var target = +el.dataset.count;
+      if(reduceMotion){ el.textContent = fmt(target, el); return; }
+      var t0 = null, dur = 1400;
+      function step(t){
+        if(!t0) t0 = t;
+        var p = Math.min((t - t0) / dur, 1), e = 1 - Math.pow(1 - p, 3);
+        el.textContent = fmt(target * e, el);
+        if(p < 1) requestAnimationFrame(step);
       }
-    }, 3000);
+      requestAnimationFrame(step);
+    }
+    if('IntersectionObserver' in window){
+      var sio = new IntersectionObserver(function(es){
+        es.forEach(function(e){ if(e.isIntersecting){ run(e.target); sio.unobserve(e.target); } });
+      }, {threshold:.4});
+      nums.forEach(function(n){ sio.observe(n); });
+    } else { nums.forEach(run); }
   })();
 
   /* Markets tabs — auto-rotate ~5s, click to jump */
