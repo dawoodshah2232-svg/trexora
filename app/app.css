@@ -522,15 +522,15 @@ table.data tr:last-child td{border-bottom:0}
 .tour-avail::before,.tour-avail::after{content:'';position:absolute;top:50%;width:26%;height:1px;background:var(--line)}
 .tour-avail::before{left:0}.tour-avail::after{right:0}
 .tour-grid2{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:16px;margin-bottom:10px}
-.tx-card{position:relative;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:20px;overflow:hidden;animation:rise .4s both}
+.tx-card{position:relative;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;overflow:hidden;animation:rise .4s both}
 .tx-card::before{content:'🏆';position:absolute;right:8px;top:-6px;font-size:7rem;opacity:.06;pointer-events:none}
-.tx-cd{display:inline-flex;align-items:center;gap:6px;background:#2563eb;color:#fff;font-size:.7rem;font-weight:800;letter-spacing:.04em;border-radius:8px;padding:7px 12px;margin-bottom:34px;font-variant-numeric:tabular-nums}
+.tx-cd{display:inline-flex;align-items:center;gap:6px;background:#2563eb;color:#fff;font-size:.7rem;font-weight:800;letter-spacing:.04em;border-radius:8px;padding:7px 12px;margin-bottom:12px;font-variant-numeric:tabular-nums}
 .tx-cd.live{background:#22c55e}
-.tx-card h4{font-size:1.35rem;margin-bottom:16px}
-.tx-prize{text-align:right;margin-bottom:14px}
+.tx-card h4{font-size:1.35rem;margin-bottom:8px}
+.tx-prize{text-align:right;margin-bottom:10px}
 .tx-prize small{display:block;font-size:.68rem;letter-spacing:.1em;color:var(--muted);font-weight:700}
 .tx-prize b{font-size:1.6rem;color:#22c55e;font-variant-numeric:tabular-nums}
-.tx-meta{display:grid;grid-template-columns:1fr 1fr;background:rgba(0,0,0,.22);border-radius:12px;padding:14px;margin-bottom:14px}
+.tx-meta{display:grid;grid-template-columns:1fr 1fr;background:rgba(0,0,0,.22);border-radius:12px;padding:10px;margin-bottom:10px}
 .tx-meta>div{text-align:center}
 .tx-meta>div+div{border-left:1px solid var(--line)}
 .tx-meta b{display:block;font-size:1.25rem}
