@@ -81,7 +81,12 @@
       promos: promos, tournaments: tournaments, tourJoins: [], signals: signals,
       verifyQueue: [], ledger: [], announcements: [],
       roles: [{ id: "r_admin", email: DEMO_ADMIN.email, password: DEMO_ADMIN.password, role: "admin", createdAt: now - 86400000 * 60 }],
-      settings: { defaultPayout: 80, minTrade: 1, maxTrade: 5000, maxPayout: 95, maxOpen: 20, earlyClose: true, signups: true, maintenance: false, signalsOn: true, expiries: ["1m", "5m", "10m", "15m", "30m", "1h", "4h", "1d"] }
+      settings: { defaultPayout: 80, minTrade: 1, maxTrade: 5000, maxPayout: 95, maxOpen: 20, earlyClose: true, signups: true, maintenance: false, signalsOn: true, expiries: ["1m", "5m", "10m", "15m", "30m", "1h", "4h", "1d"],
+        kyc: { mode: "manual", provider: "sumsub", appToken: "", secretKey: "", webhookSecret: "", testMode: true },
+        email: { provider: "smtp", apiKey: "", smtpHost: "", smtpPort: 587, smtpUser: "", smtpPass: "", fromName: "Trexora", fromEmail: "noreply@trexora.example" },
+        sms: { provider: "twilio", apiKey: "", apiSecret: "", senderId: "Trexora" },
+        payments: { provider: "manual", apiKey: "", secretKey: "", merchantId: "" },
+        api: { enabled: false, key: "", whTrade: "", whDeposit: "", whKyc: "", whWithdraw: "" } }
     };
   }
 
@@ -115,6 +120,27 @@
     });
     if (!Array.isArray(s.settings.expiries) || !s.settings.expiries.length) {
       s.settings.expiries = ["1m", "5m", "10m", "15m", "30m", "1h", "4h", "1d"]; changed = true;
+    }
+    /* integrations: KYC / email / sms / payments / platform API (admin-operated) */
+    if (s.settings.kyc == null || typeof s.settings.kyc !== "object") {
+      s.settings.kyc = { mode: "manual", provider: "sumsub", appToken: "", secretKey: "", webhookSecret: "", testMode: true };
+      changed = true;
+    }
+    if (s.settings.email == null || typeof s.settings.email !== "object") {
+      s.settings.email = { provider: "smtp", apiKey: "", smtpHost: "", smtpPort: 587, smtpUser: "", smtpPass: "", fromName: "Trexora", fromEmail: "noreply@trexora.example" };
+      changed = true;
+    }
+    if (s.settings.sms == null || typeof s.settings.sms !== "object") {
+      s.settings.sms = { provider: "twilio", apiKey: "", apiSecret: "", senderId: "Trexora" };
+      changed = true;
+    }
+    if (s.settings.payments == null || typeof s.settings.payments !== "object") {
+      s.settings.payments = { provider: "manual", apiKey: "", secretKey: "", merchantId: "" };
+      changed = true;
+    }
+    if (s.settings.api == null || typeof s.settings.api !== "object") {
+      s.settings.api = { enabled: false, key: "", whTrade: "", whDeposit: "", whKyc: "", whWithdraw: "" };
+      changed = true;
     }
     /* seed default promos/tournaments/admin role once on old stores */
     var fresh = seed();

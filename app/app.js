@@ -934,6 +934,13 @@
     var amt = Math.round(parseFloat($("wdAmt").value) * 100) / 100;
     if (!(amt >= 10)) { toast("Minimum request is $10."); return; }
     if (amt > user.balance) { toast("Amount exceeds your demo balance."); return; }
+    var k = kycCfg();
+    if (k.requireForWithdrawals && getVerify().state !== "verified") {
+      toast("Identity verification is required before withdrawals. Please verify first.");
+      showView("account");
+      if (typeof showAccountTab === "function") showAccountTab("account");
+      return;
+    }
     store.requests.push({ id: TX.uid("r"), userId: user.id, userEmail: user.email, type: "withdrawal", amount: amt, method: $("wdMethod").value, status: "pending", createdAt: Date.now() });
     TX.save(store); renderWallet();
     toast("Withdrawal request sent — admin will approve it.");
@@ -1056,7 +1063,23 @@
     $("verifyOk").hidden = v.state !== "verified";
     $("verifyOpen").style.display = v.state === "verified" ? "none" : "";
   }
-  $("verifyOpen").addEventListener("click", function () { $("vBack").hidden = false; $("vModal").hidden = false; });
+  var KYC_PROVIDERS = { sumsub: "Sumsub", veriff: "Veriff", jumio: "Jumio", onfido: "Onfido" };
+  function kycCfg() {
+    try { return (store.settings && store.settings.kyc) || { mode: "manual" }; }
+    catch (e) { return { mode: "manual" }; }
+  }
+  $("verifyOpen").addEventListener("click", function () {
+    var k = kycCfg(), auto = k.mode === "auto";
+    $("vAuto").hidden = !auto;
+    if (auto) $("vAutoName").textContent = KYC_PROVIDERS[k.provider] || "KYC provider";
+    $("vBack").hidden = false; $("vModal").hidden = false;
+  });
+  $("vAutoBtn").addEventListener("click", function () {
+    var k = kycCfg();
+    try { localStorage.setItem("tx_verify", JSON.stringify({ state: "pending", at: Date.now(), via: k.provider || "auto" })); } catch (e) {}
+    $("vBack").hidden = true; $("vModal").hidden = true; renderVerify();
+    toast("Demo: would open " + (KYC_PROVIDERS[k.provider] || "provider") + " verification. Marked pending for practice.");
+  });
   $("vClose").addEventListener("click", function () { $("vBack").hidden = true; $("vModal").hidden = true; });
   $("vCancel").addEventListener("click", function () { $("vBack").hidden = true; $("vModal").hidden = true; });
   $("vSubmit").addEventListener("click", function () {

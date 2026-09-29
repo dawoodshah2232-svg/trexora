@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Integrations &amp; APIs — Trexora Admin</title>
+<meta name="robots" content="noindex">
+<link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
+<link rel="stylesheet" href="../styles.css?v=20260929e">
+<link rel="stylesheet" href="admin.css?v=20260929e">
+<script>try{var t=localStorage.getItem('trexora-theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}</script>
+</head>
+<body class="admin-body" data-page="integrations">
+<div class="admin-shell">
+  <aside class="sidebar" id="sidebar">
+    <a class="brand" href="dashboard.html" aria-label="Trexora admin">
+      <img class="logo logo-dark" src="../assets/logo-dark.svg" alt="Trexora" height="32">
+      <img class="logo logo-light" src="../assets/logo-light.svg" alt="Trexora" height="32">
+    </a>
+    <a class="side-link" data-nav="dashboard" href="dashboard.html"><span class="ico">📊</span>Dashboard</a>
+    <a class="side-link" data-nav="users" href="users.html"><span class="ico">👥</span>Users</a>
+    <a class="side-link" data-nav="assets" href="assets.html"><span class="ico">💹</span>Assets</a>
+    <a class="side-link" data-nav="trades" href="trades.html"><span class="ico">📑</span>Trades</a>
+    <a class="side-link" data-nav="requests" href="requests.html"><span class="ico">💸</span>Requests</a>
+    <a class="side-link" data-nav="integrations" href="integrations.html"><span class="ico">🔌</span>Integrations</a>
+    <a class="side-link" data-nav="settings" href="settings.html"><span class="ico">⚙️</span>Settings</a>
+    <div class="side-foot">
+      <a class="side-link" href="../index.html"><span class="ico">🌐</span>View website</a>
+      <a class="side-link" href="../app/terminal.html"><span class="ico">📈</span>Client terminal</a>
+      <button class="side-link" id="logoutBtn" type="button" style="background:none;border:0;width:100%;text-align:left;cursor:pointer;font-family:var(--font)"><span class="ico">⏻</span>Log out</button>
+    </div>
+  </aside>
+
+  <main class="admin-main">
+    <div class="admin-top">
+      <button class="icon-btn mobile-nav-toggle" id="mobileNavToggle" aria-label="Menu">☰</button>
+      <h1>Integrations &amp; APIs</h1>
+      <span class="spacer"></span>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme" style="width:36px;height:36px">
+        <svg class="icon-sun" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M2 12h2.5M19.5 12H22M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+      </button>
+    </div>
+
+    <p style="color:var(--muted);font-size:.88rem;margin:0 0 16px">Connect the services that run the business — verification, email, SMS, payments and your own API. Credentials are stored with the platform configuration; live calls are made by the production server. <b>Demo:</b> nothing here sends real traffic yet.</p>
+
+    <!-- KYC -->
+    <div class="panel">
+      <h2>Identity verification (KYC)</h2>
+      <div class="form-grid two">
+        <div class="field"><label>Verification mode</label>
+          <select class="inline-input" id="kycMode" style="width:100%">
+            <option value="manual">Manual review (admin approves documents)</option>
+            <option value="auto">Automatic (KYC provider API)</option>
+          </select>
+        </div>
+        <div class="field" id="kycProvWrap"><label>KYC provider</label>
+          <select class="inline-input" id="kycProvider" style="width:100%">
+            <option value="sumsub">Sumsub</option>
+            <option value="veriff">Veriff</option>
+            <option value="jumio">Jumio</option>
+            <option value="onfido">Onfido</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-grid two" id="kycCreds">
+        <div class="field"><label>App token / API key</label><input class="inline-input" id="kycToken" type="text" autocomplete="off" placeholder="From your provider dashboard" style="width:100%"></div>
+        <div class="field"><label>Secret key</label><input class="inline-input" id="kycSecret" type="password" autocomplete="new-password" placeholder="Kept with the configuration" style="width:100%"></div>
+        <div class="field"><label>Webhook secret</label><input class="inline-input" id="kycWh" type="password" autocomplete="new-password" placeholder="To verify provider callbacks" style="width:100%"></div>
+        <div class="field"><label>&nbsp;</label><div class="switch-row" style="border:0;padding:6px 0"><div><div class="lbl">Test (sandbox) mode</div><div class="desc">Use the provider sandbox until you go live.</div></div><label class="toggle"><input type="checkbox" id="kycTest"><span class="track"></span></label></div></div>
+      </div>
+      <div class="switch-row"><div><div class="lbl">Require verification for withdrawals</div><div class="desc">Block withdrawal requests until the user is verified.</div></div><label class="toggle"><input type="checkbox" id="kycReqWd"><span class="track"></span></label></div>
+    </div>
+
+    <!-- EMAIL -->
+    <div class="panel">
+      <h2>Email API</h2>
+      <div class="form-grid two">
+        <div class="field"><label>Provider</label>
+          <select class="inline-input" id="emProvider" style="width:100%">
+            <option value="smtp">SMTP (any host)</option>
+            <option value="sendgrid">SendGrid</option>
+            <option value="brevo">Brevo</option>
+            <option value="mailgun">Mailgun</option>
+            <option value="ses">Amazon SES</option>
+          </select>
+        </div>
+        <div class="field"><label>API key <small style="color:var(--muted)">(SendGrid / Brevo / Mailgun / SES)</small></label><input class="inline-input" id="emKey" type="password" autocomplete="new-password" style="width:100%"></div>
+      </div>
+      <div class="form-grid two" id="emSmtp">
+        <div class="field"><label>SMTP host</label><input class="inline-input" id="emHost" type="text" placeholder="mail.example.com" style="width:100%"></div>
+        <div class="field"><label>SMTP port</label><input class="inline-input" id="emPort" type="number" min="1" max="65535" style="width:100%"></div>
+        <div class="field"><label>SMTP username</label><input class="inline-input" id="emUser" type="text" autocomplete="off" style="width:100%"></div>
+        <div class="field"><label>SMTP password</label><input class="inline-input" id="emPass" type="password" autocomplete="new-password" style="width:100%"></div>
+      </div>
+      <div class="form-grid two">
+        <div class="field"><label>From name</label><input class="inline-input" id="emFromName" type="text" style="width:100%"></div>
+        <div class="field"><label>From email</label><input class="inline-input" id="emFromEmail" type="email" style="width:100%"></div>
+      </div>
+      <button class="btn btn-ghost btn-sm" id="emTest" type="button">Send test email</button>
+    </div>
+
+    <!-- SMS -->
+    <div class="panel">
+      <h2>SMS API <small style="color:var(--muted);font-weight:500">— OTP, 2FA codes, alerts</small></h2>
+      <div class="form-grid two">
+        <div class="field"><label>Provider</label>
+          <select class="inline-input" id="smsProvider" style="width:100%">
+            <option value="twilio">Twilio</option>
+            <option value="vonage">Vonage</option>
+            <option value="custom">Custom HTTP API</option>
+          </select>
+        </div>
+        <div class="field"><label>Sender ID</label><input class="inline-input" id="smsSender" type="text" style="width:100%"></div>
+        <div class="field"><label>API key / Account SID</label><input class="inline-input" id="smsKey" type="text" autocomplete="off" style="width:100%"></div>
+        <div class="field"><label>API secret / Auth token</label><input class="inline-input" id="smsSecret" type="password" autocomplete="new-password" style="width:100%"></div>
+      </div>
+      <button class="btn btn-ghost btn-sm" id="smsTest" type="button">Send test SMS</button>
+    </div>
+
+    <!-- PAYMENTS -->
+    <div class="panel">
+      <h2>Payments API <small style="color:var(--muted);font-weight:500">— deposits &amp; withdrawals</small></h2>
+      <div class="form-grid two">
+        <div class="field"><label>Provider</label>
+          <select class="inline-input" id="payProvider" style="width:100%">
+            <option value="manual">Manual (admin approves each request)</option>
+            <option value="stripe">Stripe</option>
+            <option value="nowpayments">NOWPayments (crypto)</option>
+            <option value="custom">Custom gateway</option>
+          </select>
+        </div>
+        <div class="field"><label>Merchant / account ID</label><input class="inline-input" id="payMid" type="text" autocomplete="off" style="width:100%"></div>
+        <div class="field"><label>API key</label><input class="inline-input" id="payKey" type="password" autocomplete="new-password" style="width:100%"></div>
+        <div class="field"><label>Secret key</label><input class="inline-input" id="paySecret" type="password" autocomplete="new-password" style="width:100%"></div>
+      </div>
+      <p style="color:var(--muted);font-size:.82rem;margin:8px 0 0">Point your provider's webhook at: <code id="payWhUrl" style="user-select:all">https://trexora.example/api/webhooks/payments</code></p>
+    </div>
+
+    <!-- PLATFORM API -->
+    <div class="panel">
+      <h2>Platform API <small style="color:var(--muted);font-weight:500">— operate Trexora through your own systems</small></h2>
+      <div class="switch-row"><div><div class="lbl">Enable API access</div><div class="desc">Issue a key that external systems can use against the production REST API.</div></div><label class="toggle"><input type="checkbox" id="apiEnabled"><span class="track"></span></label></div>
+      <div class="form-grid two" style="margin-top:12px">
+        <div class="field"><label>API key</label><div style="display:flex;gap:8px"><input class="inline-input" id="apiKey" type="text" readonly placeholder="Not generated yet" style="width:100%"><button class="btn btn-ghost btn-sm" id="apiGen" type="button" style="flex:none">Generate</button></div></div>
+        <div class="field"><label>&nbsp;</label><p style="color:var(--muted);font-size:.82rem;margin:6px 0 0">Base URL: <code>https://trexora.example/api/v1</code> — bearer token auth.</p></div>
+      </div>
+      <h3 style="font-size:.95rem;margin:14px 0 8px">Event webhooks <small style="color:var(--muted);font-weight:500">— we POST JSON to these URLs</small></h3>
+      <div class="form-grid two">
+        <div class="field"><label>Trade settled</label><input class="inline-input" id="whTrade" type="url" placeholder="https://…" style="width:100%"></div>
+        <div class="field"><label>Deposit confirmed</label><input class="inline-input" id="whDeposit" type="url" placeholder="https://…" style="width:100%"></div>
+        <div class="field"><label>KYC decision</label><input class="inline-input" id="whKyc" type="url" placeholder="https://…" style="width:100%"></div>
+        <div class="field"><label>Withdrawal requested</label><input class="inline-input" id="whWithdraw" type="url" placeholder="https://…" style="width:100%"></div>
+      </div>
+    </div>
+
+    <button class="btn btn-primary" id="saveBtn" type="button" style="width:100%;padding:13px">Save integrations</button>
+  </main>
+</div>
+<div class="toast" id="toast" style="position:fixed;left:50%;bottom:30px;transform:translateX(-50%);background:#1c0d11;color:#fff;border:1px solid var(--brand);padding:12px 20px;border-radius:12px;opacity:0;pointer-events:none;transition:.3s;z-index:200"></div>
+
+<script src="../shared/store.js?v=20260929o"></script>
+<script src="admin.js?v=20260929e"></script>
+<script>
+(function(){
+  "use strict";
+  var $ = ADM.$;
+  var s = TX.load();
+  function kyc(){ return s.settings.kyc || {}; }
+  function eml(){ return s.settings.email || {}; }
+  function sms(){ return s.settings.sms || {}; }
+  function pay(){ return s.settings.payments || {}; }
+  function api(){ return s.settings.api || {}; }
+
+  function paintProv(){
+    var auto = $("kycMode").value === "auto";
+    $("kycProvWrap").style.display = auto ? "" : "none";
+    $("kycCreds").style.display = auto ? "" : "none";
+    $("emSmtp").style.display = $("emProvider").value === "smtp" ? "" : "none";
+  }
+
+  function fill(){
+    var k = kyc(), e = eml(), m = sms(), p = pay(), a = api();
+    $("kycMode").value = k.mode || "manual";
+    $("kycProvider").value = k.provider || "sumsub";
+    $("kycToken").value = k.appToken || "";
+    $("kycSecret").value = k.secretKey || "";
+    $("kycWh").value = k.webhookSecret || "";
+    $("kycTest").checked = k.testMode !== false;
+    $("kycReqWd").checked = !!k.requireForWithdrawals;
+    $("emProvider").value = e.provider || "smtp";
+    $("emKey").value = e.apiKey || "";
+    $("emHost").value = e.smtpHost || "";
+    $("emPort").value = e.smtpPort || 587;
+    $("emUser").value = e.smtpUser || "";
+    $("emPass").value = e.smtpPass || "";
+    $("emFromName").value = e.fromName || "Trexora";
+    $("emFromEmail").value = e.fromEmail || "";
+    $("smsProvider").value = m.provider || "twilio";
+    $("smsSender").value = m.senderId || "Trexora";
+    $("smsKey").value = m.apiKey || "";
+    $("smsSecret").value = m.apiSecret || "";
+    $("payProvider").value = p.provider || "manual";
+    $("payMid").value = p.merchantId || "";
+    $("payKey").value = p.apiKey || "";
+    $("paySecret").value = p.secretKey || "";
+    $("apiEnabled").checked = !!a.enabled;
+    $("apiKey").value = a.key || "";
+    $("whTrade").value = a.whTrade || "";
+    $("whDeposit").value = a.whDeposit || "";
+    $("whKyc").value = a.whKyc || "";
+    $("whWithdraw").value = a.whWithdraw || "";
+    paintProv();
+  }
+  fill();
+
+  ["kycMode", "emProvider"].forEach(function(id){
+    $(id).addEventListener("change", paintProv);
+  });
+
+  $("apiGen").addEventListener("click", function(){
+    var chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789", key = "tx_live_";
+    for (var i = 0; i < 32; i++) key += chars.charAt(Math.floor(Math.random() * chars.length));
+    $("apiKey").value = key;
+    ADM.toast("New API key generated — save to keep it.");
+  });
+
+  $("emTest").addEventListener("click", function(){
+    ADM.toast("Demo: test email queued. Real delivery is handled by the production server.");
+  });
+  $("smsTest").addEventListener("click", function(){
+    ADM.toast("Demo: test SMS queued. Real delivery is handled by the production server.");
+  });
+
+  $("saveBtn").addEventListener("click", function(){
+    s.settings.kyc = {
+      mode: $("kycMode").value,
+      provider: $("kycProvider").value,
+      appToken: $("kycToken").value.trim(),
+      secretKey: $("kycSecret").value,
+      webhookSecret: $("kycWh").value,
+      testMode: $("kycTest").checked,
+      requireForWithdrawals: $("kycReqWd").checked
+    };
+    s.settings.email = {
+      provider: $("emProvider").value,
+      apiKey: $("emKey").value,
+      smtpHost: $("emHost").value.trim(),
+      smtpPort: Math.max(1, parseInt($("emPort").value, 10) || 587),
+      smtpUser: $("emUser").value.trim(),
+      smtpPass: $("emPass").value,
+      fromName: $("emFromName").value.trim() || "Trexora",
+      fromEmail: $("emFromEmail").value.trim()
+    };
+    s.settings.sms = {
+      provider: $("smsProvider").value,
+      senderId: $("smsSender").value.trim() || "Trexora",
+      apiKey: $("smsKey").value.trim(),
+      apiSecret: $("smsSecret").value
+    };
+    s.settings.payments = {
+      provider: $("payProvider").value,
+      merchantId: $("payMid").value.trim(),
+      apiKey: $("payKey").value,
+      secretKey: $("paySecret").value
+    };
+    s.settings.api = {
+      enabled: $("apiEnabled").checked,
+      key: $("apiKey").value.trim(),
+      whTrade: $("whTrade").value.trim(),
+      whDeposit: $("whDeposit").value.trim(),
+      whKyc: $("whKyc").value.trim(),
+      whWithdraw: $("whWithdraw").value.trim()
+    };
+    TX.save(s);
+    ADM.toast("Integrations saved — the terminal and production server read them immediately.");
+  });
+})();
+</script>
+</body>
+</html>

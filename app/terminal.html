@@ -426,6 +426,12 @@
 <div class="qx-modal-back" id="vBack" hidden></div>
 <div class="qx-modal" id="vModal" role="dialog" aria-modal="true" aria-label="Verification" hidden>
   <div class="sheet-head"><h3>Identity verification</h3><button class="icon-btn" id="vClose" type="button" aria-label="Close">✕</button></div>
+  <div id="vAuto" hidden style="background:rgba(37,99,235,.12);border:1px solid rgba(37,99,235,.35);border-radius:12px;padding:12px;margin-bottom:12px">
+    <div style="font-weight:800;font-size:.9rem;margin-bottom:4px">Automatic verification via <span id="vAutoName">Sumsub</span></div>
+    <div style="color:var(--muted);font-size:.8rem;margin-bottom:10px">Quick AI check — selfie + document scan, decision in minutes.</div>
+    <button class="btn btn-primary" id="vAutoBtn" type="button" style="width:100%">Verify automatically</button>
+    <div style="text-align:center;color:var(--muted);font-size:.75rem;margin:10px 0 2px">— or submit documents manually —</div>
+  </div>
   <div class="field"><label for="vDocType">Document type</label><select id="vDocType"><option>Passport</option><option>National ID</option><option>Driving licence</option></select></div>
   <div class="field"><label for="vDocNum">Document number</label><input id="vDocNum" placeholder="e.g. A1234567"></div>
   <div class="field"><label for="vName">Full name</label><input id="vName" placeholder="As on the document"></div>
@@ -489,7 +495,7 @@
 
 <div class="toast" id="toast"></div>
 
-<script src="../shared/store.js?v=20260929n"></script>
-<script src="app.js?v=20260929n"></script>
+<script src="../shared/store.js?v=20260929o"></script>
+<script src="app.js?v=20260929o"></script>
 </body>
 </html>
