@@ -895,6 +895,7 @@ table.data tr:last-child td{border-bottom:0}
   .qx-mobilebar{grid-template-columns:repeat(5,1fr);padding:8px 6px calc(10px + env(safe-area-inset-bottom));background:rgba(10,19,34,.92)}
   .qx-mobilebar button{font-size:0;gap:0;padding:8px 2px}
   .qx-mobilebar button .ico{font-size:1.55rem;position:relative;line-height:1}
+  .qx-mobilebar button .ico svg{width:26px;height:26px;display:block}
   .qx-mobilebar button.active{color:#2F80FF}
   .mb-badge{position:absolute;top:-7px;right:-9px;min-width:17px;height:17px;border-radius:99px;background:#2F80FF;color:#fff;font-size:.6rem;font-weight:800;display:grid;place-items:center;padding:0 4px;font-style:normal}
 
