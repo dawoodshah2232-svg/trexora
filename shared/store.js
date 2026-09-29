@@ -65,10 +65,32 @@
       { id: "r_3", userId: "u_1", userEmail: "aria@demo.mail", type: "deposit", amount: 250, method: "Mastercard", status: "approved", createdAt: now - 86400000 * 2, note: "seeded demo data" }
     ];
     return {
-      v: 2, seededAt: now, seq: 1000,
+      v: 3, seededAt: now, seq: 1000,
       users: users, assets: assets, trades: trades, requests: requests,
       settings: { defaultPayout: 80, minTrade: 1, maxTrade: 5000, earlyClose: true, signups: true, maintenance: false }
     };
+  }
+
+  function migrate(s) {
+    /* v2 -> v3: backfill asset fields (base/quote/kind/code/name/tv) that older
+       seeds lacked, so cached localStorage stores render correctly with new code.
+       Admin overrides (enabled/payout/min/max) are always preserved. */
+    var defs = defaultAssets(), changed = false;
+    (s.assets || []).forEach(function (a) {
+      var d = null;
+      defs.forEach(function (x) { if (x.id === a.id) d = x; });
+      if (d) ["name", "tv", "kind", "code", "base", "quote"].forEach(function (k) {
+        if (a[k] == null && d[k] != null) { a[k] = d[k]; changed = true; }
+      });
+    });
+    defs.forEach(function (d) {
+      var found = false;
+      (s.assets || []).forEach(function (a) { if (a.id === d.id) found = true; });
+      if (!found) { s.assets.push(d); changed = true; }
+    });
+    if (s.v !== 3) { s.v = 3; changed = true; }
+    if (changed) save(s);
+    return s;
   }
 
   function load() {
@@ -76,7 +98,7 @@
       var raw = localStorage.getItem(STORE_KEY);
       if (raw) {
         var s = JSON.parse(raw);
-        if (s && s.v === 2) return s;
+        if (s && (s.v === 2 || s.v === 3)) return migrate(s);
       }
     } catch (e) {}
     var s2 = seed();
@@ -125,8 +147,8 @@
     if (!cache.rates) return null;
     var b = cache.rates[(asset.base || "").toLowerCase()];
     var q = cache.rates[(asset.quote || "").toLowerCase()];
-    if (!b || !q || !q.value) return null;
-    return b.value / q.value;
+    if (!b || !q || !q.value || !b.value) return null;
+    return q.value / b.value; /* rates are per-1-BTC: USD-per-BTC / EUR-per-BTC = EUR/USD */
   }
 
   function feedAge() { return Date.now() - cache.ts; }
