@@ -59,7 +59,7 @@
     if (name === "tournaments") renderTours();
     if (name === "market") renderMarket();
     if (name === "analytics") renderAnalytics();
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    window.scrollTo(0, 0);
   }
   document.querySelectorAll("#rail button[data-view], #mobileBar button[data-view]").forEach(function (b) {
     b.addEventListener("click", function () { showView(b.getAttribute("data-view")); });
