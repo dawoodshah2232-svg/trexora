@@ -1787,7 +1787,7 @@
     });
   });
   /* mobile bottom bar: help + more have no view of their own */
-  var mbH = $("mbHelp"); if (mbH) mbH.addEventListener("click", openSupport);
+  var mhH = $("moreHelp"); if (mhH) mhH.addEventListener("click", function () { $("moreBack").hidden = true; $("moreDrawer").hidden = true; openSupport(); });
   var mbM = $("mbMore"); if (mbM) mbM.addEventListener("click", openMore);
   var mOut = $("mLogout"); if (mOut) mOut.addEventListener("click", function () { TX.setClientSession(null); window.location.replace("login.html"); });
   var iApp = $("installApp"); if (iApp) iApp.addEventListener("click", function () { toast("The demo app is not published yet — the web terminal works everywhere."); });
