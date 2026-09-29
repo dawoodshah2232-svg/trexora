@@ -117,6 +117,28 @@
     }
     return TX.priceOf(a);
   }
+  /* Wait for a real price instead of failing on the first empty poll.
+   * Kills the "badge says LIVE but trade says price unavailable" race:
+   * right after asset select / reconnect the feed may need a beat. */
+  function waitForPrice(a, ms) {
+    return new Promise(function (resolve) {
+      var t0 = Date.now();
+      (function poll() {
+        var p = pxOf(a);
+        if (p != null) return resolve(p);
+        if (Date.now() - t0 >= (ms || 9000)) return resolve(null);
+        setTimeout(poll, 200);
+      })();
+    });
+  }
+  /* Keep Up/Down honest: disabled until the selected asset has a live price. */
+  function refreshTradeButtons() {
+    var a = getAsset(state.assetId);
+    var has = !!(a && pxOf(a) != null);
+    var up = $("btnUp"), dn = $("btnDown");
+    if (up) up.disabled = !has;
+    if (dn) dn.disabled = !has;
+  }
   function enabledAssets() { return store.assets.filter(function (a) { return a.enabled; }); }
   function getAsset(id) {
     for (var i = 0; i < store.assets.length; i++) if (store.assets[i].id === id) return store.assets[i];
@@ -233,6 +255,7 @@
     loadChart();
     drawMini();
     renderTradeBar();
+    refreshTradeButtons();
   }
 
   /* ---------- live chart: bundled Lightweight Charts v5 + Deriv feed ----------
@@ -273,6 +296,7 @@
   var chartCS = null; /* current admin chart settings */
   var chartTF = 60, chartTFInit = false; /* seconds: 60=M1 300=M5 900=M15 */
   var lwChart = null, lwSeries = null, chartAssetId = null, chartGran = 0, chartKind = "";
+  var chartHasData = false; /* true once at least one candle/tick painted for current asset+tf */
   var TFS = [{ g: 60, l: "M1" }, { g: 300, l: "M5" }, { g: 900, l: "M15" }];
 
   function seriesKind(cs) {
@@ -366,6 +390,7 @@
       }
       if (full) { lwSeries.setData(data); }
       else if (data.length) { lwSeries.update(data[data.length - 1]); }
+      if (data.length) { chartHasData = true; renderChartState({ state: "LIVE" }); }
     } catch (e) {}
   }
   function loadChart() {
@@ -384,6 +409,7 @@
     ensurePriceWatch(a.id);
     var prevId = chartAssetId, prevGran = chartGran;
     if (!ensureChart()) return;
+    if (prevId !== a.id || prevGran !== chartTF) chartHasData = false;
     if (prevId && (prevId !== a.id || prevGran !== chartTF)) DerivFeed.unwatch(prevId, prevGran);
     // seed instantly from cache, then live
     var cached = DerivFeed.candlesOf(a.id, chartTF);
@@ -417,6 +443,26 @@
   }
   var BADGE_TXT = { LOADING: "Connecting…", LIVE: "LIVE", STALE: "STALE", RECONNECTING: "RECONNECTING", CLOSED: "CLOSED", OFFLINE: "OFFLINE" };
   var BADGE_CLS = { LOADING: "b-load", LIVE: "b-live", STALE: "b-stale", RECONNECTING: "b-re", CLOSED: "b-closed", OFFLINE: "b-off" };
+  /* honest chart overlay: shown only while the canvas has no data yet */
+  var CHART_STATE_TXT = {
+    LOADING: ["◌", "Connecting to live feed…", "Fetching real-time prices from Deriv.", false],
+    RECONNECTING: ["↻", "Reconnecting…", "The live feed was interrupted. Retrying automatically.", false],
+    STALE: ["◌", "Waiting for live data…", "No fresh ticks yet. The chart appears as soon as data arrives.", false],
+    CLOSED: ["🌙", "Market closed", "This market is currently closed. The chart resumes at market open.", false],
+    OFFLINE: ["📡", "You're offline", "Check your connection — the live chart resumes automatically.", true]
+  };
+  function renderChartState(st) {
+    var ov = $("chartState");
+    if (!ov) return;
+    var state = (st && st.state) || "LOADING";
+    if (chartHasData || state === "LIVE") { ov.hidden = true; return; }
+    var t = CHART_STATE_TXT[state] || CHART_STATE_TXT.LOADING;
+    $("chartStateIco").textContent = t[0];
+    $("chartStateTitle").textContent = t[1];
+    $("chartStateSub").textContent = t[2];
+    $("chartStateRetry").hidden = !t[3];
+    ov.hidden = false;
+  }
   function renderFeedBadge(assetId, gran, st) {
     var b = $("feedBadge");
     if (!b) return;
@@ -430,12 +476,14 @@
     b.className = "feed-badge " + (BADGE_CLS[st.state] || "b-load");
     b.innerHTML = '<i></i><span>' + TX.esc(BADGE_TXT[st.state] || st.state) + extra + '</span><em>' + TX.esc(st.source || "Deriv") + "</em>";
     b.title = "Price source: " + (st.source || "Deriv") + (st.updatedAt ? " · last update " + new Date(st.updatedAt).toLocaleTimeString("en-GB") : "");
+    renderChartState(st);
   }
   setInterval(function () {
     if (state.assetId && window.DerivFeed) renderFeedBadge(state.assetId, chartTF, DerivFeed.stateOf(state.assetId, chartTF));
   }, 2000);
   $("chartRetry").addEventListener("click", loadChart);
   $("chartReload").addEventListener("click", loadChart);
+  var csr = $("chartStateRetry"); if (csr) csr.addEventListener("click", loadChart);
 
 
   /* ---------- live prices ---------- */
@@ -455,6 +503,7 @@
     });
   }
   setInterval(refreshPrices, 60000);
+  setInterval(refreshTradeButtons, 1000);
 
   /* ---------- mini live chart in ticket (real quote trail only) ---------- */
   var pxHist = {};
@@ -633,22 +682,25 @@
     var openN = store.trades.filter(function (t) { return t.userId === user.id && t.status === "open"; }).length;
     if (openN >= maxOpen) { toast("Position limit reached (" + maxOpen + " open). Close one first."); return; }
     toast("Locking live price…");
-    TX.refreshPrices(true).then(function (ok) {
-      var entry = pxOf(a);
-      if (!ok || entry == null) { toast("Live price unavailable — try again."); return; }
-      user.balance = Math.round((user.balance - amt) * 100) / 100;
-      var now = Date.now();
-      var secs = EXP[state.expIdx];
-      store.trades.push({
-        id: TX.uid("t"), userId: user.id, userEmail: user.email,
-        assetId: a.id, assetName: a.name, dir: dir,
-        amount: amt, payout: a.payout, entryPrice: entry,
-        openedAt: now, expiresAt: now + secs * 1000,
-        status: "open", retries: 0
+    var waitNote = setTimeout(function () { toast("Waiting for the live price…"); }, 1500);
+    TX.refreshPrices(true).then(function () {
+      waitForPrice(a, 9000).then(function (entry) {
+        clearTimeout(waitNote);
+        if (entry == null) { toast("Live price unavailable — try again."); return; }
+        user.balance = Math.round((user.balance - amt) * 100) / 100;
+        var now = Date.now();
+        var secs = EXP[state.expIdx];
+        store.trades.push({
+          id: TX.uid("t"), userId: user.id, userEmail: user.email,
+          assetId: a.id, assetName: a.name, dir: dir,
+          amount: amt, payout: a.payout, entryPrice: entry,
+          openedAt: now, expiresAt: now + secs * 1000,
+          status: "open", retries: 0
+        });
+        store.seq++; TX.save(store);
+        renderBalance(); renderPositions(); renderTradeBar(); renderSentiment();
+        toast("Position opened: " + a.name + " " + dir.toUpperCase() + " " + TX.fmt(amt));
       });
-      store.seq++; TX.save(store);
-      renderBalance(); renderPositions(); renderTradeBar(); renderSentiment();
-      toast("Position opened: " + a.name + " " + dir.toUpperCase() + " " + TX.fmt(amt));
     });
   }
   $("btnUp").addEventListener("click", function () { placeTrade("up"); });
@@ -793,10 +845,10 @@
     var t = null;
     for (var i = 0; i < store.trades.length; i++) if (store.trades[i].id === id) t = store.trades[i];
     if (!t || t.status !== "open") return;
-    TX.refreshPrices(true).then(function (ok) {
+    toast("Fetching live price…");
+    waitForPrice(getAsset(t.assetId), 8000).then(function (cur) {
       var a = getAsset(t.assetId);
-      var cur = a ? pxOf(a) : null;
-      if (!ok || cur == null) { toast("Live price unavailable — try again."); return; }
+      if (cur == null || !a) { toast("Live price unavailable — try again."); return; }
       var total = t.expiresAt - t.openedAt, elapsed = Math.min(Math.max(Date.now() - t.openedAt, 0), total);
       var frac = total > 0 ? elapsed / total : 1;
       var winning = t.dir === "up" ? cur > t.entryPrice : cur < t.entryPrice;

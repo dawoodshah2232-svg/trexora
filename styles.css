@@ -97,7 +97,7 @@ h3{font-size:1.1rem;font-weight:650}
 
 /* Hero — layered: photo, scrim, candle canvas, content, trust strip */
 .hero{padding:96px 0 110px;position:relative;z-index:1;overflow:hidden;min-height:calc(100svh - 64px);display:flex;align-items:center}
-.page-curtain{position:relative;z-index:2;background:var(--bg);border-radius:26px 26px 0 0;margin-top:-26px;box-shadow:0 -24px 70px rgba(0,0,0,.45)}
+.page-curtain{position:relative;z-index:2;background:var(--bg);border-radius:26px 26px 0 0;margin-top:-26px;box-shadow:0 -24px 70px rgba(0,0,0,.45);padding-top:26px}
 .hero-inner{will-change:transform,opacity}
 .hero-photo{position:absolute;inset:0;z-index:0;background:url('assets/hero-skyline.jpg') center 70%/cover no-repeat;opacity:.55;pointer-events:none}
 .hero-scrim{position:absolute;inset:0;z-index:1;background:linear-gradient(180deg,rgba(10,19,34,.72) 0%,rgba(10,19,34,.55) 45%,rgba(10,19,34,.92) 100%);pointer-events:none}
@@ -106,7 +106,7 @@ h3{font-size:1.1rem;font-weight:650}
 .hero::before{content:"";position:absolute;inset:0;background:radial-gradient(700px 340px at 75% 10%,rgba(47,128,255,.22),transparent 65%);pointer-events:none;z-index:2}
 .hero-bg{position:absolute;inset:0;width:100%;height:100%;opacity:.14;pointer-events:none;z-index:2}
 .hero-inner{position:relative;z-index:3;width:min(1120px,92%);margin:0 auto;display:grid;gap:44px}
-.hero-trust{position:absolute;left:0;right:0;bottom:0;z-index:3;display:flex;justify-content:center;gap:10px;flex-wrap:wrap;padding:16px 4%;background:rgba(7,13,26,.55);border-top:1px solid var(--line-soft);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);font-size:.85rem;color:var(--muted)}
+.hero-trust{position:absolute;left:0;right:0;bottom:26px;z-index:3;display:flex;justify-content:center;gap:10px;flex-wrap:wrap;padding:16px 4%;background:rgba(7,13,26,.55);border-top:1px solid var(--line-soft);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);font-size:.85rem;color:var(--muted)}
 [data-theme="light"] .hero-trust{background:rgba(255,255,255,.6)}
 .hero-trust strong{color:var(--text)}
 .hero-trust span{display:flex;align-items:center;gap:7px}
@@ -174,12 +174,16 @@ h3{font-size:1.1rem;font-weight:650}
 .check-list li{position:relative;padding-left:30px;color:var(--muted);font-size:.97rem}
 .check-list li::before{content:"✓";position:absolute;left:0;top:0;width:20px;height:20px;border-radius:50%;background:var(--brand-soft);color:var(--brand);font-weight:800;font-size:.78rem;display:grid;place-items:center}
 
-/* Phone mock */
-.phone-mock{width:min(300px,80%);margin:0 auto;background:#0D080A;border-radius:38px;padding:12px;border:1px solid var(--line);box-shadow:var(--shadow)}
-.phone-notch{width:110px;height:24px;background:#0D080A;border-radius:0 0 14px 14px;margin:-12px auto 8px}
-.phone-screen{background:var(--card);border-radius:28px;padding:16px;display:grid;gap:10px}
-.phone-asset{display:flex;justify-content:space-between;align-items:center;font-weight:750}
-.phone-asset em{font-style:normal;color:var(--gold);font-size:.85rem}
+/* Trade ticket card (interface preview) */
+.ticket-card{position:relative;width:min(340px,88%);margin:8px auto 0;background:linear-gradient(165deg,rgba(26,38,66,.96),rgba(12,19,36,.98));border:1px solid rgba(120,160,255,.2);border-radius:26px;padding:22px 20px;display:grid;gap:12px;box-shadow:0 34px 80px rgba(0,0,0,.5),0 0 44px rgba(47,128,255,.1);animation:floaty 7s ease-in-out infinite}
+.tk-head{display:flex;justify-content:space-between;align-items:center}
+.tk-pair{font-size:1.15rem;font-weight:800;letter-spacing:.02em}
+.tk-pay{color:var(--gold);font-weight:800;font-size:1.05rem;font-variant-numeric:tabular-nums}
+.tk-chart{width:100%;height:auto;display:block;background:rgba(6,10,20,.55);border:1px solid rgba(255,255,255,.06);border-radius:16px}
+.tk-row{display:flex;justify-content:space-between;align-items:center;color:var(--muted);font-size:.92rem}
+.tk-row strong{color:var(--text);font-size:1.02rem;font-variant-numeric:tabular-nums}
+.tk-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (prefers-reduced-motion:reduce){.ticket-card{animation:none}}
 .phone-row{display:flex;justify-content:space-between;font-size:.88rem;color:var(--muted)}
 .phone-row strong{color:var(--text)}
 .phone-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
@@ -277,10 +281,29 @@ h3{font-size:1.1rem;font-weight:650}
 
 /* ---- Richness pass: ticker, stats, pay badges, demo chart, app, faq, cta ---- */
 
-/* Live ticker tape */
-.ticker-tape{border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:#0A1322;overflow:hidden}
-.ticker-tape .tradingview-widget-container{height:46px;background:#0A1322}
-.ticker-tape iframe{height:46px;background:#0A1322}
+/* Live ticker tape (native Deriv feed) */
+.ticker-tape{border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:#0A1322;overflow:hidden;display:flex;align-items:stretch;min-height:52px}
+.ticker-live{display:flex;align-items:center;gap:7px;padding:0 14px;font-size:.72rem;font-weight:800;letter-spacing:.1em;flex:none;border-right:1px solid var(--line)}
+.ticker-live.is-live{color:#7ee2a0;background:rgba(34,197,94,.07)}
+.ticker-live.is-re{color:#F5A623;background:rgba(245,166,35,.07)}
+.ticker-live.is-off{color:#F23645;background:rgba(242,54,69,.07)}
+.live-dot{width:8px;height:8px;border-radius:50%;background:currentColor;box-shadow:0 0 8px currentColor;animation:blink 1.6s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.35}}
+.ticker-view{flex:1;overflow:hidden;position:relative;min-width:0}
+.ticker-track{display:inline-flex;align-items:stretch;height:52px;white-space:nowrap;animation:tickmove 40s linear infinite;will-change:transform}
+.ticker-view:hover .ticker-track{animation-play-state:paused}
+@keyframes tickmove{to{transform:translateX(-50%)}}
+.tk-item{display:inline-flex;align-items:center;gap:9px;padding:0 22px;border-right:1px solid rgba(255,255,255,.06);font-size:.85rem}
+.tk-ico{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-size:.66rem;font-weight:800;flex:none}
+.tk-name{color:var(--muted);font-weight:600}
+.tk-px{font-weight:700;font-variant-numeric:tabular-nums;color:var(--text)}
+.tk-chg{font-weight:700;font-variant-numeric:tabular-nums;min-width:56px;text-align:right}
+.tk-up .tk-chg{color:#22C55E}
+.tk-dn .tk-chg{color:#F23645}
+.ticker-loading{display:inline-flex;align-items:center;height:52px;padding:0 22px;color:var(--muted);font-size:.85rem}
+.ticker-err{display:flex;align-items:center;gap:10px;height:52px;padding:0 22px;color:var(--muted);font-size:.85rem}
+.ticker-err button{border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:10px;padding:7px 14px;font-family:var(--font);font-weight:700;cursor:pointer}
+@media (prefers-reduced-motion:reduce){.ticker-track{animation:none}.live-dot{animation:none}}
 
 /* Stats band */
 .stats-band{padding:44px 0;border-bottom:1px solid var(--line-soft)}
@@ -580,23 +603,50 @@ body[class*="page-"] .blog-card:hover{transform:translateY(-6px);box-shadow:0 20
 .stat-card>span:last-child{font-size:.95rem;color:var(--muted);font-weight:550}
 @media(max-width:760px){.stats-grid{grid-template-columns:repeat(2,1fr);gap:10px}.stat-card{padding:20px 10px}}
 
-/* Markets — auto-rotating tabs */
+/* Markets — segmented tabs + live chart card */
 .markets{background:var(--bg-soft);border-top:1px solid var(--line-soft);border-bottom:1px solid var(--line-soft)}
-.mkt-tabs{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin:30px 0 40px;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:6px;width:fit-content;max-width:100%;margin-left:auto;margin-right:auto}
-.mkt-tab{border:0;background:none;color:var(--muted);font-family:var(--font);font-size:.92rem;font-weight:650;padding:10px 22px;border-radius:999px;cursor:pointer;transition:.25s;position:relative;overflow:hidden}
+.mkt-tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;margin:30px auto 34px;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:5px;width:min(620px,100%)}
+.mkt-tab{border:0;background:none;color:var(--muted);font-family:var(--font);font-size:.9rem;font-weight:700;padding:12px 4px;border-radius:13px;cursor:pointer;transition:.25s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 .mkt-tab:hover{color:var(--text)}
 .mkt-tab.active{background:linear-gradient(135deg,var(--brand),var(--brand-deep));color:#fff;box-shadow:0 6px 18px rgba(47,128,255,.4)}
-.mkt-stage{display:grid;gap:44px;align-items:center}
-/* Markets device (photorealistic smartphone) */
-.mkt-device{width:min(280px,76%);margin:0 auto;display:block;animation:floaty 8s ease-in-out 1.2s infinite;filter:drop-shadow(0 26px 52px rgba(0,0,0,.5))}
-.mkt-info h3{font-size:1.5rem;margin-bottom:10px}
-.mkt-info p{color:var(--muted);margin-bottom:22px;max-width:420px}
-.mkt-pills{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:28px}
-.mkt-pill{display:inline-flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:9px 14px;font-size:.88rem;font-weight:650;animation:rise .45s both}
-.mkt-pill b{color:var(--brand);font-variant-numeric:tabular-nums}
-@keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
-@media (prefers-reduced-motion:reduce){.mkt-pill{animation:none}}
-@media(min-width:768px){.mkt-stage{grid-template-columns:.9fr 1.1fr}}
+.mkt-stage{display:block}
+.mkt-live{background:linear-gradient(180deg,rgba(20,30,52,.92),rgba(10,16,30,.94));border:1px solid var(--line);border-radius:24px;padding:22px;box-shadow:0 30px 70px rgba(0,0,0,.45);position:relative;overflow:hidden;max-width:860px;margin:0 auto}
+.mkt-live-top{display:flex;justify-content:space-between;align-items:flex-start;gap:14px}
+.mkt-live-top h3{font-size:1.35rem;margin:0 0 4px}
+.mkt-live-top p{color:var(--muted);margin:0;max-width:46ch;font-size:.9rem}
+.mkt-live-px{text-align:right;flex:none}
+.mkt-live-px b{display:block;font-size:1.45rem;font-variant-numeric:tabular-nums;line-height:1.15}
+.mkt-live-px span{font-size:.85rem;font-weight:700;font-variant-numeric:tabular-nums}
+.mkt-live-px span.pos{color:#22C55E}
+.mkt-live-px span.neg{color:#F23645}
+.mkt-live-chart{position:relative;height:240px;margin:16px 0 4px;border-radius:16px;overflow:hidden;background:rgba(5,9,18,.6);border:1px solid rgba(255,255,255,.05)}
+.mkt-live-chart #mktChart{position:absolute;inset:0}
+.mkt-chart-state{position:absolute;inset:0;display:flex;flex-direction:column;gap:10px;align-items:center;justify-content:center;color:var(--muted);font-size:.9rem;text-align:center;padding:20px}
+.mkt-chart-state[hidden]{display:none}
+.mkt-chart-state .cs-ico{font-size:1.6rem;animation:blink 1.6s infinite}
+.mkt-pills{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 18px}
+.mkt-pill{border:1px solid var(--line);background:var(--card);color:var(--text);font-family:var(--font);font-size:.85rem;font-weight:700;border-radius:12px;padding:9px 16px;cursor:pointer;transition:.2s}
+.mkt-pill:hover{border-color:var(--brand)}
+.mkt-pill.on{background:linear-gradient(135deg,var(--brand),var(--brand-deep));border-color:transparent;color:#fff;box-shadow:0 4px 14px rgba(47,128,255,.35)}
+.mkt-pill-static{color:var(--muted);font-size:.88rem;padding:9px 4px}
+.mkt-live-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.mkt-pay{color:var(--gold);font-weight:800;font-size:1rem}
+@media(max-width:520px){
+  .mkt-live{padding:16px}
+  .mkt-live-top h3{font-size:1.15rem}
+  .mkt-live-px b{font-size:1.2rem}
+  .mkt-live-chart{height:200px}
+  .mkt-tab{font-size:.8rem;padding:11px 2px}
+}
+
+/* WhatsApp float */.wa-float{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom));z-index:200;width:56px;height:56px;border-radius:50%;background:#25D366;display:grid;place-items:center;box-shadow:0 12px 30px rgba(37,211,102,.4);transition:transform .2s}
+.wa-float:hover{transform:scale(1.07)}
+.wa-float svg{width:30px;height:30px;fill:#fff}
+
+/* Pitch chart honest state */
+.demo-chart{position:relative}
+.pitch-state{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;color:var(--muted);font-size:.88rem;line-height:1.6;padding:20px;background:rgba(6,10,20,.45)}
+.pitch-state[hidden]{display:none}
 
 /* Steps — sticky stacked deck */
 .deck{display:grid;gap:26px;margin-top:44px}

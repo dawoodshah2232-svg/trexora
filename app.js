@@ -114,7 +114,7 @@
     lp.setAttribute('stroke-width','1.4'); lp.setAttribute('opacity','.8');
     svg.appendChild(lp);
   }
-  drawCandles(document.getElementById('phoneChart'), 777, 300, 150, 22);
+  drawCandles(document.getElementById('ticketChart'), 777, 300, 150, 22);
   drawCandles(document.getElementById('appChart'), 4242, 300, 150, 22);
 
   /* Hero curtain parallax — the page slides up and "eats" the hero on scroll */
@@ -213,25 +213,7 @@
     requestAnimationFrame(frame);
   })();
 
-  /* Live TradingView chart in the pitch demo frame */
-  try{
-    var pitchEl = document.getElementById('pitchChart');
-    if(pitchEl && typeof TradingView !== 'undefined'){
-      new TradingView.widget({
-        autosize: true,
-        symbol: 'FOREXCOM:EURUSD',
-        interval: '5',
-        timezone: 'Asia/Dubai',
-        theme: 'dark',
-        style: '1',
-        locale: 'en',
-        enable_publishing: false,
-        allow_symbol_change: true,
-        hide_volume: true,
-        container_id: 'pitchChart'
-      });
-    }
-  }catch(e){/* demo frame stays as a styled placeholder */}
+  /* Pitch demo frame chart is rendered by home-live.js (bundled Lightweight Charts + Deriv feed) */
 
   /* ============ Trexora 2.0 ============ */
   var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -294,43 +276,7 @@
     } else { nums.forEach(run); }
   })();
 
-  /* Markets tabs — auto-rotate ~5s, click to jump */
-  (function markets(){
-    var MKTS = {
-      forex:  {name:'Forex',  desc:'Majors and minors with tight fixed payouts — the most traded market in the world, on your screen in one tap.', pair:'EUR/USD', pay:'82%', seed:11, pills:[['EUR/USD','82%'],['GBP/USD','80%'],['USD/JPY','79%'],['AUD/USD','78%']]},
-      crypto: {name:'Crypto', desc:'Bitcoin, Ethereum and more — trade crypto 24/7: nights, weekends and holidays.', pair:'BTC/USD', pay:'85%', seed:22, pills:[['BTC/USD','85%'],['ETH/USD','84%'],['SOL/USD','83%'],['XRP/USD','82%']]},
-      metals: {name:'Metals', desc:'Gold and silver — classic safe-haven instruments with fixed payouts on every trade.', pair:'XAU/USD', pay:'78%', seed:33, pills:[['XAU/USD','78%'],['XAG/USD','76%']]},
-      indices:{name:'Indices',desc:'US30, NAS100 and S&P 500 — trade the whole market in a single position.', pair:'US30', pay:'81%', seed:44, pills:[['US30','81%'],['NAS100','80%'],['SPX500','79%']]}
-    };
-    var tabs = document.querySelectorAll('.mkt-tab');
-    if(!tabs.length) return;
-    var order = ['forex','crypto','metals','indices'], idx = 0, timer = null;
-    function show(key){
-      var m = MKTS[key]; if(!m) return;
-      tabs.forEach(function(t){
-        var on = t.getAttribute('data-mkt') === key;
-        t.classList.toggle('active', on);
-        t.setAttribute('aria-selected', on ? 'true' : 'false');
-      });
-      document.getElementById('mktName').textContent = m.name;
-      document.getElementById('mktDesc').textContent = m.desc;
-      var pairEl = document.getElementById('mktPair');
-      var payEl = document.getElementById('mktPay');
-      if(pairEl) pairEl.textContent = m.pair;
-      if(payEl) payEl.textContent = m.pay;
-      document.getElementById('mktPills').innerHTML = m.pills.map(function(p,i){
-        return '<span class="mkt-pill" style="animation-delay:' + (i*0.06).toFixed(2) + 's"><b>' + p[1] + '</b>' + p[0] + '</span>';
-      }).join('');
-      var svg = document.getElementById('mktChart');
-      if(svg){ svg.innerHTML = ''; drawCandles(svg, m.seed, 300, 150, 22); }
-      idx = order.indexOf(key);
-    }
-    function auto(){ timer = setInterval(function(){ show(order[(idx+1) % order.length]); }, 5000); }
-    tabs.forEach(function(t){
-      t.addEventListener('click', function(){ clearInterval(timer); show(t.getAttribute('data-mkt')); auto(); });
-    });
-    show('forex'); auto();
-  })();
+  /* Markets tabs + live charts are rendered by home-live.js (Deriv feed) */
 
   /* Hero device — subtle mouse parallax (fine pointers only) */
   (function heroParallaxPhone(){

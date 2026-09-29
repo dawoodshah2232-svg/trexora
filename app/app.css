@@ -101,6 +101,11 @@
 #tv_chart{height:100%;width:100%}
 .chart-reload{position:absolute;right:10px;bottom:34px;z-index:6;width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:rgba(0,0,0,.5);color:#fff;font-size:1rem;cursor:pointer;backdrop-filter:blur(6px);display:grid;place-items:center}
 .chart-fallback{position:absolute;inset:0;display:grid;place-items:center;background:var(--card);color:var(--muted);font-size:.9rem;text-align:center;padding:20px;z-index:7}
+.chart-state{position:absolute;inset:0;z-index:4;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:rgba(9,13,24,.8);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);text-align:center;padding:24px}
+.chart-state[hidden]{display:none}
+.cs-ico{font-size:2rem;line-height:1}
+.cs-t{font-weight:800;font-size:1.02rem;color:var(--text)}
+.cs-s{color:var(--muted);font-size:.85rem;max-width:270px;line-height:1.5}
 .chart-loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:10px;color:var(--muted);font-size:.9rem}
 .chart-loading .spin{width:18px;height:18px;border-radius:50%;border:2px solid var(--line);border-top-color:var(--brand);animation:txspin .8s linear infinite}
 @keyframes txspin{to{transform:rotate(360deg)}}
@@ -343,6 +348,7 @@ table.data tr:last-child td{border-bottom:0}
 .qp-up{background:linear-gradient(180deg,#2dd36f,#1faa53)}
 .qp-down{background:linear-gradient(180deg,#f0564a,#d63a2f)}
 .qp-up:active,.qp-down:active{transform:scale(.96)}
+.qp-up:disabled,.qp-down:disabled{opacity:.45;cursor:wait;filter:saturate(.5)}
 .qp-trades{flex:1;min-height:120px;display:flex;flex-direction:column;border-top:1px solid var(--line);padding-top:10px}
 .qp-tabs{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
 .qp-tabs button{background:none;border:0;color:var(--text);font-family:var(--font);font-weight:750;font-size:.85rem;cursor:pointer;padding:6px 2px}
@@ -422,7 +428,8 @@ table.data tr:last-child td{border-bottom:0}
 
 /* Welcome modal + onboarding tour */
 .qx-welc-back{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:400}
-.qx-welc{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(430px,92vw);background:#232733;color:#fff;border-radius:20px;padding:34px 30px 26px;z-index:401;text-align:center;box-shadow:0 30px 80px rgba(0,0,0,.5);animation:rise .35s both}
+@keyframes welcRise{from{opacity:0;transform:translate(-50%,calc(-50% + 14px))}to{opacity:1;transform:translate(-50%,-50%)}}
+.qx-welc{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(430px,92vw);background:#232733;color:#fff;border-radius:20px;padding:34px 30px 26px;z-index:401;text-align:center;box-shadow:0 30px 80px rgba(0,0,0,.5);animation:welcRise .35s both}
 .qx-welc-x{position:absolute;top:12px;right:14px;background:none;border:0;color:#9aa;font-size:1.1rem;cursor:pointer}
 .qx-welc-ico{font-size:2.6rem;margin-bottom:10px}
 .qx-welc h3{font-size:1.45rem;margin-bottom:12px}
@@ -860,7 +867,7 @@ table.data tr:last-child td{border-bottom:0}
 
   /* ---- trade ticket: navy bottom card, asset row, steppers, payout, Up/Down ---- */
   .qx-shell:has(#view-trade.active) .qx-panel{background:rgba(10,19,34,.96)}
-  .qx-panel{display:flex;flex-wrap:wrap;gap:8px;padding:12px;left:8px;right:8px}
+  .qx-panel{display:flex;flex-direction:row;flex-wrap:wrap;gap:8px;padding:12px;left:8px;right:8px;min-width:0}
   .qp-asset{flex:1 1 100%;align-items:center}
   .qp-flag{width:34px;height:34px}
   .qp-names b{font-size:.95rem}
@@ -875,10 +882,10 @@ table.data tr:last-child td{border-bottom:0}
   .qp-link{font-size:.62rem;margin:5px auto 0}
   .qp-payout{flex:1 1 100%;border:0;border-bottom:1px dotted var(--line);border-radius:0;background:none;padding:8px 2px;font-size:.88rem}
   .qp-payout b{color:var(--text);font-size:1rem}
-  .qp-btns{flex:1 1 100%;gap:10px}
-  .qp-up,.qp-down{border-radius:12px;padding:14px 8px;font-size:1rem;flex-direction:row;justify-content:center;gap:8px}
-  .qp-up small,.qp-down small{font-size:.72rem}
-  .qp-trades{flex:1 1 100%;max-height:150px;overflow-y:auto}
+  .qp-btns{flex:1 1 100%;gap:10px;min-width:0}
+  .qp-up,.qp-down{border-radius:12px;padding:14px 8px;font-size:1rem;flex-direction:row;justify-content:center;gap:8px;min-width:0;overflow:hidden}
+  .qp-up small,.qp-down small{font-size:.72rem;white-space:nowrap}
+  .qp-trades{flex:1 1 100%;min-width:0;max-height:150px;overflow-y:auto}
   .qp-tabs button{font-size:.8rem}
 
   /* ---- bottom nav: 5 icons, blue active, badges ---- */

@@ -7,8 +7,8 @@
 <meta name="description" content="Trexora demo trading terminal with live charts.">
 <meta name="robots" content="noindex">
 <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
-<link rel="stylesheet" href="../styles.css?v=20260929q">
-<link rel="stylesheet" href="app.css?v=20260929u">
+<link rel="stylesheet" href="../styles.css?v=20260929t8">
+<link rel="stylesheet" href="app.css?v=20260929v">
 <script>try{var t=localStorage.getItem('trexora-theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}</script>
 </head>
 <body class="qx">
@@ -108,6 +108,12 @@
         </div>
         <div class="chart-wrap qx-chart" id="chartBox">
           <div id="tv_chart"></div>
+          <div class="chart-state" id="chartState" hidden>
+            <div class="cs-ico" id="chartStateIco">◌</div>
+            <div class="cs-t" id="chartStateTitle">Connecting…</div>
+            <div class="cs-s" id="chartStateSub">Fetching the live chart.</div>
+            <button class="btn btn-primary btn-sm" id="chartStateRetry" type="button" hidden>Retry</button>
+          </div>
           <div class="chart-toolbar">
             <div class="feed-badge b-load" id="feedBadge"><i></i><span>Connecting…</span><em>Deriv</em></div>
             <div class="chart-src-label" id="chartSrcLabel" hidden></div>
@@ -534,6 +540,6 @@
 <script src="../shared/store.js?v=20260929u"></script>
 <script src="vendor/lightweight-charts.standalone.production.js?v=20260929t"></script>
 <script src="feed-deriv.js?v=20260929r"></script>
-<script src="app.js?v=20260929u"></script>
+<script src="app.js?v=20260929v"></script>
 </body>
 </html>
