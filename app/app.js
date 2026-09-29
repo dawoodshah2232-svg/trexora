@@ -54,6 +54,18 @@
   }
 
   /* ---------- assets ---------- */
+  var CUR_SYM = { EUR: "€", USD: "$", GBP: "£", JPY: "¥", AUD: "A$", CHF: "Fr", XAU: "Au", XAG: "Ag", BTC: "₿", ETH: "Ξ" };
+  var CUR_NAME = { EUR: "Euro", USD: "U.S. Dollar", GBP: "British Pound", JPY: "Japanese Yen", AUD: "Australian Dollar", CHF: "Swiss Franc", XAU: "Gold", XAG: "Silver", BTC: "Bitcoin", ETH: "Ethereum" };
+  function assetCat(a) { return a.id === "xauusd" ? "Metals" : (a.kind === "fiat" ? "Forex" : "Crypto"); }
+  function assetIcon(a) { return CUR_SYM[a.base] || String(a.base || "?").slice(0, 2); }
+  function assetSub(a) {
+    if (a.id === "xauusd") return "Gold · Spot";
+    return (CUR_NAME[a.base] || a.base) + " / " + (CUR_NAME[a.quote] || a.quote);
+  }
+  function fmtPrice(a, p) {
+    if (p == null) return "—";
+    return a.kind === "fiat" ? p.toFixed(5) : TX.fmt(p);
+  }
   function enabledAssets() {
     return store.assets.filter(function (a) { return a.enabled; });
   }
@@ -61,32 +73,76 @@
     for (var i = 0; i < store.assets.length; i++) if (store.assets[i].id === id) return store.assets[i];
     return null;
   }
-  function renderAssetChips(filter) {
-    var box = $("assetChips"); box.innerHTML = "";
-    var list = enabledAssets().filter(function (a) {
-      return !filter || a.name.toLowerCase().indexOf(filter.toLowerCase()) !== -1;
+
+  /* ----- asset bottom sheet ----- */
+  var sheet = { tab: "All", q: "" };
+  function sheetCats() {
+    var cats = ["All"], seen = {};
+    enabledAssets().forEach(function (a) { var c = assetCat(a); if (!seen[c]) { seen[c] = 1; cats.push(c); } });
+    return cats;
+  }
+  function renderSheetTabs() {
+    var box = $("assetSheetTabs"); box.innerHTML = "";
+    sheetCats().forEach(function (c) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "sheet-tab" + (c === sheet.tab ? " active" : "");
+      b.textContent = c;
+      b.addEventListener("click", function () { sheet.tab = c; renderSheetTabs(); renderSheetList(); });
+      box.appendChild(b);
     });
-    if (!list.length) { box.innerHTML = '<span style="color:var(--faint);font-size:.85rem;padding:8px">No assets match.</span>'; return; }
+  }
+  function renderSheetList() {
+    var box = $("assetSheetList"); box.innerHTML = "";
+    var q = sheet.q.toLowerCase();
+    var list = enabledAssets().filter(function (a) {
+      if (sheet.tab !== "All" && assetCat(a) !== sheet.tab) return false;
+      if (q && (a.name.toLowerCase().indexOf(q) === -1 && assetSub(a).toLowerCase().indexOf(q) === -1)) return false;
+      return true;
+    });
+    if (!list.length) { box.innerHTML = '<div class="empty" style="margin:12px 0">No assets match.</div>'; return; }
     list.forEach(function (a) {
       var b = document.createElement("button");
       b.type = "button";
-      b.className = "asset-chip-btn" + (a.id === state.assetId ? " active" : "");
-      b.innerHTML = TX.esc(a.name) + "<small>" + a.payout + "%</small>";
-      b.addEventListener("click", function () { selectAsset(a.id); });
+      b.className = "asset-row" + (a.id === state.assetId ? " active" : "");
+      b.innerHTML =
+        '<span class="ar-icon">' + TX.esc(assetIcon(a)) + "</span>" +
+        '<span class="ar-names"><strong>' + TX.esc(a.name) + "</strong><small>" + TX.esc(assetSub(a)) + " · " + TX.esc(assetCat(a)) + "</small></span>" +
+        '<span class="ar-right"><span class="ar-price" data-px="' + a.id + '">' + fmtPrice(a, TX.priceOf(a)) + '</span><br><span class="ar-payout">' + a.payout + "%</span></span>";
+      b.addEventListener("click", function () { selectAsset(a.id); closeSheet(); });
       box.appendChild(b);
     });
-    if (!getAsset(state.assetId) && list.length) selectAsset(list[0].id, true);
   }
-  $("assetSearch").addEventListener("input", function () { renderAssetChips(this.value.trim()); });
+  function openSheet() {
+    sheet.q = ""; $("assetSheetSearch").value = "";
+    renderSheetTabs(); renderSheetList();
+    var s = $("assetSheet"), bd = $("assetSheetBackdrop");
+    s.hidden = false; bd.hidden = false;
+    void s.offsetWidth;
+    s.classList.add("show"); bd.classList.add("show");
+    TX.refreshPrices(false).then(function () { renderSheetList(); });
+    setTimeout(function () { $("assetSheetSearch").focus(); }, 350);
+  }
+  function closeSheet() {
+    var s = $("assetSheet"), bd = $("assetSheetBackdrop");
+    s.classList.remove("show"); bd.classList.remove("show");
+    setTimeout(function () { s.hidden = true; bd.hidden = true; }, 340);
+  }
+  $("assetBtn").addEventListener("click", openSheet);
+  $("assetSheetClose").addEventListener("click", closeSheet);
+  $("assetSheetBackdrop").addEventListener("click", closeSheet);
+  $("assetSheetSearch").addEventListener("input", function () { sheet.q = this.value.trim(); renderSheetList(); });
 
   function selectAsset(id, silent) {
     state.assetId = id;
     var a = getAsset(id);
     $("selAssetName").textContent = a ? a.name : "—";
-    renderAssetChips($("assetSearch").value.trim());
+    $("assetBtnIcon").textContent = a ? assetIcon(a) : "?";
+    $("assetBtnName").textContent = a ? a.name : "—";
+    $("assetBtnSub").textContent = a ? assetSub(a) + " · " + assetCat(a) : "—";
+    $("assetBtnPayout").textContent = a ? a.payout + "%" : "—";
     updatePreview();
-    if (!silent) loadChart();
-    else loadChart();
+    loadChart();
     refreshPriceLine();
   }
 
@@ -119,22 +175,25 @@
   /* ---------- live price line ---------- */
   function refreshPriceLine() {
     var a = getAsset(state.assetId);
-    var badge = $("feedBadge"), lp = $("livePrice");
+    var dot = $("feedDot"), badge = $("feedBadge"), lp = $("livePrice");
     TX.refreshPrices(false).then(function (ok) {
       var p = a ? TX.priceOf(a) : null;
+      lp.textContent = fmtPrice(a, p);
       if (ok && p != null) {
-        lp.textContent = (a.kind === "fiat" ? p.toFixed(5) : TX.fmt(p));
         var age = TX.feedAge();
-        badge.textContent = age < 90000 ? "LIVE · CoinGecko" : "STALE · CoinGecko";
-        badge.className = "badge " + (age < 90000 ? "live" : "stale");
+        var live = age < 90000;
+        badge.textContent = live ? "LIVE" : "STALE";
+        dot.className = live ? "live" : "";
       } else {
-        lp.textContent = "—";
-        badge.textContent = "FEED DOWN";
-        badge.className = "badge down";
+        badge.textContent = "OFFLINE";
+        dot.className = "down";
       }
+      if (!$("assetSheet").hidden) renderSheetList();
     });
   }
   setInterval(refreshPriceLine, 60000);
+  $("chartRetry").addEventListener("click", loadChart);
+  $("chartReload").addEventListener("click", loadChart);
 
   /* ---------- trade panel ---------- */
   function limits() {
@@ -242,6 +301,55 @@
     });
   }
 
+  /* ---------- settlement notification (iOS style) ---------- */
+  var noteQueue = [], noteBusy = false;
+  function notifySettle(t) {
+    var title, cls;
+    if (t.result === "win") { title = "Trade won  +" + TX.fmt(t.pl); cls = "win"; }
+    else if (t.result === "loss") { title = "Trade lost  " + TX.fmt(t.pl); cls = "loss"; }
+    else if (t.result === "tie") { title = "Trade tied — stake refunded"; cls = "tie"; }
+    else if (t.result === "early") { title = "Closed early  " + (t.pl >= 0 ? "+" : "") + TX.fmt(t.pl); cls = t.pl >= 0 ? "win" : "loss"; }
+    else return;
+    noteQueue.push({ t: t, title: title, cls: cls });
+    pumpNotes();
+  }
+  function pumpNotes() {
+    if (noteBusy || !noteQueue.length) return;
+    noteBusy = true;
+    var n = noteQueue.shift(), t = n.t;
+    var titleEl = $("snTitle");
+    titleEl.textContent = n.title;
+    titleEl.className = "sn-title " + n.cls;
+    $("snSub").textContent = t.assetName + " · " + String(t.dir).toUpperCase() + " · " + TX.fmt(t.amount);
+    var el = $("settleNote");
+    el.hidden = false;
+    el.classList.remove("hide");
+    void el.offsetWidth;
+    el.classList.add("show");
+    var done = false;
+    function dismiss(go) {
+      if (done) return; done = true;
+      clearTimeout(el._h);
+      el.classList.remove("show"); el.classList.add("hide");
+      setTimeout(function () { el.hidden = true; el.classList.remove("hide"); noteBusy = false; pumpNotes(); }, 280);
+      if (go) { showView("history"); highlightTrade(t.id); }
+    }
+    el.onclick = function () { dismiss(true); };
+    el._h = setTimeout(function () { dismiss(false); }, 5200);
+  }
+  function highlightTrade(id) {
+    setTimeout(function () {
+      var row = document.getElementById("hist_" + id);
+      if (row) {
+        row.scrollIntoView({ block: "center", behavior: "smooth" });
+        row.classList.remove("flash");
+        void row.offsetWidth;
+        row.classList.add("flash");
+        setTimeout(function () { row.classList.remove("flash"); }, 2600);
+      }
+    }, 380);
+  }
+
   function earlyClose(id) {
     var t = null;
     for (var i = 0; i < store.trades.length; i++) if (store.trades[i].id === id) t = store.trades[i];
@@ -262,6 +370,7 @@
       user.balance = Math.round((user.balance + value) * 100) / 100;
       TX.save(store);
       renderBalance(); renderPositions();
+      notifySettle(t);
       toast("Closed early: " + TX.fmt(value) + " returned.");
     });
   }
@@ -297,6 +406,7 @@
           user.balance = Math.round((user.balance + credit) * 100) / 100;
         } else { t.result = "loss"; t.pl = -t.amount; }
         changed = true;
+        notifySettle(t);
       });
       if (changed) {
         TX.save(store); renderBalance(); renderPositions(); updatePosCount();
@@ -315,6 +425,7 @@
     $("histTable").style.display = rows.length ? "" : "none";
     rows.forEach(function (t) {
       var tr = document.createElement("tr");
+      tr.id = "hist_" + t.id;
       var rc = t.result === "win" ? "result-win" : (t.result === "loss" ? "result-loss" : "result-void");
       tr.innerHTML = "<td>" + TX.fmtTime(t.closedAt) + "</td><td>" + TX.esc(t.assetName) + "</td>" +
         "<td>" + t.dir.toUpperCase() + "</td><td>" + TX.fmt(t.amount) + "</td>" +
@@ -360,7 +471,6 @@
   /* ---------- init ---------- */
   if (store.settings.maintenance) $("maintBanner").hidden = false;
   renderBalance();
-  renderAssetChips("");
   selectAsset((enabledAssets()[0] || {}).id);
   updatePreview();
   updatePosCount();
