@@ -118,6 +118,95 @@
   drawCandles(document.getElementById('phoneChart'), 777, 300, 150, 22);
   drawCandles(document.getElementById('appChart'), 4242, 300, 150, 22);
 
+  /* Hero curtain parallax — the page slides up and "eats" the hero on scroll */
+  (function heroParallax(){
+    var hero = document.querySelector('.hero');
+    var inner = document.querySelector('.hero-inner');
+    var curtain = document.querySelector('.page-curtain');
+    if (!hero || !inner || !curtain) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    var ticking = false, heroH = 0;
+    function measure(){ heroH = hero.offsetHeight; }
+    function update(){
+      ticking = false;
+      var y = window.scrollY || 0;
+      if (y < 0) y = 0;
+      if (y > heroH) { inner.style.transform = ''; inner.style.opacity = ''; return; }
+      var p = y / Math.max(1, heroH);
+      inner.style.transform = 'translateY(' + Math.round(y * 0.28) + 'px) scale(' + (1 - p * 0.05).toFixed(4) + ')';
+      inner.style.opacity = (1 - p * 0.85).toFixed(3);
+    }
+    function onScroll(){ if (!ticking) { ticking = true; requestAnimationFrame(update); } }
+    measure();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', function(){ measure(); onScroll(); });
+    update();
+  })();
+  (function heroBg(){
+    var cv = document.getElementById('heroBg');
+    if (!cv || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    var ctx = cv.getContext('2d');
+    var W = 0, H = 0, dpr = Math.min(window.devicePixelRatio || 1, 2);
+    var candles = [], price = 100, t = 0;
+    var UP = '#22C55E', DN = '#F23645';
+    function resize(){
+      var r = cv.parentElement.getBoundingClientRect();
+      W = Math.max(1, r.width); H = Math.max(1, r.height);
+      cv.width = W * dpr; cv.height = H * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+    function newCandle(){
+      var o = price;
+      var drift = Math.sin(t / 90) * 0.35;
+      var c = o + (Math.random() - 0.5) * 2.2 + drift;
+      var h = Math.max(o, c) + Math.random() * 1.4;
+      var l = Math.min(o, c) - Math.random() * 1.4;
+      price = c; t++;
+      return { o: o, h: h, l: l, c: c, age: 0 };
+    }
+    function seed(){
+      candles = []; price = 100; t = 0;
+      var n = Math.ceil(W / 26) + 8;
+      for (var i = 0; i < n; i++) candles.push(newCandle());
+    }
+    var SPEED = 0.28, CW = 26, BW = 13;
+    var running = true, visible = true;
+    function frame(){
+      if (!running || !visible || document.hidden) { requestAnimationFrame(frame); return; }
+      ctx.clearRect(0, 0, W, H);
+      var min = Infinity, max = -Infinity, i;
+      for (i = 0; i < candles.length; i++) {
+        var cd = candles[i];
+        if (cd.l < min) min = cd.l;
+        if (cd.h > max) max = cd.h;
+      }
+      var pad = (max - min) * 0.25 || 1;
+      min -= pad; max += pad;
+      function y(p){ return H - ((p - min) / (max - min)) * H; }
+      var off = (t * SPEED) % CW;
+      for (i = 0; i < candles.length; i++) {
+        var x = W - (candles.length - 1 - i) * CW + off - CW;
+        if (x < -CW || x > W + CW) continue;
+        var c = candles[i];
+        var col = c.c >= c.o ? UP : DN;
+        ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = 1.4;
+        ctx.beginPath(); ctx.moveTo(x, y(c.h)); ctx.lineTo(x, y(c.l)); ctx.stroke();
+        var yo = y(c.o), yc = y(c.c);
+        ctx.fillRect(x - BW / 2, Math.min(yo, yc), BW, Math.max(2.5, Math.abs(yc - yo)));
+      }
+      if ((t * SPEED) % CW < SPEED) candles.push(newCandle());
+      while (candles.length > Math.ceil(W / CW) + 10) candles.shift();
+      requestAnimationFrame(frame);
+    }
+    resize(); seed();
+    window.addEventListener('resize', function(){ resize(); seed(); });
+    if ('IntersectionObserver' in window) {
+      new IntersectionObserver(function(en){ visible = en[0].isIntersecting; }, { threshold: 0 }).observe(cv);
+    }
+    document.addEventListener('visibilitychange', function(){ running = !document.hidden; });
+    requestAnimationFrame(frame);
+  })();
+
   /* Live TradingView chart in the pitch demo frame */
   try{
     var pitchEl = document.getElementById('pitchChart');

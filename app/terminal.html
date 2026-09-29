@@ -7,161 +7,210 @@
 <meta name="description" content="Trexora demo trading terminal with live charts.">
 <meta name="robots" content="noindex">
 <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
-<link rel="stylesheet" href="../styles.css?v=20260929e">
-<link rel="stylesheet" href="app.css?v=20260929e">
+<link rel="stylesheet" href="../styles.css?v=20260929f">
+<link rel="stylesheet" href="app.css?v=20260929f">
 <script>try{var t=localStorage.getItem('trexora-theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}</script>
 <script src="https://s3.tradingview.com/tv.js"></script>
 </head>
-<body class="app-body">
-<header class="app-header">
-  <div class="app-header-inner">
-    <a class="back-link" href="../index.html">← Site</a>
-    <a class="brand" href="terminal.html" aria-label="Trexora terminal">
-      <img class="logo logo-dark" src="../assets/logo-dark.svg" alt="Trexora" height="30">
-      <img class="logo logo-light" src="../assets/logo-light.svg" alt="Trexora" height="30">
-    </a>
-    <div class="balance-pill"><small>DEMO</small><span id="balanceVal">$10,000.00</span></div>
-    <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme" style="width:36px;height:36px">
-      <svg class="icon-sun" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M2 12h2.5M19.5 12H22M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></svg>
-      <svg class="icon-moon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
-    </button>
-    <button class="icon-btn" id="logoutBtn" title="Log out" aria-label="Log out">⏻</button>
+<body class="qx">
+<header class="qx-top">
+  <button class="qx-burger" id="burger" aria-label="Menu">☰</button>
+  <a class="qx-brand" href="terminal.html" aria-label="Trexora terminal">
+    <img class="logo logo-dark" src="../assets/logo-dark.svg" alt="Trexora" height="28">
+    <img class="logo logo-light" src="../assets/logo-light.svg" alt="Trexora" height="28">
+    <span class="qx-tag">WEB TRADING PLATFORM</span>
+  </a>
+  <div class="qx-top-right">
+    <button class="qx-bell" id="bellBtn" aria-label="Notifications">🔔<i id="bellBadge" hidden></i></button>
+    <div class="qx-acct-wrap">
+      <button class="qx-acct" id="acctBtn" aria-haspopup="true" aria-expanded="false">
+        <span class="qx-gem">◆</span>
+        <span class="qx-acct-t"><small>DEMO ACCOUNT</small><b id="topBal">$10,000.00</b></span>
+        <span class="qx-chev">▾</span>
+      </button>
+      <div class="qx-acct-menu" id="acctMenu" hidden>
+        <button class="qx-acct-opt active" type="button"><span><b>Demo account</b><small>Virtual funds · practice trading</small></span><i>✓</i></button>
+        <button class="qx-acct-opt" type="button" disabled><span><b>Real account</b><small>Coming soon</small></span></button>
+      </div>
+    </div>
+    <button class="qx-dep" id="depTop" type="button">+ Deposit</button>
+    <button class="qx-wd" id="wdTop" type="button">Withdrawal</button>
   </div>
 </header>
 <div class="maint-banner" id="maintBanner" hidden>⚠ Platform maintenance is in progress — trading is temporarily paused.</div>
 
-<main class="terminal">
-  <nav class="bottom-nav" id="viewNav" aria-label="Terminal sections" style="margin-bottom:14px">
+<div class="qx-shell">
+  <aside class="qx-rail" id="rail" aria-label="Terminal sections">
     <button data-view="trade" class="active"><span class="ico">📈</span>Trade</button>
-    <button data-view="positions"><span class="ico">⏳</span>Positions <span id="posCount"></span></button>
+    <button data-view="markets"><span class="ico">🌐</span>Markets</button>
+    <button data-view="tournaments"><span class="ico">🏆</span>Tournaments</button>
     <button data-view="history"><span class="ico">🕘</span>History</button>
-    <button data-view="wallet"><span class="ico">👛</span>Wallet</button>
-  </nav>
+    <button data-view="account"><span class="ico">👛</span>Account</button>
+    <span class="rail-sp"></span>
+    <button id="supportBtn"><span class="ico">💬</span>Support</button>
+    <button id="themeToggle2"><span class="ico">🌗</span>Theme</button>
+    <button id="logoutBtn"><span class="ico">⏻</span>Log out</button>
+  </aside>
 
-  <!-- TRADE -->
-  <section class="view active" id="view-trade">
-    <div class="trade-layout">
-      <div>
-        <button class="asset-btn" id="assetBtn" type="button" aria-haspopup="dialog" aria-label="Choose asset">
-          <span class="ab-icon" id="assetBtnIcon">€</span>
-          <span class="ab-names"><strong id="assetBtnName">—</strong><small id="assetBtnSub">—</small></span>
-          <span class="ab-price"><strong id="livePrice">—</strong><small class="feed-dot"><i id="feedDot"></i><span id="feedBadge">connecting…</span></small></span>
-          <span class="ab-payout" id="assetBtnPayout">—</span>
-          <span class="ab-chev">›</span>
-        </button>
-        <div class="chart-wrap">
+  <main class="qx-main">
+    <!-- TRADE -->
+    <section class="view active" id="view-trade">
+      <div class="qx-tabs" id="assetTabs" aria-label="Open assets"></div>
+      <div class="qx-chartzone">
+        <div class="qx-sent" id="sentBar" title="Demo book sentiment">
+          <span class="qx-sent-up" id="sentUp">–</span>
+          <span class="qx-sent-bar"><i id="sentFill"></i></span>
+          <span class="qx-sent-dn" id="sentDn">–</span>
+        </div>
+        <div class="chart-wrap qx-chart">
           <div id="tv_chart"></div>
+          <div class="qx-tradebar" id="tradeBar" hidden>
+            <span class="qtb-ico" id="tradeBarIco">₿</span>
+            <span class="qtb-t"><b id="tradeBarName">—</b><small id="tradeBarSub">—</small></span>
+            <span class="qtb-count" id="tradeBarCount">--:--</span>
+            <span class="qtb-prog"><i id="tradeBarProg"></i></span>
+          </div>
           <button class="chart-reload" id="chartReload" type="button" title="Reload chart" aria-label="Reload chart">↻</button>
           <div class="chart-fallback" id="chartFallback" hidden><div>Chart could not load.<br>Check your connection and reload.<br><br><button class="btn btn-primary btn-sm" id="chartRetry" type="button">Retry</button></div></div>
         </div>
       </div>
-      <div class="trade-panel">
-        <h3>New position</h3>
-        <div class="field" style="margin-bottom:10px">
-          <label>Asset</label>
-          <div style="font-weight:750" id="selAssetName">—</div>
-        </div>
-        <div class="field">
-          <label for="amount">Amount (USD)</label>
-          <div class="amount-row">
-            <button class="step-btn" id="amtDown" type="button" aria-label="Decrease amount">−</button>
-            <input id="amount" type="number" value="10" min="1" step="1" inputmode="decimal">
-            <button class="step-btn" id="amtUp" type="button" aria-label="Increase amount">+</button>
-          </div>
-          <div class="amt-chips" id="amtChips">
-            <button type="button" data-amt="10">10</button>
-            <button type="button" data-amt="25">25</button>
-            <button type="button" data-amt="50">50</button>
-            <button type="button" data-amt="100">100</button>
-            <button type="button" data-amt="250">250</button>
-          </div>
-        </div>
-        <div class="field">
-          <label>Expiry</label>
-          <div class="exp-row" id="expRow">
-            <button class="exp-pill active" data-sec="60" type="button">1m</button>
-            <button class="exp-pill" data-sec="300" type="button">5m</button>
-            <button class="exp-pill" data-sec="900" type="button">15m</button>
-            <button class="exp-pill" data-sec="3600" type="button">1h</button>
-            <button class="exp-pill" data-sec="14400" type="button">4h</button>
-          </div>
-        </div>
-        <div class="payout-preview"><span>Payout if you win</span><strong id="payoutPreview">—</strong></div>
-        <div class="trade-btns">
-          <button class="btn-trade up" id="btnUp" type="button">▲ Up<small id="upReturn"></small></button>
-          <button class="btn-trade down" id="btnDown" type="button">▼ Down<small id="downReturn"></small></button>
-        </div>
-        <p class="fine-print">Settles against the live market quote at expiry. Ties refund the stake. Early close: winners keep stake + up to 50% of profit (pro-rata by elapsed time); losers recover part of the stake (pro-rata). Demo funds only.</p>
+    </section>
+
+    <!-- MARKETS -->
+    <section class="view" id="view-markets">
+      <div class="qx-page">
+        <div class="qx-page-head"><h2>Markets</h2><p>Every asset with live quotes and payouts. Pick one to trade.</p></div>
+        <input class="sheet-search" id="mktSearch" type="search" placeholder="Search assets…" aria-label="Search assets">
+        <div class="sheet-tabs" id="mktTabs"></div>
+        <div class="mkt-grid" id="mktGrid"></div>
       </div>
-    </div>
-  </section>
+    </section>
 
-  <!-- POSITIONS -->
-  <section class="view" id="view-positions">
-    <div id="openList"></div>
-  </section>
+    <!-- TOURNAMENTS -->
+    <section class="view" id="view-tournaments">
+      <div class="qx-page">
+        <div class="qx-page-head"><h2>Tournaments</h2><p>Demo contests on virtual funds. Climb the leaderboard — prizes are virtual.</p></div>
+        <div class="tour-grid" id="tourGrid"></div>
+        <h3 class="qx-sub">Leaderboard <small style="color:var(--muted);font-weight:500">· demo P/L this week</small></h3>
+        <div class="tbl-wrap"><table class="data" id="tourTable">
+          <thead><tr><th>#</th><th>Trader</th><th>Trades</th><th>Win rate</th><th>P/L</th></tr></thead>
+          <tbody></tbody>
+        </table></div>
+      </div>
+    </section>
 
-  <!-- HISTORY -->
-  <section class="view" id="view-history">
-    <div class="hist-stats">
-      <div class="hist-stat"><small>Net P/L</small><strong id="hPL">$0.00</strong></div>
-      <div class="hist-stat"><small>Win rate</small><strong id="hWR">—</strong></div>
-      <div class="hist-stat"><small>Trades</small><strong id="hCount">0</strong></div>
-    </div>
-    <div class="filter-pills" id="histFilters">
-      <button class="fpill active" data-f="" type="button">All</button>
-      <button class="fpill" data-f="win" type="button">Wins</button>
-      <button class="fpill" data-f="loss" type="button">Losses</button>
-      <button class="fpill" data-f="other" type="button">Ties / early</button>
-    </div>
-    <div class="tbl-wrap"><table class="data" id="histTable">
-      <thead><tr><th>Time</th><th>Asset</th><th>Dir</th><th>Amount</th><th>Entry</th><th>Exit</th><th>P/L</th></tr></thead>
-      <tbody></tbody>
-    </table></div>
-    <div class="empty" id="histEmpty" hidden>No closed trades yet. Your history will appear here.</div>
-  </section>
+    <!-- HISTORY -->
+    <section class="view" id="view-history">
+      <div class="qx-page">
+        <div class="qx-page-head"><h2>History</h2><p>Every closed position, newest first.</p></div>
+        <div class="hist-stats">
+          <div class="hist-stat"><small>Net P/L</small><strong id="hPL">$0.00</strong></div>
+          <div class="hist-stat"><small>Win rate</small><strong id="hWR">—</strong></div>
+          <div class="hist-stat"><small>Trades</small><strong id="hCount">0</strong></div>
+        </div>
+        <div class="filter-pills" id="histFilters">
+          <button class="fpill active" data-f="" type="button">All</button>
+          <button class="fpill" data-f="win" type="button">Wins</button>
+          <button class="fpill" data-f="loss" type="button">Losses</button>
+          <button class="fpill" data-f="other" type="button">Ties / early</button>
+        </div>
+        <div class="tbl-wrap"><table class="data" id="histTable">
+          <thead><tr><th>Time</th><th>Asset</th><th>Dir</th><th>Amount</th><th>Entry</th><th>Exit</th><th>P/L</th></tr></thead>
+          <tbody></tbody>
+        </table></div>
+        <div class="empty" id="histEmpty" hidden>No closed trades yet. Your history will appear here.</div>
+      </div>
+    </section>
 
-  <!-- WALLET -->
-  <section class="view" id="view-wallet">
-    <div class="wallet-grid">
-      <div class="wallet-bal"><small>Demo balance</small><div class="big" id="walletBal">$0.00</div></div>
-      <div class="req-form">
-        <h3>Fund your demo</h3>
-        <p class="sub" style="color:var(--muted);font-size:.85rem;margin-bottom:12px">Requests go to the admin for approval. Demo funds only.</p>
-        <div class="two-col">
-          <div class="req-form" style="padding:0;border:0">
-            <div class="field"><label for="depAmt">Deposit amount (USD)</label><input id="depAmt" type="number" min="10" value="100"></div>
-            <div class="field"><label for="depMethod">Method</label><select id="depMethod"><option>Visa</option><option>Mastercard</option><option>Bank transfer</option><option>Crypto</option></select></div>
-            <button class="btn btn-primary btn-sm" id="depBtn" type="button" style="width:100%">Request deposit</button>
+    <!-- ACCOUNT -->
+    <section class="view" id="view-account">
+      <div class="qx-page">
+        <div class="qx-page-head"><h2>Account</h2><p>Balance, funding requests and the full ledger.</p></div>
+        <div class="wallet-grid">
+          <div class="wallet-bal"><small>Demo balance</small><div class="big" id="walletBal">$0.00</div>
+            <div class="acct-row"><span id="acctEmail">—</span><button class="btn btn-ghost btn-sm" id="refillBtn" type="button">Refill $10,000</button></div>
           </div>
-          <div class="req-form" style="padding:0;border:0">
-            <div class="field"><label for="wdAmt">Withdraw amount (USD)</label><input id="wdAmt" type="number" min="10" value="100"></div>
-            <div class="field"><label for="wdMethod">Method</label><select id="wdMethod"><option>Visa</option><option>Mastercard</option><option>Bank transfer</option><option>Crypto</option></select></div>
-            <button class="btn btn-ghost btn-sm" id="wdBtn" type="button" style="width:100%">Request withdrawal</button>
+          <div class="req-form">
+            <h3>Fund your demo</h3>
+            <p class="sub" style="color:var(--muted);font-size:.85rem;margin-bottom:12px">Requests go to the admin for approval. Demo funds only.</p>
+            <div class="two-col">
+              <div class="req-form" style="padding:0;border:0">
+                <div class="field"><label for="depAmt">Deposit amount (USD)</label><input id="depAmt" type="number" min="10" value="100"></div>
+                <div class="field"><label for="depMethod">Method</label><select id="depMethod"><option>Visa</option><option>Mastercard</option><option>Bank transfer</option><option>Crypto</option></select></div>
+                <button class="btn btn-primary btn-sm" id="depBtn" type="button" style="width:100%">Request deposit</button>
+              </div>
+              <div class="req-form" style="padding:0;border:0">
+                <div class="field"><label for="wdAmt">Withdraw amount (USD)</label><input id="wdAmt" type="number" min="10" value="100"></div>
+                <div class="field"><label for="wdMethod">Method</label><select id="wdMethod"><option>Visa</option><option>Mastercard</option><option>Bank transfer</option><option>Crypto</option></select></div>
+                <button class="btn btn-ghost btn-sm" id="wdBtn" type="button" style="width:100%">Request withdrawal</button>
+              </div>
+            </div>
           </div>
         </div>
+        <h3 class="qx-sub">My requests</h3>
+        <div class="tbl-wrap"><table class="data" id="reqTable">
+          <thead><tr><th>Time</th><th>Type</th><th>Amount</th><th>Method</th><th>Status</th></tr></thead>
+          <tbody></tbody>
+        </table></div>
+        <div class="empty" id="reqEmpty" hidden>No requests yet.</div>
+        <h3 class="qx-sub">Ledger — every balance movement</h3>
+        <div class="tbl-wrap"><table class="data" id="ledgerTable">
+          <thead><tr><th>Time</th><th>Description</th><th>Amount</th></tr></thead>
+          <tbody></tbody>
+        </table></div>
+        <div class="empty" id="ledgerEmpty" hidden>No movements yet.</div>
       </div>
-    </div>
-    <h3 style="margin:6px 0 10px">My requests</h3>
-    <div class="tbl-wrap"><table class="data" id="reqTable">
-      <thead><tr><th>Time</th><th>Type</th><th>Amount</th><th>Method</th><th>Status</th></tr></thead>
-      <tbody></tbody>
-    </table></div>
-    <div class="empty" id="reqEmpty" hidden>No requests yet.</div>
-    <h3 style="margin:18px 0 10px">Ledger — every balance movement</h3>
-    <div class="tbl-wrap"><table class="data" id="ledgerTable">
-      <thead><tr><th>Time</th><th>Description</th><th>Amount</th></tr></thead>
-      <tbody></tbody>
-    </table></div>
-    <div class="empty" id="ledgerEmpty" hidden>No movements yet.</div>
-  </section>
-</main>
+    </section>
+  </main>
 
-<nav class="bottom-nav" id="viewNavMobile" aria-label="Terminal sections">
+  <!-- RIGHT TRADE PANEL -->
+  <aside class="qx-panel" id="tradePanel" aria-label="Trade ticket">
+    <div class="qp-asset">
+      <span class="qp-flag" id="qpIcon">₿</span>
+      <span class="qp-names"><b id="qpName">—</b><small id="qpSub">—</small></span>
+      <span class="qp-pay" id="qpPay">—</span>
+    </div>
+    <div class="qp-row">
+      <label>Time</label>
+      <div class="qp-step">
+        <button id="tDown" type="button" aria-label="Shorter time">−</button>
+        <b id="tVal">1m</b>
+        <button id="tUp" type="button" aria-label="Longer time">+</button>
+      </div>
+      <button class="qp-link" id="tSwitch" type="button">SWITCH TIME</button>
+    </div>
+    <div class="qp-times" id="qpTimes" hidden></div>
+    <div class="qp-row">
+      <label>Investment</label>
+      <div class="qp-step">
+        <button id="aDown" type="button" aria-label="Decrease amount">−</button>
+        <b>$<span id="aVal">10</span></b>
+        <button id="aUp" type="button" aria-label="Increase amount">+</button>
+      </div>
+      <button class="qp-link" id="aSwitch" type="button">SWITCH</button>
+    </div>
+    <div class="qp-chips" id="qpChips" hidden></div>
+    <div class="qp-payout">Your payout: <b id="qpPayout">—</b></div>
+    <div class="qp-btns">
+      <button class="qp-up" id="btnUp" type="button"><span>Up</span><small id="upReturn"></small></button>
+      <button class="qp-down" id="btnDown" type="button"><span>Down</span><small id="downReturn"></small></button>
+    </div>
+    <div class="qp-trades">
+      <div class="qp-tabs">
+        <button class="active" type="button">Trades <span class="qp-n" id="posCount"></span></button>
+        <button type="button" id="qpHistBtn" title="History">🕘</button>
+      </div>
+      <div class="qp-list" id="openList"></div>
+    </div>
+  </aside>
+</div>
+
+<nav class="qx-mobilebar" id="mobileBar" aria-label="Terminal sections">
   <button data-view="trade" class="active"><span class="ico">📈</span>Trade</button>
-  <button data-view="positions"><span class="ico">⏳</span>Positions</button>
+  <button data-view="markets"><span class="ico">🌐</span>Markets</button>
+  <button data-view="tournaments"><span class="ico">🏆</span>Tour</button>
   <button data-view="history"><span class="ico">🕘</span>History</button>
-  <button data-view="wallet"><span class="ico">👛</span>Wallet</button>
+  <button data-view="account"><span class="ico">👛</span>Account</button>
 </nav>
 
 <div class="sheet-backdrop" id="assetSheetBackdrop" hidden></div>
@@ -173,6 +222,17 @@
   <div class="sheet-list" id="assetSheetList"></div>
 </div>
 
+<div class="qx-modal-back" id="supportBack" hidden></div>
+<div class="qx-modal" id="supportModal" role="dialog" aria-modal="true" aria-label="Support" hidden>
+  <div class="sheet-head"><h3>Support</h3><button class="icon-btn" id="supportClose" type="button" aria-label="Close">✕</button></div>
+  <div class="sup-list">
+    <a href="../support.html">Help center &amp; contact →</a>
+    <a href="../faq.html">FAQ →</a>
+    <a href="../legal/risk-disclosure.html">Risk disclosure →</a>
+    <button type="button" id="chatBtn">💬 Live chat <small>(demo)</small></button>
+  </div>
+</div>
+
 <div class="settle-note" id="settleNote" hidden>
   <span class="sn-icon">TX</span>
   <span class="sn-body"><span class="sn-top"><b>Trexora</b><i>now</i></span><strong class="sn-title" id="snTitle"></strong><span class="sn-sub" id="snSub"></span></span>
@@ -181,7 +241,7 @@
 
 <div class="toast" id="toast"></div>
 
-<script src="../shared/store.js?v=20260929e"></script>
-<script src="app.js?v=20260929e"></script>
+<script src="../shared/store.js?v=20260929f"></script>
+<script src="app.js?v=20260929f"></script>
 </body>
 </html>
