@@ -634,9 +634,14 @@ table.data tr:last-child td{border-bottom:0}
 @media(max-width:899px){.an-grid{grid-template-columns:1fr}.an-duo{grid-template-columns:1fr}.an-strip{flex-wrap:wrap;gap:12px}.an-cell{border-left:0;padding:0 12px 0 0}}
 
 /* ============ Rich account dropdown + promo banner ============ */
-.promo-banner{display:flex;align-items:center;gap:8px;border:0;cursor:pointer;font-family:var(--font);font-size:.84rem;color:#fff;background:linear-gradient(90deg,#16a34a,#22c55e);border-radius:99px;padding:9px 16px 9px 12px;font-weight:600;white-space:nowrap}
-.promo-banner b{font-weight:800}
-.promo-banner span{background:rgba(0,0,0,.3);border-radius:99px;padding:3px 10px;font-weight:800;font-size:.76rem}
+.promo-banner{position:relative;display:flex;align-items:center;gap:10px;border:0;cursor:pointer;font-family:var(--font);font-size:.84rem;color:#fff;background:linear-gradient(135deg,#0E1A30,#1B2B4D);border-radius:99px;padding:10px 18px 10px 14px;font-weight:600;white-space:nowrap;overflow:hidden;isolation:isolate;box-shadow:0 4px 18px rgba(47,128,255,.25)}
+.promo-banner::before{content:'';position:absolute;inset:0;border-radius:inherit;padding:1.5px;background:linear-gradient(120deg,#2F80FF,#FFD166,#2F80FF,#7DD3FC,#2F80FF);background-size:300% 100%;-webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);-webkit-mask-composite:xor;mask-composite:exclude;animation:pb-border 4s linear infinite;pointer-events:none}
+@keyframes pb-border{to{background-position:300% 0}}
+.promo-banner::after{content:'';position:absolute;top:0;bottom:0;width:45%;left:-70%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.28),transparent);transform:skewX(-20deg);animation:pb-shine 3.4s ease-in-out infinite;pointer-events:none}
+@keyframes pb-shine{0%{left:-70%}55%,100%{left:140%}}
+.promo-banner b{font-weight:800;background:linear-gradient(90deg,#FFD166,#FF9F43);-webkit-background-clip:text;background-clip:text;color:transparent}
+.promo-banner span{background:linear-gradient(135deg,#FFE29A,#F5A623);color:#3A2500;border-radius:99px;padding:4px 12px;font-weight:800;font-size:.76rem;box-shadow:0 0 14px rgba(255,209,102,.6);animation:pb-pulse 2.4s ease-in-out infinite}
+@keyframes pb-pulse{50%{box-shadow:0 0 24px rgba(255,209,102,.95);transform:scale(1.06)}}
 .qx-acct-menu.rich{width:330px;padding:0;overflow:hidden}
 .am-std{display:flex;align-items:center;gap:10px;background:var(--bg-soft);border:1px solid var(--line-soft);border-radius:12px;padding:11px 13px;margin:14px 14px 10px}
 .am-flag{color:#4ade80;font-size:1.1rem}
@@ -803,8 +808,7 @@ table.data tr:last-child td{border-bottom:0}
   .qx-acct-t small{font-size:0!important;line-height:0}
   .qx-acct-t small::after{content:'DEMO';font-size:.72rem;color:#F59E0B;font-weight:800;letter-spacing:.06em}
   .qx-acct-t b{font-size:.95rem}
-  .promo-banner{display:flex;order:5;flex:1 1 100%;justify-content:center;border-radius:12px;padding:10px 14px;font-size:.82rem;background:linear-gradient(90deg,#1FA84F,#2F80FF)}
-  .promo-banner span{background:rgba(0,0,0,.32)}
+  .promo-banner{display:flex;order:5;flex:1 1 100%;justify-content:center;border-radius:14px;padding:11px 14px;font-size:.82rem}
 
   /* ---- trade ticket: navy bottom card, asset row, steppers, payout, Up/Down ---- */
   .qx-shell:has(#view-trade.active) .qx-panel{background:rgba(10,19,34,.96)}

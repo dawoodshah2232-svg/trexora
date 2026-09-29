@@ -280,13 +280,14 @@
     setTimeout(fin, 15000);
   }
   var lwLoading = false, lwQueue = [];
-  var LW_CDN = "https://unpkg.com/lightweight-charts@5.2.1/dist/lightweight-charts.standalone.production.js";
+  /* Owner chart standard: Lightweight Charts v5 loads from the local vendor bundle only — no runtime CDN. */
+  var LW_LOCAL = "vendor/lightweight-charts.standalone.production.js";
   function ensureLW(cb) {
     if (window.LightweightCharts && window.LightweightCharts.createChart) { cb(true); return; }
     lwQueue.push(cb);
     if (lwLoading) return;
     lwLoading = true;
-    var done = false, triedLocal = false;
+    var done = false;
     function finOk() {
       if (done) return; done = true; lwLoading = false;
       var q = lwQueue; lwQueue = [];
@@ -300,18 +301,10 @@
     function fin() {
       if (done) return;
       if (window.LightweightCharts && window.LightweightCharts.createChart) { finOk(); return; }
-      if (!triedLocal) { /* CDN failed: fall back to the copy shipped with the app */
-        triedLocal = true;
-        var s = document.createElement("script");
-        s.src = "vendor/lightweight-charts.standalone.production.js"; s.async = true;
-        s.onload = fin; s.onerror = finFail;
-        document.head.appendChild(s);
-        return;
-      }
       finFail();
     }
     var s0 = document.createElement("script");
-    s0.src = LW_CDN; s0.async = true;
+    s0.src = LW_LOCAL; s0.async = true;
     s0.onload = fin; s0.onerror = fin;
     document.head.appendChild(s0);
     setTimeout(fin, 20000);
