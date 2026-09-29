@@ -7,10 +7,9 @@
 <meta name="description" content="Trexora demo trading terminal with live charts.">
 <meta name="robots" content="noindex">
 <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
-<link rel="stylesheet" href="../styles.css?v=20260929p">
-<link rel="stylesheet" href="app.css?v=20260929p">
+<link rel="stylesheet" href="../styles.css?v=20260929q">
+<link rel="stylesheet" href="app.css?v=20260929q">
 <script>try{var t=localStorage.getItem('trexora-theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}</script>
-<script src="https://s3.tradingview.com/tv.js"></script>
 </head>
 <body class="qx">
 <header class="qx-top">
@@ -109,6 +108,10 @@
         </div>
         <div class="chart-wrap qx-chart" id="chartBox">
           <div id="tv_chart"></div>
+          <div class="chart-toolbar">
+            <div class="feed-badge b-load" id="feedBadge"><i></i><span>Connecting…</span><em>Deriv</em></div>
+            <div class="tf-pills" id="tfPills"></div>
+          </div>
           <div class="qx-tradebar" id="tradeBar" hidden>
             <span class="qtb-ico" id="tradeBarIco">₿</span>
             <span class="qtb-t"><b id="tradeBarName">—</b><small id="tradeBarSub">—</small></span>
@@ -333,11 +336,24 @@
   <div class="qx-more-back" id="moreBack" hidden></div>
   <aside class="qx-more" id="moreDrawer" aria-label="More" hidden>
     <div class="qx-more-head"><h3>More</h3><button class="icon-btn" id="moreClose" type="button" aria-label="Close">✕</button></div>
-    <button class="qx-more-link" data-goto="history" type="button"><span>📊</span>Analytics<i>›</i></button>
-    <button class="qx-more-link" data-goto="tournaments" type="button"><span>🏅</span>TOP<i>›</i></button>
-    <button class="qx-more-link" data-goto="signals" type="button"><span>📡</span>Signals<i>›</i></button>
-    <button class="qx-more-link" data-goto="market" type="button"><span>🎁</span>Market<i class="qx-more-badge" id="marketBadge">3</i><i>›</i></button>
-    <button class="qx-more-link" data-goto="settings" type="button"><span>⚙️</span>Settings<i>›</i></button>
+    <button class="qx-more-card" data-goto="market" type="button"><span>🎁</span>Market<i class="qx-more-badge" id="marketBadge">3</i><i class="chev">›</i></button>
+    <button class="qx-more-card" data-goto="history" type="button"><span>📊</span>Analytics<i class="chev">›</i></button>
+    <button class="qx-more-card" data-goto="tournaments" type="button"><span>🏅</span>TOP<i class="chev">›</i></button>
+    <button class="qx-more-card" data-goto="signals" type="button"><span>📡</span>Signals<i class="chev">›</i></button>
+    <div class="qx-more-links">
+      <button data-goto="deposit" type="button">Deposit</button>
+      <button data-goto="withdrawal" type="button">Withdrawal</button>
+      <button data-goto="payments" type="button">Payments</button>
+      <button data-goto="trades" type="button">Trades</button>
+    </div>
+    <div class="qx-more-foot">
+      <button class="m-set" data-goto="settings" type="button"><span>⚙️</span>Settings</button>
+      <button class="m-out" id="mLogout" type="button"><span>⎋</span>Logout</button>
+    </div>
+    <div class="qx-more-apps">
+      <button id="installApp" type="button">🤖 Install App</button>
+      <button id="joinUs" type="button">💬 Join Us</button>
+    </div>
   </aside>
 
   <!-- RIGHT TRADE PANEL -->
@@ -387,11 +403,11 @@
 </div>
 
 <nav class="qx-mobilebar" id="mobileBar" aria-label="Terminal sections">
-  <button data-view="trade" class="active"><span class="ico">📈</span>Trade</button>
-  <button data-view="markets"><span class="ico">🌐</span>Markets</button>
-  <button data-view="tournaments"><span class="ico">🏆</span>Tour</button>
-  <button data-view="history"><span class="ico">🕘</span>History</button>
-  <button data-view="account"><span class="ico">👛</span>Account</button>
+  <button data-view="trade" class="active" aria-label="Trade"><span class="ico">📈</span></button>
+  <button id="mbHelp" type="button" aria-label="Help"><span class="ico">❓</span></button>
+  <button data-view="account" aria-label="Profile"><span class="ico">👤</span></button>
+  <button data-view="tournaments" aria-label="Tournaments"><span class="ico">🏆<i class="mb-badge" id="mbTourBadge" hidden></i></span></button>
+  <button id="mbMore" type="button" aria-label="More"><span class="ico">···<i class="mb-badge" id="mbMoreBadge" hidden></i></span></button>
 </nav>
 
 <div class="sheet-backdrop" id="assetSheetBackdrop" hidden></div>
@@ -459,8 +475,14 @@
   <div class="tour-m-body" id="tourMBody"></div>
 </div>
 
-<div class="qx-modal" id="supportModal" role="dialog" aria-modal="true" aria-label="Support" hidden>
-  <div class="sheet-head"><h3>Support</h3><button class="icon-btn" id="supportClose" type="button" aria-label="Close">✕</button></div>
+<div class="qx-modal" id="supportModal" role="dialog" aria-modal="true" aria-label="Help" hidden>
+  <div class="sheet-head"><h3>Help</h3><button class="icon-btn" id="supportClose" type="button" aria-label="Close">✕</button></div>
+  <div class="help-cards">
+    <a class="help-card" href="../faq.html"><span class="hc-ico">🧩</span><b>FAQ</b><small>Open the database</small></a>
+    <button class="help-card" id="helpTutorials" type="button"><span class="hc-ico">🎓</span><b>Tutorials</b><small>Use the hints</small></button>
+    <a class="help-card" href="../support.html"><span class="hc-ico">🎧</span><b>Support</b><small>Contact our team</small></a>
+  </div>
+  <div class="help-nofind"><span class="hn-ico">❓</span><p>Didn't find an answer to your question?<br><a href="../support.html">Contact support</a></p></div>
   <div class="sup-list">
     <a href="../support.html">Help center &amp; contact →</a>
     <a href="../faq.html">FAQ →</a>
@@ -495,7 +517,9 @@
 
 <div class="toast" id="toast"></div>
 
-<script src="../shared/store.js?v=20260929o"></script>
-<script src="app.js?v=20260929p"></script>
+<script src="../shared/store.js?v=20260929q"></script>
+<script src="vendor/lightweight-charts.standalone.production.js?v=5.2.1"></script>
+<script src="feed-deriv.js?v=20260929q"></script>
+<script src="app.js?v=20260929q"></script>
 </body>
 </html>

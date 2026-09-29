@@ -758,3 +758,194 @@ table.data tr:last-child td{border-bottom:0}
   .qx-shell:has(#view-trade.active) .qx-main{padding-bottom:0}
   .qx-main{padding-bottom:84px}
 }
+
+/* ============================================================
+   Quotex-parity mobile rebuild (2026-09-29)
+   Presentation-layer restyle of the terminal for <900px so the
+   phone UI mirrors Quotex's structure/density with Trexora's
+   navy (#0A1322) + blue (#2F80FF) tokens. Desktop untouched.
+   ============================================================ */
+
+/* ---- accent parity: blue everywhere Quotex uses green (all widths) ---- */
+.qx-dep{background:#2F80FF}
+.qp-up{background:linear-gradient(180deg,#3B8BFF,#1F6AE0)}
+.tx-join{background:#2F80FF}
+.tx-cd.live{background:#2F80FF}
+.promo-enter{background:#2F80FF}
+.code-yes{background:#2F80FF}
+.qx-welc-go{background:linear-gradient(180deg,#2F80FF,#1A5FD0)}
+.qx-tradebar{background:rgba(10,19,34,.82)}
+
+/* ---- Market (promos) empty-state table header: un-jam the columns ---- */
+.promo-table-h{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;padding:8px 18px 0;font-size:.66rem;font-weight:800;letter-spacing:.08em;color:var(--faint)}
+.promo-table-h span:last-child{margin-left:auto}
+
+@media(max-width:899px){
+  /* ---- tokens / base ---- */
+  body.qx{background:#0A1322}
+  .qx-page{padding:12px 12px 34px}
+  .qx-page-head h2{font-size:1.15rem}
+  .qx-page-head p{font-size:.8rem}
+
+  /* ---- top bar: account pill + bell + blue Deposit, promo strip below ---- */
+  .qx-top{flex-wrap:wrap;height:auto;min-height:58px;padding:6px 10px;row-gap:8px;gap:8px}
+  .qx-burger,.qx-brand{display:none}
+  .qx-top-right{margin-left:0;width:100%;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .qx-acct-wrap{order:1}
+  .qx-bell{order:2;width:40px;height:40px;border-radius:12px}
+  .qx-dep{order:3;margin-left:auto;padding:10px 18px;font-size:.85rem;border-radius:10px;background:#2F80FF;box-shadow:0 4px 14px rgba(47,128,255,.4)}
+  .qx-wd{display:none}
+  .qx-acct{border-radius:12px;padding:8px 12px;gap:8px}
+  .qx-gem{font-size:0;width:22px;height:22px;display:grid;place-items:center}
+  .qx-gem::after{content:'🎓';font-size:1.05rem}
+  .qx-acct-t{flex-direction:row;align-items:center;gap:6px}
+  .qx-acct-t small{font-size:0!important;line-height:0}
+  .qx-acct-t small::after{content:'DEMO';font-size:.72rem;color:#F59E0B;font-weight:800;letter-spacing:.06em}
+  .qx-acct-t b{font-size:.95rem}
+  .promo-banner{display:flex;order:5;flex:1 1 100%;justify-content:center;border-radius:12px;padding:10px 14px;font-size:.82rem;background:linear-gradient(90deg,#1FA84F,#2F80FF)}
+  .promo-banner span{background:rgba(0,0,0,.32)}
+
+  /* ---- trade ticket: navy bottom card, asset row, steppers, payout, Up/Down ---- */
+  .qx-shell:has(#view-trade.active) .qx-panel{background:rgba(10,19,34,.96)}
+  .qx-panel{display:flex;flex-wrap:wrap;gap:8px;padding:12px;left:8px;right:8px}
+  .qp-asset{flex:1 1 100%;align-items:center}
+  .qp-flag{width:34px;height:34px}
+  .qp-names b{font-size:.95rem}
+  .qp-pay{font-size:.85rem}
+  .qp-pay::after{content:' ▾';color:var(--muted);font-size:.7rem}
+  .qp-mini{display:none}
+  .qx-panel>.qp-row{flex:1 1 calc(50% - 6px);min-width:0;position:relative;border:1px solid var(--line);border-radius:12px;padding:13px 8px 8px;margin-top:8px}
+  .qx-panel>.qp-row>label{position:absolute;top:-9px;left:12px;background:#0D1830;padding:0 7px;margin:0;font-size:.66rem;letter-spacing:.06em}
+  .qp-step{gap:6px}
+  .qp-step button{width:38px;border-radius:9px;font-size:1.05rem;background:var(--bg-soft)}
+  .qp-step b{padding:8px 0;font-size:.95rem;border:0;background:transparent}
+  .qp-link{font-size:.62rem;margin:5px auto 0}
+  .qp-payout{flex:1 1 100%;border:0;border-bottom:1px dotted var(--line);border-radius:0;background:none;padding:8px 2px;font-size:.88rem}
+  .qp-payout b{color:var(--text);font-size:1rem}
+  .qp-btns{flex:1 1 100%;gap:10px}
+  .qp-up,.qp-down{border-radius:12px;padding:14px 8px;font-size:1rem;flex-direction:row;justify-content:center;gap:8px}
+  .qp-up small,.qp-down small{font-size:.72rem}
+  .qp-trades{flex:1 1 100%;max-height:150px;overflow-y:auto}
+  .qp-tabs button{font-size:.8rem}
+
+  /* ---- bottom nav: 5 icons, blue active, badges ---- */
+  .qx-mobilebar{grid-template-columns:repeat(5,1fr);padding:8px 6px calc(10px + env(safe-area-inset-bottom));background:rgba(10,19,34,.92)}
+  .qx-mobilebar button{font-size:0;gap:0;padding:8px 2px}
+  .qx-mobilebar button .ico{font-size:1.55rem;position:relative;line-height:1}
+  .qx-mobilebar button.active{color:#2F80FF}
+  .mb-badge{position:absolute;top:-7px;right:-9px;min-width:17px;height:17px;border-radius:99px;background:#2F80FF;color:#fff;font-size:.6rem;font-weight:800;display:grid;place-items:center;padding:0 4px;font-style:normal}
+
+  /* ---- tournaments ---- */
+  .tour-grid2{grid-template-columns:1fr}
+  .tour-tabs{justify-content:flex-start}
+  .tour-tabs button.active{color:#2F80FF;border-bottom-color:#2F80FF}
+  .tx-card{border-radius:16px}
+  .tx-cd{background:#2F80FF;border-radius:8px}
+  .tx-prize b{font-size:1.45rem}
+  .tx-details{border-radius:10px;padding:12px}
+
+  /* ---- promos / market ---- */
+  .promo-grid{grid-template-columns:1fr}
+  .promo-card{border-radius:16px}
+  .promo-head small{color:#4ADE80}
+  .promo-head small.dim{color:var(--faint)}
+  .promo-enter,.promo-foot .btn-primary{background:#2F80FF!important}
+  .promo-foot{margin-top:12px;padding:12px 16px}
+  .promo-foot .showall{font-size:.85rem}
+  .promo-foot .btn-primary{flex:1;margin-left:10px;padding:13px;border-radius:12px;font-size:.9rem}
+
+  /* ---- account / profile ---- */
+  .acct-balstrip{flex-direction:column;gap:8px}
+  .acct-balstrip>div{padding:11px 14px}
+  .acct-card{padding:18px 16px;border-radius:16px}
+  .p-id{gap:12px}
+  .p-ava{width:56px;height:56px}
+  #view-account .field{position:relative;margin-bottom:16px}
+  #view-account .field>label{position:absolute;top:-8px;left:12px;background:var(--card);padding:0 7px;font-size:.68rem;z-index:1;margin:0}
+  #view-account .field input,#view-account .field select{background:transparent;border-radius:10px;padding:14px}
+  .vbadge{margin-left:0;margin-top:6px;display:inline-block}
+  .acct-cols{grid-template-columns:1fr}
+
+  /* ---- analytics ---- */
+  .an-strip{flex-direction:column;align-items:stretch;gap:0;padding:6px 16px}
+  .an-user{padding:12px 0;border-bottom:1px solid var(--line-soft)}
+  .an-cell{border-left:0;padding:10px 0;border-bottom:1px solid var(--line-soft)}
+  .an-cell small{font-size:.72rem}
+  .an-cell b{font-size:1.05rem}
+  .an-period{margin:12px 0 6px;width:100%;padding:12px;border-radius:10px}
+  .an-grid{grid-template-columns:1fr}
+  .an-duo{grid-template-columns:1fr}
+
+  /* ---- drawers become full sheets ---- */
+  .qx-more{left:0;right:0;top:0;bottom:0;width:100%;max-width:none;border-right:0;padding:14px 14px calc(20px + env(safe-area-inset-bottom));overflow-y:auto;animation:sheetup .28s both}
+  .qx-more.wide{width:100%;max-width:none}
+  @keyframes sheetup{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
+  .qx-more-head{padding:4px 2px 12px}
+  .qx-more-head h3{font-size:1.35rem}
+  .drawer-sub{font-size:.85rem;margin:-6px 2px 14px;color:var(--muted)}
+
+  /* more menu: cards + links + settings/logout + app buttons */
+  .qx-more-card{width:100%;display:flex;align-items:center;gap:13px;background:var(--card);border:1px solid var(--line-soft);border-radius:14px;padding:16px;color:var(--text);font-family:var(--font);font-size:1rem;font-weight:700;cursor:pointer;margin-bottom:10px;text-align:left}
+  .qx-more-card span{font-size:1.35rem}
+  .qx-more-card .chev{margin-left:auto;font-style:normal;color:var(--faint);font-size:1.2rem}
+  .qx-more-links{padding:6px 4px 2px;border-bottom:1px solid var(--line-soft);margin-bottom:4px}
+  .qx-more-links button{display:block;width:100%;text-align:left;background:none;border:0;color:var(--text);font-family:var(--font);font-size:.95rem;font-weight:600;padding:13px 4px;cursor:pointer}
+  .qx-more-foot{display:flex;justify-content:space-between;align-items:center;padding:14px 4px}
+  .m-set{background:none;border:0;color:#2F80FF;font-family:var(--font);font-size:.95rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;padding:8px 0}
+  .m-out{background:none;border:0;color:#F23645;font-family:var(--font);font-size:.95rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;padding:8px 0}
+  .qx-more-apps{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px}
+  .qx-more-apps button{border:0;border-radius:12px;background:rgba(47,128,255,.16);color:var(--text);font-family:var(--font);font-weight:700;font-size:.85rem;padding:14px 8px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px}
+
+  /* leaderboard rows */
+  .top-me{border-radius:14px}
+  .top-me-pl{color:#4ADE80}
+  .about-sig{margin-bottom:12px}
+  .top-row{padding:13px 8px;font-size:.88rem}
+  .top-row .rk{width:30px;height:30px;border-radius:50%;background:var(--bg-soft);display:grid;place-items:center;font-size:.78rem}
+  .top-row:nth-child(1) .rk,.top-row:nth-child(2) .rk,.top-row:nth-child(3) .rk{color:#fff;font-weight:800}
+  .top-row:nth-child(1) .rk{background:#F5B301}
+  .top-row:nth-child(2) .rk{background:#9AA5B5}
+  .top-row:nth-child(3) .rk{background:#C97B2D}
+
+  /* signals cards */
+  .sig-card{flex-direction:column;align-items:stretch;gap:10px}
+  .sig-top{margin-bottom:2px}
+  .sig-act .btn-primary{width:100%;padding:13px;font-size:.9rem;border-radius:12px}
+
+  /* help sheet */
+  #supportModal{position:fixed;inset:0;width:100%;max-width:none;border-radius:0;border:0;background:#0A1322;z-index:320;overflow-y:auto;padding:18px 16px calc(24px + env(safe-area-inset-bottom))}
+  #supportModal .sheet-head h3{font-size:1.5rem}
+  .help-cards{display:flex;flex-direction:column;gap:0;margin:8px 0 6px}
+  .help-card{display:flex;flex-direction:column;align-items:center;gap:5px;text-decoration:none;color:var(--text);font-family:var(--font);background:none;border:0;border-bottom:1px solid var(--line-soft);padding:22px 8px;cursor:pointer;width:100%}
+  .help-card:last-child{border-bottom:0}
+  .hc-ico{font-size:2.1rem;color:#2F80FF;filter:drop-shadow(0 0 12px rgba(47,128,255,.5))}
+  .help-card b{font-size:1.15rem}
+  .help-card small{color:var(--muted);font-size:.85rem}
+  .help-nofind{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;padding:22px 8px;color:var(--text);font-size:.95rem}
+  .hn-ico{font-size:1.8rem}
+  .help-nofind p{margin:0;line-height:1.6}
+  .help-nofind a{color:#2F80FF;font-weight:800;text-decoration:none}
+
+  /* trade view full-bleed on phones */
+  #view-trade .qx-tabs{top:8px;left:8px;right:8px}
+}
+
+/* ---- live feed badge + timeframe pills (Deriv chart) ---- */
+.chart-toolbar{position:absolute;top:10px;left:12px;right:12px;display:flex;align-items:center;justify-content:space-between;gap:8px;pointer-events:none;z-index:5}
+.feed-badge{pointer-events:auto;display:inline-flex;align-items:center;gap:7px;padding:5px 10px;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:.04em;background:rgba(10,12,18,.72);border:1px solid var(--line);color:#cdd3e0;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.feed-badge i{width:8px;height:8px;border-radius:50%;background:#8a93a6;flex:none}
+.feed-badge em{font-style:normal;font-weight:600;opacity:.65;font-size:10px}
+.feed-badge.b-live i{background:#22C55E;box-shadow:0 0 8px #22C55E}
+.feed-badge.b-live{color:#7ee2a0;border-color:rgba(34,197,94,.4)}
+.feed-badge.b-stale i{background:#F59E0B;box-shadow:0 0 8px #F59E0B}
+.feed-badge.b-stale{color:#fbbf24;border-color:rgba(245,158,11,.4)}
+.feed-badge.b-re i{background:#F59E0B;animation:blink 1s infinite}
+.feed-badge.b-re{color:#fbbf24;border-color:rgba(245,158,11,.4)}
+.feed-badge.b-closed i{background:#8a93a6}
+.feed-badge.b-off i{background:#F23645;box-shadow:0 0 8px #F23645}
+.feed-badge.b-off{color:#fda4af;border-color:rgba(242,54,69,.45)}
+@keyframes blink{50%{opacity:.25}}
+.tf-pills{pointer-events:auto;display:flex;gap:6px}
+.tf-pill{border:1px solid var(--line);background:rgba(10,12,18,.72);color:#cdd3e0;font-size:11px;font-weight:700;padding:5px 11px;border-radius:999px;cursor:pointer;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.tf-pill.on{background:#7a1f2b;border-color:#a02c3d;color:#fff}
+@media (hover:hover){.tf-pill:hover{border-color:#a02c3d}}

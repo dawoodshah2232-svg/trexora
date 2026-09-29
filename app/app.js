@@ -29,7 +29,7 @@
     var next = root.getAttribute("data-theme") === "light" ? "dark" : "light";
     root.setAttribute("data-theme", next);
     try { localStorage.setItem("trexora-theme", next); } catch (e) {}
-    if (state.assetId) loadChart();
+    applyChartTheme();
   }
   $("themeToggle2").addEventListener("click", toggleTheme);
   $("logoutBtn").addEventListener("click", function () {
@@ -104,6 +104,17 @@
     if (p == null) return "—";
     return a.kind === "fiat" ? p.toFixed(5) : TX.fmt(p);
   }
+  /* THE price: Deriv's live quote is the single truth for ticket, chart, and
+   * settlement. CoinGecko (TX.priceOf) is only a fallback so the UI never
+   * shows "—" when the socket is briefly down. */
+  function pxOf(a) {
+    if (!a) return null;
+    if (window.DerivFeed) {
+      var p = DerivFeed.priceOf(a.id);
+      if (p != null) return p;
+    }
+    return TX.priceOf(a);
+  }
   function enabledAssets() { return store.assets.filter(function (a) { return a.enabled; }); }
   function getAsset(id) {
     for (var i = 0; i < store.assets.length; i++) if (store.assets[i].id === id) return store.assets[i];
@@ -119,7 +130,7 @@
       t.className = "qx-tab" + (id === state.assetId ? " active" : "");
       t.innerHTML =
         '<span class="qt-ico">' + TX.assetIconHTML(a) + "</span>" +
-        '<span class="qt-t"><b>' + TX.esc(a.name) + '</b><small data-px="' + a.id + '">' + fmtPrice(a, TX.priceOf(a)) + "</small></span>" +
+        '<span class="qt-t"><b>' + TX.esc(a.name) + '</b><small data-px="' + a.id + '">' + fmtPrice(a, pxOf(a)) + "</small></span>" +
         '<span class="qt-pay">' + a.payout + '%</span>' +
         (state.tabs.length > 1 ? '<button class="qt-x" type="button" aria-label="Close tab">✕</button>' : "");
       t.addEventListener("click", function (e) {
@@ -174,7 +185,7 @@
       b.innerHTML =
         '<span class="ar-icon">' + TX.assetIconHTML(a) + "</span>" +
         '<span class="ar-names"><strong>' + TX.esc(a.name) + "</strong><small>" + TX.esc(assetSub(a)) + " · " + TX.esc(assetCat(a)) + "</small></span>" +
-        '<span class="ar-right"><span class="ar-price" data-px="' + a.id + '">' + fmtPrice(a, TX.priceOf(a)) + '</span><br><span class="ar-payout">' + a.payout + "%</span></span>";
+        '<span class="ar-right"><span class="ar-price" data-px="' + a.id + '">' + fmtPrice(a, pxOf(a)) + '</span><br><span class="ar-payout">' + a.payout + "%</span></span>";
       b.addEventListener("click", function () {
         if (state.sheetMode === "add") {
           if (state.tabs.indexOf(a.id) === -1) {
@@ -222,50 +233,131 @@
     renderTradeBar();
   }
 
-  /* ---------- TradingView chart ---------- */
-  var tvLoading = false;
-  var tvQueue = [];
-  function ensureTV(cb) {
-    if (typeof TradingView !== "undefined") { cb(true); return; }
-    tvQueue.push(cb);
-    if (tvLoading) return;
-    tvLoading = true;
-    var done = false;
-    function fin(ok) { if (!done) { done = true; tvLoading = false; var q = tvQueue; tvQueue = []; q.forEach(function (fn) { try { fn(ok); } catch (e) {} }); } }
-    var s = document.createElement("script");
-    s.src = "https://s3.tradingview.com/tv.js";
-    s.async = true;
-    s.onload = function () { fin(typeof TradingView !== "undefined"); };
-    s.onerror = function () { fin(false); };
-    document.head.appendChild(s);
-    setTimeout(function () { fin(typeof TradingView !== "undefined"); }, 15000);
+  /* ---------- live chart: Lightweight Charts (bundled, offline-safe) + Deriv feed ----------
+   * One price path: DerivFeed owns quotes, candles, and settlement prices.
+   * The chart renders Deriv's own candles (seconds timestamps, exchange-direct),
+   * and the badge next to it always tells the truth about the feed state. */
+  var chartTF = 60; /* seconds: 60=M1 300=M5 900=M15 */
+  var lwChart = null, lwSeries = null, chartAssetId = null, chartGran = 0;
+  var TFS = [{ g: 60, l: "M1" }, { g: 300, l: "M5" }, { g: 900, l: "M15" }];
+
+  function chartTheme() {
+    var light = root.getAttribute("data-theme") === "light";
+    return {
+      layout: { background: { type: "solid", color: "transparent" }, textColor: light ? "#3a3f4b" : "#9aa3b2", attributionLogo: true },
+      grid: { vertLines: { color: light ? "rgba(0,0,0,0.06)" : "rgba(255,255,255,0.06)" }, horzLines: { color: light ? "rgba(0,0,0,0.06)" : "rgba(255,255,255,0.06)" } },
+      timeScale: { borderColor: light ? "rgba(0,0,0,0.12)" : "rgba(255,255,255,0.12)", timeVisible: true, secondsVisible: false },
+      rightPriceScale: { borderColor: light ? "rgba(0,0,0,0.12)" : "rgba(255,255,255,0.12)" },
+      crosshair: { vertLine: { color: light ? "#9aa3b2" : "#5b6472", labelBackgroundColor: "#7a1f2b" }, horzLine: { color: light ? "#9aa3b2" : "#5b6472", labelBackgroundColor: "#7a1f2b" } }
+    };
+  }
+  function applyChartTheme() {
+    if (!lwChart) return;
+    try { lwChart.applyOptions(chartTheme()); } catch (e) {}
+  }
+  function ensureChart() {
+    var el = $("tv_chart");
+    if (!window.LightweightCharts) { el.innerHTML = ""; $("chartFallback").hidden = false; return false; }
+    $("chartFallback").hidden = true;
+    if (lwChart && chartAssetId === state.assetId && chartGran === chartTF) return true;
+    try { if (lwChart) { lwChart.remove(); } } catch (e) {}
+    lwChart = null; lwSeries = null;
+    el.innerHTML = "";
+    try {
+      lwChart = LightweightCharts.createChart(el, Object.assign({ width: el.clientWidth || 320, height: el.clientHeight || 300 }, chartTheme()));
+      lwSeries = lwChart.addSeries(LightweightCharts.CandlestickSeries, {
+        upColor: "#22C55E", downColor: "#F23645",
+        wickUpColor: "#22C55E", wickDownColor: "#F23645",
+        borderVisible: false, priceLineVisible: true, lastValueVisible: true
+      });
+      lwChart.timeScale().scrollToRealTime();
+      new ResizeObserver(function () {
+        try { lwChart.applyOptions({ width: el.clientWidth, height: el.clientHeight }); } catch (e) {}
+      }).observe(el);
+    } catch (e) { el.innerHTML = ""; $("chartFallback").hidden = false; return false; }
+    chartAssetId = state.assetId; chartGran = chartTF;
+    renderTfPills();
+    return true;
+  }
+  function renderTfPills() {
+    var box = $("tfPills");
+    if (!box) return;
+    box.innerHTML = "";
+    TFS.forEach(function (t) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "tf-pill" + (t.g === chartTF ? " on" : "");
+      b.textContent = t.l;
+      b.addEventListener("click", function () {
+        if (chartTF === t.g) return;
+        if (chartAssetId) DerivFeed.unwatch(chartAssetId, chartTF);
+        chartTF = t.g;
+        loadChart();
+      });
+      box.appendChild(b);
+    });
+  }
+  function paintCandles(assetId, gran, candles, full) {
+    if (!lwSeries || assetId !== chartAssetId || gran !== chartGran) return;
+    try {
+      if (full) { lwSeries.setData(candles); }
+      else if (candles.length) { lwSeries.update(candles[candles.length - 1]); }
+    } catch (e) {}
   }
   function loadChart() {
     var a = getAsset(state.assetId);
-    if (!a) return;
-    var el = $("tv_chart");
-    $("chartFallback").hidden = true;
-    el.innerHTML = '<div class="chart-loading"><span class="spin"></span>Loading live chart…</div>';
-    ensureTV(function (ok) {
-      if (!ok || getAsset(state.assetId) !== a) { if (!ok) { el.innerHTML = ""; $("chartFallback").hidden = false; } return; }
-      try {
-        el.innerHTML = "";
-        new TradingView.widget({
-          autosize: true,
-          symbol: a.tv,
-          interval: "5",
-          timezone: "Asia/Dubai",
-          theme: root.getAttribute("data-theme") === "light" ? "light" : "dark",
-          style: "1",
-          locale: "en",
-          enable_publishing: false,
-          allow_symbol_change: false,
-          hide_volume: false,
-          container_id: "tv_chart"
-        });
-      } catch (e) { el.innerHTML = ""; $("chartFallback").hidden = false; }
+    if (!a || !window.DerivFeed) return;
+    if (!DerivFeed.symbols[a.id]) { /* asset without a Deriv mapping: honest fallback */
+      var el = $("tv_chart");
+      el.innerHTML = "";
+      $("chartFallback").hidden = false;
+      renderFeedBadge(a.id, chartTF, { state: "OFFLINE", source: "Deriv", updatedAt: 0 });
+      return;
+    }
+    var prevId = chartAssetId, prevGran = chartGran;
+    if (!ensureChart()) return;
+    if (prevId && (prevId !== a.id || prevGran !== chartTF)) DerivFeed.unwatch(prevId, prevGran);
+    // seed instantly from cache, then live
+    var cached = DerivFeed.candlesOf(a.id, chartTF);
+    if (cached.length) paintCandles(a.id, chartTF, cached, true);
+    DerivFeed.watch(a.id, chartTF);
+    chartAssetId = a.id; chartGran = chartTF;
+    var st = DerivFeed.stateOf(a.id, chartTF);
+    renderFeedBadge(a.id, chartTF, st);
+    if (st.state === "LIVE") {
+      var live = DerivFeed.candlesOf(a.id, chartTF);
+      if (live.length) paintCandles(a.id, chartTF, live, true);
+    }
+  }
+  /* feed -> chart + price displays */
+  if (window.DerivFeed) {
+    DerivFeed.on("candles", function (ev) {
+      paintCandles(ev.assetId, ev.gran, ev.candles, ev.full);
+      if (ev.assetId === state.assetId) refreshPx();
+    });
+    DerivFeed.on("state", function (ev) {
+      if (ev.assetId === state.assetId && ev.gran === chartTF) renderFeedBadge(ev.assetId, ev.gran, ev);
     });
   }
+  var BADGE_TXT = { LOADING: "Connecting…", LIVE: "LIVE", STALE: "STALE", RECONNECTING: "RECONNECTING", CLOSED: "CLOSED", OFFLINE: "OFFLINE" };
+  var BADGE_CLS = { LOADING: "b-load", LIVE: "b-live", STALE: "b-stale", RECONNECTING: "b-re", CLOSED: "b-closed", OFFLINE: "b-off" };
+  function renderFeedBadge(assetId, gran, st) {
+    var b = $("feedBadge");
+    if (!b) return;
+    st = st || { state: "LOADING", source: "Deriv", updatedAt: 0, attempts: 0 };
+    var ago = st.updatedAt ? Math.max(0, Math.round((Date.now() - st.updatedAt) / 1000)) : -1;
+    var extra = "";
+    if (st.state === "LIVE" && ago >= 0) extra = " · " + ago + "s ago";
+    else if (st.state === "STALE" && ago >= 0) extra = " · " + ago + "s without tick";
+    else if (st.state === "RECONNECTING" && st.attempts > 0) extra = " · try " + st.attempts;
+    else if (st.state === "CLOSED") extra = " · market closed";
+    b.className = "feed-badge " + (BADGE_CLS[st.state] || "b-load");
+    b.innerHTML = '<i></i><span>' + TX.esc(BADGE_TXT[st.state] || st.state) + extra + '</span><em>' + TX.esc(st.source || "Deriv") + "</em>";
+    b.title = "Price source: " + (st.source || "Deriv") + (st.updatedAt ? " · last update " + new Date(st.updatedAt).toLocaleTimeString("en-GB") : "");
+  }
+  setInterval(function () {
+    if (state.assetId && window.DerivFeed) renderFeedBadge(state.assetId, chartTF, DerivFeed.stateOf(state.assetId, chartTF));
+  }, 2000);
   $("chartRetry").addEventListener("click", loadChart);
   $("chartReload").addEventListener("click", loadChart);
 
@@ -273,7 +365,7 @@
   function refreshPx() {
     document.querySelectorAll("[data-px]").forEach(function (el) {
       var a = getAsset(el.getAttribute("data-px"));
-      if (a) el.textContent = fmtPrice(a, TX.priceOf(a));
+      if (a) el.textContent = fmtPrice(a, pxOf(a));
     });
   }
   function refreshPrices() {
@@ -301,7 +393,7 @@
     if (!cv) return;
     var a = getAsset(state.assetId);
     if (!a) return;
-    var px = TX.priceOf(a);
+    var px = pxOf(a);
     if (px != null) pushPx(a.id, px);
     var h = pxHist[a.id] || [];
     var pxEl = $("qpMiniPx"), chgEl = $("qpMiniChg");
@@ -439,7 +531,7 @@
     if (openN >= maxOpen) { toast("Position limit reached (" + maxOpen + " open). Close one first."); return; }
     toast("Locking live price…");
     TX.refreshPrices(true).then(function (ok) {
-      var entry = TX.priceOf(a);
+      var entry = pxOf(a);
       if (!ok || entry == null) { toast("Live price unavailable — try again."); return; }
       user.balance = Math.round((user.balance - amt) * 100) / 100;
       var now = Date.now();
@@ -514,7 +606,7 @@
       var t = null;
       for (var i = 0; i < store.trades.length; i++) if (store.trades[i].id === el.getAttribute("data-live")) t = store.trades[i];
       if (!t) return;
-      var a = getAsset(t.assetId), cur = a ? TX.priceOf(a) : null;
+      var a = getAsset(t.assetId), cur = a ? pxOf(a) : null;
       if (cur == null || t.entryPrice == null) { el.className = "pos-live flat"; return; }
       var winning = t.dir === "up" ? cur > t.entryPrice : cur < t.entryPrice;
       var tied = cur === t.entryPrice;
@@ -600,7 +692,7 @@
     if (!t || t.status !== "open") return;
     TX.refreshPrices(true).then(function (ok) {
       var a = getAsset(t.assetId);
-      var cur = a ? TX.priceOf(a) : null;
+      var cur = a ? pxOf(a) : null;
       if (!ok || cur == null) { toast("Live price unavailable — try again."); return; }
       var total = t.expiresAt - t.openedAt, elapsed = Math.min(Math.max(Date.now() - t.openedAt, 0), total);
       var frac = total > 0 ? elapsed / total : 1;
@@ -627,7 +719,7 @@
       var changed = false;
       due.forEach(function (t) {
         var a = getAsset(t.assetId);
-        var exit = a ? TX.priceOf(a) : null;
+        var exit = a ? pxOf(a) : null;
         if (!ok || exit == null) {
           t.retries = (t.retries || 0) + 1;
           if (t.retries >= 8) {
@@ -726,7 +818,7 @@
       d.innerHTML =
         '<span class="ar-icon">' + TX.assetIconHTML(a) + "</span>" +
         '<span class="mkt-t"><b>' + TX.esc(a.name) + "</b><small>" + TX.esc(assetSub(a)) + "</small>" +
-        '<strong class="mkt-px">' + fmtPrice(a, TX.priceOf(a)) + "</strong></span>" +
+        '<strong class="mkt-px">' + fmtPrice(a, pxOf(a)) + "</strong></span>" +
         '<span class="mkt-r"><span class="ar-payout">' + a.payout + '%</span><button class="btn btn-primary btn-sm" type="button">Trade</button></span>';
       d.querySelector("button").addEventListener("click", function () {
         if (state.tabs.indexOf(a.id) === -1) { state.tabs.push(a.id); if (state.tabs.length > 6) state.tabs.shift(); }
@@ -786,6 +878,7 @@
     });
     $("tourAvailN").textContent = avail;
     $("tourActiveN").textContent = TOURS.length;
+    var mtb = $("mbTourBadge"); if (mtb) { mtb.textContent = TOURS.length; mtb.hidden = false; }
     grid.querySelectorAll("[data-td]").forEach(function (b) {
       b.addEventListener("click", function () { openTourModal(b.getAttribute("data-td")); });
     });
@@ -1178,6 +1271,7 @@
     });
     var mb = $("marketBadge");
     mb.textContent = avail; mb.style.display = avail ? "" : "none";
+    var mmb = $("mbMoreBadge"); if (mmb) { mmb.textContent = avail; mmb.hidden = avail ? false : true; }
     grid.querySelectorAll("[data-puse]").forEach(function (b) {
       b.addEventListener("click", function () { applyPromo(b.getAttribute("data-puse")); });
     });
@@ -1237,7 +1331,7 @@
       '<div class="sig-act"><button class="btn btn-primary btn-sm" type="button" data-sigtrade>Place Trade</button><small class="kyc-demo">Demo signal — paper trade only.</small></div>';
     d.querySelector("[data-sigtrade]").addEventListener("click", function () {
       var idx = EXP_L.indexOf(s.deal); if (idx < 0) idx = 2;
-      state.expIdx = idx; state.amount = 1;
+      state.expIdx = idx; /* keep the user's current investment amount — do not reset it */
       selectAsset(s.assetId); updatePreview();
       $("sigBack").hidden = true; $("sigDrawer").hidden = true;
       showView("trade");
@@ -1343,8 +1437,18 @@
       else if (g === "settings") openSettings();
       else if (g === "market") { showView("market"); paintAcctTabs("market"); }
       else if (g === "history") { showView("analytics"); paintAcctTabs("analytics"); }
+      else if (g === "deposit" || g === "payments") { showAccountTab("payments"); }
+      else if (g === "withdrawal") { showAccountTab("withdrawal"); }
+      else if (g === "trades") { showView("history"); }
     });
   });
+  /* mobile bottom bar: help + more have no view of their own */
+  var mbH = $("mbHelp"); if (mbH) mbH.addEventListener("click", openSupport);
+  var mbM = $("mbMore"); if (mbM) mbM.addEventListener("click", openMore);
+  var mOut = $("mLogout"); if (mOut) mOut.addEventListener("click", function () { TX.setClientSession(null); window.location.replace("login.html"); });
+  var iApp = $("installApp"); if (iApp) iApp.addEventListener("click", function () { toast("The demo app is not published yet — the web terminal works everywhere."); });
+  var jUs = $("joinUs"); if (jUs) jUs.addEventListener("click", function () { toast("Trexora demo — community links coming soon."); });
+  var hTut = $("helpTutorials"); if (hTut) hTut.addEventListener("click", function () { closeSupport(); startTour(); });
 
   /* ---------- analytics ---------- */
   function svgLine(pts, w, h) {
@@ -1494,7 +1598,7 @@
     $("welcStart").addEventListener("click", function () { hideWelc(); startTour(); });
 
     var STEPS = [
-      { sel: "chartBox", t: "Live chart", d: "This is the real TradingView chart. Watch price action and pick your moment." },
+      { sel: "chartBox", t: "Live chart", d: "Real Deriv market candles, updating tick-by-tick. The badge shows the live feed state." },
       { sel: "expStep", t: "Set the time", d: "Pick how long your trade runs — from 15 seconds up to 4 hours." },
       { sel: "amtStep", t: "Set the investment", d: "Choose your stake with the stepper or the quick amount chips." },
       { sel: "tradeBtns", t: "Up or Down", d: "Think the price will rise? Tap Up. Fall? Tap Down. Your payout shows right above." },
@@ -1545,6 +1649,8 @@
   renderBalance();
   var ea = enabledAssets();
   state.tabs = ea.slice(0, 3).map(function (a) { return a.id; });
+  /* live Deriv feed: single price truth for chart, ticket, and settlement */
+  if (window.DerivFeed) DerivFeed.start();
   selectAsset(state.tabs[0]);
   updatePreview();
   renderPositions();
