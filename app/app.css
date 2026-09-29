@@ -7,8 +7,9 @@
 .back-link:hover{color:var(--text)}
 .balance-pill{margin-left:auto;display:flex;align-items:center;gap:8px;background:var(--gold-soft);border:1px solid var(--line);border-radius:999px;padding:7px 14px;font-weight:750;font-size:.92rem}
 .balance-pill small{font-weight:600;color:var(--muted);font-size:.68rem;letter-spacing:.08em}
-.icon-btn{width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:transparent;color:var(--text);display:grid;place-items:center;cursor:pointer;font-size:.85rem;font-weight:700}
-.icon-btn:hover{border-color:var(--brand)}
+.icon-btn{width:36px;height:36px;flex:none;aspect-ratio:1/1;padding:0;border-radius:50%;border:1px solid var(--line);background:transparent;color:var(--text);display:grid;place-items:center;cursor:pointer;font-size:.85rem;font-weight:700;-webkit-tap-highlight-color:transparent}
+@media(hover:hover){.icon-btn:hover{border-color:var(--brand)}}
+.icon-btn:active{transform:scale(.92)}
 .maint-banner{background:#7f1d1d;color:#ffe9ec;text-align:center;font-size:.82rem;padding:8px 14px;font-weight:600}
 
 /* Auth */
