@@ -92,7 +92,7 @@
       var o = i===0 ? c : prices[i-1];
       var hi = Math.max(o,c) + rnd()*1.4, lo = Math.min(o,c) - rnd()*1.4;
       var x = pad + i*cw + cw/2, up = c >= o;
-      var col = up ? '#22C55E' : '#F23645';
+      var col = up ? '#2F80FF' : '#F23645';
       var wick = document.createElementNS(NS,'line');
       wick.setAttribute('x1',x); wick.setAttribute('x2',x);
       wick.setAttribute('y1',y(hi)); wick.setAttribute('y2',y(lo));
@@ -114,7 +114,6 @@
     lp.setAttribute('stroke-width','1.4'); lp.setAttribute('opacity','.8');
     svg.appendChild(lp);
   }
-  drawCandles(document.getElementById('heroChart'), 20260929, 560, 220, 34);
   drawCandles(document.getElementById('phoneChart'), 777, 300, 150, 22);
   drawCandles(document.getElementById('appChart'), 4242, 300, 150, 22);
 
@@ -143,7 +142,7 @@
     update();
   })();
   (function heroBg(){
-    /* One-color "video" backdrop: Trexora-red candles streaming right -> left,
+    /* One-color "video" backdrop: brand-blue candles streaming right -> left,
        two parallax layers for depth. Pure canvas, 60fps, pauses off-screen. */
     var cv = document.getElementById('heroBg');
     if (!cv || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
@@ -233,4 +232,162 @@
       });
     }
   }catch(e){/* demo frame stays as a styled placeholder */}
+
+  /* ============ Trexora 2.0 ============ */
+  var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* Navbar: glass pill gains background on scroll */
+  (function navScroll(){
+    var header = document.querySelector('.site-header');
+    if(!header) return;
+    function upd(){ header.classList.toggle('scrolled', (window.scrollY || 0) > 24); }
+    window.addEventListener('scroll', upd, {passive:true});
+    upd();
+  })();
+
+  /* "More" dropdown — click support for touch */
+  (function navMore(){
+    var wrap = document.querySelector('.nav-more');
+    var btn = document.querySelector('.nav-more-btn');
+    if(!wrap || !btn) return;
+    btn.addEventListener('click', function(e){
+      e.stopPropagation();
+      var open = wrap.classList.toggle('open');
+      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+    document.addEventListener('click', function(){ wrap.classList.remove('open'); });
+  })();
+
+  /* Stagger grid reveals */
+  document.querySelectorAll('.ind-grid,.feat-grid,.trust-grid,.mkt-pills').forEach(function(grid){
+    grid.querySelectorAll('.reveal').forEach(function(el,i){
+      el.style.setProperty('--d', Math.min(i * 0.08, 0.4).toFixed(2) + 's');
+    });
+  });
+
+  /* Vertical stat ticker — seamless loop */
+  (function vTicker(){
+    var list = document.querySelector('.vticker-list');
+    if(!list || reduceMotion) return;
+    var n = list.children.length, i = 0, H = 68;
+    list.innerHTML += list.innerHTML;
+    setInterval(function(){
+      i++;
+      list.style.transform = 'translateY(' + (-i * H) + 'px)';
+      if(i >= n){
+        setTimeout(function(){
+          list.style.transition = 'none';
+          i = 0;
+          list.style.transform = 'translateY(0)';
+          void list.offsetHeight;
+          list.style.transition = '';
+        }, 700);
+      }
+    }, 3000);
+  })();
+
+  /* Markets tabs — auto-rotate ~5s, click to jump */
+  (function markets(){
+    var MKTS = {
+      forex:  {name:'Forex',  desc:'Majors and minors with tight fixed payouts — the most traded market in the world, on your screen in one tap.', pair:'EUR/USD', pay:'82%', seed:11, pills:[['EUR/USD','82%'],['GBP/USD','80%'],['USD/JPY','79%'],['AUD/USD','78%']]},
+      crypto: {name:'Crypto', desc:'Bitcoin, Ethereum and more — trade crypto 24/7: nights, weekends and holidays.', pair:'BTC/USD', pay:'85%', seed:22, pills:[['BTC/USD','85%'],['ETH/USD','84%'],['SOL/USD','83%'],['XRP/USD','82%']]},
+      metals: {name:'Metals', desc:'Gold and silver — classic safe-haven instruments with fixed payouts on every trade.', pair:'XAU/USD', pay:'78%', seed:33, pills:[['XAU/USD','78%'],['XAG/USD','76%']]},
+      indices:{name:'Indices',desc:'US30, NAS100 and S&P 500 — trade the whole market in a single position.', pair:'US30', pay:'81%', seed:44, pills:[['US30','81%'],['NAS100','80%'],['SPX500','79%']]}
+    };
+    var tabs = document.querySelectorAll('.mkt-tab');
+    if(!tabs.length) return;
+    var order = ['forex','crypto','metals','indices'], idx = 0, timer = null;
+    function show(key){
+      var m = MKTS[key]; if(!m) return;
+      tabs.forEach(function(t){
+        var on = t.getAttribute('data-mkt') === key;
+        t.classList.toggle('active', on);
+        t.setAttribute('aria-selected', on ? 'true' : 'false');
+      });
+      document.getElementById('mktName').textContent = m.name;
+      document.getElementById('mktDesc').textContent = m.desc;
+      document.getElementById('mktPair').textContent = m.pair;
+      document.getElementById('mktPay').textContent = m.pay;
+      document.getElementById('mktPills').innerHTML = m.pills.map(function(p,i){
+        return '<span class="mkt-pill" style="animation-delay:' + (i*0.06).toFixed(2) + 's"><b>' + p[1] + '</b>' + p[0] + '</span>';
+      }).join('');
+      var svg = document.getElementById('mktChart');
+      if(svg){ svg.innerHTML = ''; drawCandles(svg, m.seed, 300, 150, 22); }
+      idx = order.indexOf(key);
+    }
+    function auto(){ timer = setInterval(function(){ show(order[(idx+1) % order.length]); }, 5000); }
+    tabs.forEach(function(t){
+      t.addEventListener('click', function(){ clearInterval(timer); show(t.getAttribute('data-mkt')); auto(); });
+    });
+    show('forex'); auto();
+  })();
+
+  /* Hero phone — live-animated mini candlesticks (blue up / red down) */
+  (function heroPhoneChart(){
+    var cv = document.getElementById('heroPhoneChart');
+    if(!cv || reduceMotion) return;
+    var ctx = cv.getContext('2d');
+    var W = 0, H = 150, dpr = Math.min(window.devicePixelRatio || 1, 2);
+    var CW = 15, BW = 8, candles = [], price = 100, px = 0, t = 0, visible = true;
+    function newCandle(){
+      var o = price;
+      var c = o + (Math.random() - 0.5) * 3.4 + Math.sin(t / 9) * 0.5;
+      var h = Math.max(o,c) + Math.random() * 1.6, l = Math.min(o,c) - Math.random() * 1.6;
+      price = c; t++;
+      return {o:o,h:h,l:l,c:c};
+    }
+    function seed(){ candles = []; price = 100; t = 0; px = 0; var n = Math.ceil(W / CW) + 4; for(var i=0;i<n;i++) candles.push(newCandle()); }
+    function resize(){
+      W = Math.max(1, cv.parentElement.clientWidth);
+      cv.width = W * dpr; cv.height = H * dpr;
+      ctx.setTransform(dpr,0,0,dpr,0,0);
+      seed();
+    }
+    function frame(){
+      if(!visible || document.hidden){ requestAnimationFrame(frame); return; }
+      px += 0.55;
+      if(px >= CW){ px -= CW; candles.push(newCandle()); }
+      while(candles.length > Math.ceil(W / CW) + 6) candles.shift();
+      var n = candles.length, i, cd, min = Infinity, max = -Infinity;
+      for(i=0;i<n;i++){ cd=candles[i]; if(cd.l<min)min=cd.l; if(cd.h>max)max=cd.h; }
+      var pad = (max-min)*0.35 || 1; min-=pad; max+=pad;
+      function y(p){ return 8 + (1-(p-min)/(max-min)) * (H-16); }
+      ctx.clearRect(0,0,W,H);
+      ctx.strokeStyle = 'rgba(140,175,255,.09)'; ctx.lineWidth = 1;
+      for(var g=1;g<4;g++){ var gy = 8 + g*(H-16)/4; ctx.beginPath(); ctx.moveTo(0,gy); ctx.lineTo(W,gy); ctx.stroke(); }
+      for(i=0;i<n;i++){
+        cd = candles[i];
+        var x = W - (n-1-i)*CW - px, xc = x + BW/2;
+        if(x < -CW || x > W+CW) continue;
+        var up = cd.c >= cd.o, col = up ? '#2F80FF' : '#F23645';
+        ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = 1.4;
+        ctx.beginPath(); ctx.moveTo(xc,y(cd.h)); ctx.lineTo(xc,y(cd.l)); ctx.stroke();
+        var yo=y(cd.o), yc=y(cd.c);
+        ctx.fillRect(x, Math.min(yo,yc), BW, Math.max(2,Math.abs(yc-yo)));
+      }
+      requestAnimationFrame(frame);
+    }
+    resize();
+    window.addEventListener('resize', resize);
+    if('IntersectionObserver' in window){ new IntersectionObserver(function(en){ visible = en[0].isIntersecting; },{threshold:0}).observe(cv); }
+    requestAnimationFrame(frame);
+  })();
+
+  /* Hero phone — subtle mouse parallax (fine pointers only) */
+  (function heroParallaxPhone(){
+    var phone = document.getElementById('heroPhone');
+    var hero = document.querySelector('.hero');
+    if(!phone || !hero || reduceMotion) return;
+    if(!window.matchMedia('(pointer:fine)').matches) return;
+    hero.addEventListener('mousemove', function(e){
+      var r = hero.getBoundingClientRect();
+      var x = (e.clientX - r.left) / r.width - 0.5, y = (e.clientY - r.top) / r.height - 0.5;
+      phone.style.setProperty('--px', (x * 16).toFixed(1) + 'px');
+      phone.style.setProperty('--py', (y * 12).toFixed(1) + 'px');
+    });
+    hero.addEventListener('mouseleave', function(){
+      phone.style.setProperty('--px', '0px');
+      phone.style.setProperty('--py', '0px');
+    });
+  })();
 })();

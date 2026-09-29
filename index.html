@@ -16,7 +16,7 @@
 <meta name="twitter:title" content="Trexora — Binary Options Trading Platform">
 <meta name="twitter:description" content="Up or Down. You call it. 410+ instruments, free demo, fast withdrawals.">
 <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
-<link rel="stylesheet" href="styles.css?v=20260929p">
+<link rel="stylesheet" href="styles.css?v=20260929t2">
 <script>try{var t=localStorage.getItem('trexora-theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}</script>
 </head>
 <body>
@@ -33,24 +33,26 @@
       <img class="logo logo-dark" src="assets/logo-dark.svg" alt="Trexora" width="132" height="37">
       <img class="logo logo-light" src="assets/logo-light.svg" alt="Trexora" width="132" height="37">
     </a>
-    <nav class="main-nav" id="mainNav" aria-label="Primary">
+    <nav class="nav-pill" id="mainNav" aria-label="Primary">
       <a href="platform.html">Platform</a>
       <a href="markets.html">Markets</a>
       <a href="tournaments.html">Tournaments</a>
-      <a href="affiliate.html">Affiliate</a>
       <a href="faq.html">FAQ</a>
-      <span class="drawer-label" aria-hidden="true">More</span>
-      <span class="drawer-more">
-      <a href="signals.html">Signals</a>
-      <a href="indicators.html">Indicators</a>
-      <a href="demo.html">Demo account</a>
-      <a href="promotions.html">Promotions</a>
-      <a href="payments.html">Payments</a>
-      <a href="mobile-app.html">Mobile app</a>
-      <a href="blog.html">Blog</a>
-      <a href="about.html">About</a>
-      <a href="support.html">Support</a>
-      </span>
+      <div class="nav-more">
+        <button class="nav-more-btn" type="button" aria-haspopup="true" aria-expanded="false">More <span aria-hidden="true">▾</span></button>
+        <div class="nav-more-menu" role="menu">
+          <a href="signals.html" role="menuitem">Signals</a>
+          <a href="indicators.html" role="menuitem">Indicators</a>
+          <a href="demo.html" role="menuitem">Demo account</a>
+          <a href="promotions.html" role="menuitem">Promotions</a>
+          <a href="payments.html" role="menuitem">Payments</a>
+          <a href="mobile-app.html" role="menuitem">Mobile app</a>
+          <a href="affiliate.html" role="menuitem">Affiliate</a>
+          <a href="blog.html" role="menuitem">Blog</a>
+          <a href="about.html" role="menuitem">About</a>
+          <a href="support.html" role="menuitem">Support</a>
+        </div>
+      </div>
       <span class="drawer-label" aria-hidden="true">Account</span>
       <span class="drawer-more drawer-account">
         <a href="app/login.html">Log in</a>
@@ -59,8 +61,8 @@
     </nav>
     <div class="header-actions">
       <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme"><span class="sun">☀</span><span class="moon">☾</span></button>
-      <a class="btn btn-ghost btn-sm header-login" href="app/login.html">Log in</a>
-      <a class="btn btn-primary btn-sm" href="app/signup.html">Sign up</a>
+      <a class="btn btn-ghost btn-sm header-login" href="app/login.html">Sign in</a>
+      <a class="btn btn-primary btn-sm" href="app/signup.html">Start trading free</a>
       <button class="nav-toggle" id="navToggle" aria-label="Open menu" aria-expanded="false">
         <span></span><span></span><span></span>
       </button>
@@ -72,6 +74,8 @@
 <main>
   <!-- HERO -->
   <section class="hero">
+    <div class="hero-photo" aria-hidden="true"></div>
+    <div class="hero-scrim" aria-hidden="true"></div>
     <canvas class="hero-bg" id="heroBg" aria-hidden="true"></canvas>
     <div class="hero-inner">
       <div class="hero-copy reveal">
@@ -82,11 +86,6 @@
           <a class="btn btn-primary btn-lg" href="app/signup.html">Start trading free</a>
           <a class="btn btn-outline btn-lg" href="#platform">See how it works</a>
         </div>
-        <ul class="hero-points">
-          <li><strong>410+</strong> instruments</li>
-          <li><strong>$10</strong> min. deposit</li>
-          <li><strong>Free</strong> demo account</li>
-        </ul>
         <div class="pay-badges" aria-label="Accepted payment methods">
           <span class="pay-badge pay-visa">VISA</span>
           <span class="pay-badge pay-mc"><i></i><i></i><em>Mastercard</em></span>
@@ -96,28 +95,32 @@
         <p class="pay-note">Cards, crypto and bank transfer at the cashier — more providers connect as we launch.</p>
       </div>
       <div class="hero-visual reveal">
-        <div class="terminal-card" aria-label="Trexora trading terminal preview">
-          <div class="terminal-top">
-            <div class="asset-chip"><span class="pair">EUR/USD</span><span class="payout">82% payout</span></div>
-            <div class="live-badge"><span class="pulse"></span>Live</div>
-          </div>
-          <svg class="chart" id="heroChart" viewBox="0 0 560 220" role="img" aria-label="Candlestick price chart illustration"></svg>
-          <div class="terminal-expiry">
-            <button class="exp-pill active" type="button">1m</button>
-            <button class="exp-pill" type="button">5m</button>
-            <button class="exp-pill" type="button">15m</button>
-            <button class="exp-pill" type="button">1h</button>
-          </div>
-          <div class="terminal-trade">
-            <div class="amount-box"><label>Amount</label><span>$50</span></div>
-            <div class="amount-box"><label>Return</label><span class="gold">$91.00</span></div>
-          </div>
-          <div class="terminal-actions">
-            <button class="btn-trade up" type="button">▲ Up</button>
-            <button class="btn-trade down" type="button">▼ Down</button>
+        <div class="phone-mock hero-phone" id="heroPhone" aria-label="Trexora terminal preview">
+          <div class="phone-notch"></div>
+          <div class="phone-screen">
+            <div class="hp-top">
+              <div class="hp-asset"><span class="hp-pair">EUR/USD</span><span class="hp-pay">82%</span></div>
+              <div class="live-badge"><span class="pulse"></span>Live</div>
+            </div>
+            <div class="hp-chart-wrap"><canvas id="heroPhoneChart" aria-hidden="true"></canvas></div>
+            <div class="hp-grid">
+              <div><small>Expiry</small><strong>1 min</strong></div>
+              <div><small>Amount</small><strong>$50</strong></div>
+              <div><small>Payout</small><strong class="hp-win">$91.00</strong></div>
+            </div>
+            <div class="phone-actions">
+              <button type="button" class="btn-trade up sm" tabindex="-1">▲ Up</button>
+              <button type="button" class="btn-trade down sm" tabindex="-1">▼ Down</button>
+            </div>
+            <p class="hp-note">Demo preview — virtual funds</p>
           </div>
         </div>
       </div>
+    </div>
+    <div class="hero-trust" aria-label="Platform highlights">
+      <span><strong>Free</strong> $10,000 demo</span>
+      <span><strong>Real</strong> TradingView data</span>
+      <span><strong>No</strong> deposit to start</span>
     </div>
   </section>
 
@@ -148,13 +151,58 @@
     </div>
   </div>
 
-  <!-- STATS BAND -->
+  <!-- STAT TICKER — honest platform highlights, auto-cycling -->
   <section class="stats-band">
-    <div class="wrap stats-grid">
-      <div class="stat reveal"><span class="stat-ic" aria-hidden="true"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="M7 14l4-4 3 3 5-6"/></svg></span><strong>410+</strong><span>tradable instruments</span></div>
-      <div class="stat reveal"><span class="stat-ic" aria-hidden="true"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="13" rx="2.5"/><path d="M2.5 10h19"/><path d="M12 13.5v4M10 15.5l2 2 2-2"/></svg></span><strong>$10</strong><span>minimum deposit</span></div>
-      <div class="stat reveal"><span class="stat-ic" aria-hidden="true"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="13" rx="2.5"/><path d="M2.5 10h19"/><path d="M12 17.5v-4M10 15.5l2-2 2 2"/></svg></span><strong>$10</strong><span>minimum withdrawal</span></div>
-      <div class="stat reveal"><span class="stat-ic" aria-hidden="true"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M9 9.5l6 5M9.8 14.2a1.6 1.6 0 1 0 .1 0M14.2 9.8a1.6 1.6 0 1 0-.1 0"/></svg></span><strong>$0</strong><span>platform fees</span></div>
+    <div class="wrap">
+      <div class="vticker reveal" id="vTicker" aria-label="Platform highlights">
+        <div class="vticker-window">
+          <ul class="vticker-list">
+            <li><strong>410+</strong><span>instruments to trade</span></li>
+            <li><strong>$10</strong><span>minimum deposit</span></li>
+            <li><strong>Free</strong><span>$10,000 demo account</span></li>
+            <li><strong>24/7</strong><span>crypto markets</span></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MARKETS — auto-rotating tabs -->
+  <section class="markets" id="markets-sec">
+    <div class="wrap">
+      <p class="eyebrow center reveal">Markets</p>
+      <h2 class="section-title reveal">Every market. One account.</h2>
+      <p class="section-sub reveal">Forex, crypto, metals and indices — fixed payouts shown before every trade, on a free demo first.</p>
+      <div class="mkt-tabs reveal" role="tablist" aria-label="Market categories">
+        <button class="mkt-tab active" type="button" role="tab" aria-selected="true" data-mkt="forex">Forex</button>
+        <button class="mkt-tab" type="button" role="tab" aria-selected="false" data-mkt="crypto">Crypto</button>
+        <button class="mkt-tab" type="button" role="tab" aria-selected="false" data-mkt="metals">Metals</button>
+        <button class="mkt-tab" type="button" role="tab" aria-selected="false" data-mkt="indices">Indices</button>
+      </div>
+      <div class="mkt-stage reveal">
+        <div class="mkt-visual">
+          <div class="phone-mock mkt-phone" aria-hidden="true">
+            <div class="phone-notch"></div>
+            <div class="phone-screen">
+              <div class="hp-top">
+                <div class="hp-asset"><span class="hp-pair" id="mktPair">EUR/USD</span><span class="hp-pay" id="mktPay">82%</span></div>
+                <div class="live-badge"><span class="pulse"></span>Live</div>
+              </div>
+              <div class="hp-chart-wrap"><svg class="chart" id="mktChart" viewBox="0 0 300 150" role="img" aria-label="Market chart illustration"></svg></div>
+              <div class="phone-actions">
+                <button type="button" class="btn-trade up sm" tabindex="-1">▲ Up</button>
+                <button type="button" class="btn-trade down sm" tabindex="-1">▼ Down</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="mkt-info">
+          <h3 id="mktName">Forex</h3>
+          <p id="mktDesc">Majors and minors with tight fixed payouts — the most traded market in the world, on your screen in one tap.</p>
+          <div class="mkt-pills" id="mktPills"></div>
+          <a class="btn btn-outline" href="app/signup.html">Explore on demo</a>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -354,26 +402,35 @@
     </div>
   </section>
 
-  <!-- 3 STEPS -->
+  <!-- 3 STEPS — sticky stacked card deck -->
   <section class="steps">
     <div class="wrap">
       <h2 class="section-title reveal">Start trading in 3 steps</h2>
-      <div class="steps-grid">
-        <div class="step-card reveal">
-          <span class="step-num">1</span>
-          <h3>Deposit and trade</h3>
-          <p>Over 410 instruments and a minimum deposit of $10. Fund your account and you're ready for optimal trading.</p>
-        </div>
-        <div class="step-card reveal">
-          <span class="step-num">2</span>
-          <h3>Analysis of quotes</h3>
-          <p>Use a wide range of indicators for your strategy and market analysis — and increase your chances of a successful trade.</p>
-        </div>
-        <div class="step-card reveal">
-          <span class="step-num">3</span>
-          <h3>Access from any device</h3>
-          <p>Trade whenever and wherever it is convenient, using a laptop or a smartphone. The full terminal follows you.</p>
-        </div>
+      <p class="section-sub reveal">Demo-first, always. Learn with virtual funds — fund only when you're ready.</p>
+      <div class="deck" id="stepDeck">
+        <article class="deck-card reveal">
+          <div class="deck-body">
+            <span class="step-num">1</span>
+            <h3>Create your free account</h3>
+            <p>Sign up in under a minute. No card, no deposit — your account opens with a free $10,000 demo, ready to trade.</p>
+          </div>
+        </article>
+        <article class="deck-card reveal">
+          <div class="deck-media"><img src="assets/steps-lifestyle.jpg" alt="Trading setup with laptop and phone showing charts at night" loading="lazy"></div>
+          <div class="deck-body">
+            <span class="step-num">2</span>
+            <h3>Explore the $10,000 demo</h3>
+            <p>The full terminal with $10,000 in virtual funds. Same live quotes, same tools — zero risk while you learn.</p>
+          </div>
+        </article>
+        <article class="deck-card reveal">
+          <div class="deck-body">
+            <span class="step-num">3</span>
+            <h3>Trade with the payout shown upfront</h3>
+            <p>Pick a direction and see the exact payout before you commit. Fund from $10 only when you're ready — never before.</p>
+            <a class="btn btn-primary" href="app/signup.html">Open free demo account</a>
+          </div>
+        </article>
       </div>
     </div>
   </section>
@@ -436,17 +493,23 @@
     </div>
   </section>
 
-  <!-- FINAL CTA -->
-  <section class="cta">
-    <div class="wrap narrow reveal">
-      <div class="cta-chips" aria-hidden="true">
-        <span>EUR/USD</span><span>XAU/USD</span><span>BTC/USD</span><span>US30</span><span>GBP/JPY</span>
+  <!-- FINAL CTA — full-bleed blue band with main-attraction artwork -->
+  <section class="cta-band">
+    <div class="wrap cta-split">
+      <div class="cta-copy reveal">
+        <div class="cta-chips" aria-hidden="true">
+          <span>EUR/USD</span><span>XAU/USD</span><span>BTC/USD</span><span>US30</span><span>GBP/JPY</span>
+        </div>
+        <h2>Your first trade is one tap away.</h2>
+        <p class="cta-band-sub">Free demo. No deposit. No card required.</p>
+        <div class="hero-ctas">
+          <a class="btn btn-lg cta-band-btn" href="app/signup.html">Create free account</a>
+          <a class="btn btn-lg cta-band-ghost" href="app/login.html">Log in to demo</a>
+        </div>
+        <p class="cta-band-risk">Binary options are high-risk. Most retail traders lose money — start on the free demo.</p>
       </div>
-      <h2>Your first trade is one tap away.</h2>
-      <p class="section-sub">Free demo. No deposit. No card required.</p>
-      <div class="hero-ctas center">
-        <a class="btn btn-primary btn-lg" href="app/signup.html">Create free account</a>
-        <a class="btn btn-outline btn-lg" href="app/login.html">Log in to demo</a>
+      <div class="cta-art reveal" aria-hidden="true">
+        <img src="assets/cta-attract.png" alt="" loading="lazy">
       </div>
     </div>
   </section>
@@ -504,6 +567,6 @@
 <!--/FOOTER-->
 
 <script src="https://s3.tradingview.com/tv.js"></script>
-<script src="app.js?v=20260929p"></script>
+<script src="app.js?v=20260929t2"></script>
 </body>
 </html>
