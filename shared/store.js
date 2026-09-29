@@ -141,7 +141,9 @@
       roles: [{ id: "r_admin", email: DEMO_ADMIN.email, password: DEMO_ADMIN.password, role: "admin", createdAt: now - 86400000 * 60 }],
       settings: { defaultPayout: 80, minTrade: 1, maxTrade: 5000, maxPayout: 95, maxOpen: 20, earlyClose: true, signups: true, maintenance: false, signalsOn: true, expiries: ["1m", "5m", "10m", "15m", "30m", "1h", "4h", "1d"],
         kyc: { mode: "manual", provider: "sumsub", appToken: "", secretKey: "", webhookSecret: "", testMode: true },
-        email: { provider: "smtp", apiKey: "", smtpHost: "", smtpPort: 587, smtpUser: "", smtpPass: "", fromName: "Trexora", fromEmail: "noreply@trexora.example" },
+        email: { provider: "smtp", apiKey: "", smtpHost: "", smtpPort: 587, encryption: "tls", smtpUser: "", smtpPass: "", fromName: "Trexora", fromEmail: "noreply@trexora.example" },
+        branding: { logo: "", company: "Trexora", supportEmail: "support@trexora.example", website: "https://trexora.pdfedit.website" },
+        notifications: { welcome: true, deposit: true, wdApproved: true, wdRejected: true, tourWin: true },
         sms: { provider: "twilio", apiKey: "", apiSecret: "", senderId: "Trexora" },
         payments: { provider: "manual", apiKey: "", secretKey: "", merchantId: "" },
         api: { enabled: false, key: "", whTrade: "", whDeposit: "", whKyc: "", whWithdraw: "" },
@@ -244,6 +246,25 @@
         });
       });
     }
+    /* company branding + notification prefs + email encryption backfill for older demo stores */
+    if (!s.settings.branding || typeof s.settings.branding !== "object") {
+      s.settings.branding = { logo: "", company: "Trexora", supportEmail: "support@trexora.example", website: "https://trexora.pdfedit.website" };
+      changed = true;
+    } else {
+      ["logo", "company", "supportEmail", "website"].forEach(function (k) {
+        if (s.settings.branding[k] == null) { s.settings.branding[k] = ""; changed = true; }
+      });
+      if (!s.settings.branding.company) { s.settings.branding.company = "Trexora"; changed = true; }
+    }
+    if (!s.settings.notifications || typeof s.settings.notifications !== "object") {
+      s.settings.notifications = { welcome: true, deposit: true, wdApproved: true, wdRejected: true, tourWin: true };
+      changed = true;
+    } else {
+      ["welcome", "deposit", "wdApproved", "wdRejected", "tourWin"].forEach(function (k) {
+        if (s.settings.notifications[k] == null) { s.settings.notifications[k] = true; changed = true; }
+      });
+    }
+    if (s.settings.email && s.settings.email.encryption == null) { s.settings.email.encryption = "tls"; changed = true; }
     /* seed default promos/tournaments/admin role once on old stores */
     var fresh = seed();
     if (!Array.isArray(s.promos)) { s.promos = fresh.promos; changed = true; }

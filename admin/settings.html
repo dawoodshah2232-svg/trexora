@@ -7,7 +7,7 @@
 <meta name="robots" content="noindex">
 <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
 <link rel="stylesheet" href="../styles.css?v=20260929p">
-<link rel="stylesheet" href="admin.css?v=20260929u">
+<link rel="stylesheet" href="admin.css?v=20260929v">
 <script>try{var t=localStorage.getItem('trexora-theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}</script>
 </head>
 <body class="admin-body" data-page="settings">
@@ -37,11 +37,22 @@
       <button class="icon-btn mobile-nav-toggle" id="mobileNavToggle" aria-label="Menu">☰</button>
       <h1>Platform settings</h1>
       <span class="spacer"></span>
+      <span class="live-pill"><i class="live-dot"></i>DEMO DATA</span>
       <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme" style="width:36px;height:36px">
         <svg class="icon-sun" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M2 12h2.5M19.5 12H22M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></svg>
         <svg class="icon-moon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
       </button>
     </div>
+
+    <div class="page-head reveal">
+      <span class="ph-ico" style="--tint:#0ea5e9" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M2 12h3M19 12h3M4.9 19.1L7 17M17 7l2.1-2.1"/></svg></span>
+      <div>
+        <h2>Settings</h2>
+        <p>Platform controls — payouts, trade limits, feature toggles and the client chart. Everything here is read by the terminal <strong>immediately</strong>.</p>
+      </div>
+    </div>
+
+    <div class="sum-strip reveal" id="setStrip" style="--d:.08s" aria-live="polite"></div>
 
     <div class="panel">
       <h2>Trading limits</h2>
@@ -96,6 +107,62 @@
     </div>
 
     <div class="panel">
+      <h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c.8-3.8 4-6 8-6s7.2 2.2 8 6"/></svg>Company branding</h2>
+      <div class="form-grid two">
+        <div class="field" style="grid-column:1/-1"><label>Logo</label>
+          <input id="brLogoFile" type="file" accept="image/*" style="font-size:.85rem">
+          <img id="brLogoPrev" class="logo-prev" alt="Logo preview">
+          <div style="margin-top:8px"><button class="btn btn-ghost btn-xs" id="brLogoRemove" type="button">Remove logo</button></div>
+          <small class="hint">PNG or SVG works best. Shown in the admin sidebar and at the top of email templates.</small>
+        </div>
+        <div class="field"><label>Company name</label><input class="inline-input" id="brCompany" type="text" style="width:100%"><small class="hint">Shown in the admin sidebar, emails and page titles.</small></div>
+        <div class="field"><label>Support email</label><input class="inline-input" id="brSupport" type="email" style="width:100%"><small class="hint">Where clients reply. Shown in email footers.</small></div>
+        <div class="field"><label>Website URL</label><input class="inline-input" id="brWebsite" type="url" placeholder="https://…" style="width:100%"><small class="hint">Used for links back to the platform in emails.</small></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3 7l9 6 9-6"/></svg>Email &amp; notifications</h2>
+      <p class="pay-warn">⚠️ <strong>Demo only — no real emails are sent from this panel.</strong> Credentials entered here live in this browser's demo store. In production, mail secrets must live <strong>server-side (PHP)</strong> — never in browser storage.</p>
+      <div class="form-grid two">
+        <div class="field"><label>Provider preset</label>
+          <select class="inline-input" id="emProvider" style="width:100%">
+            <option value="smtp">Custom SMTP</option>
+            <option value="brevo">Brevo</option>
+            <option value="sendgrid">SendGrid</option>
+            <option value="mailgun">Mailgun</option>
+            <option value="ses">Amazon SES</option>
+          </select>
+          <small class="hint">Presets fill in the SMTP host, port and encryption below — you can still edit them.</small></div>
+        <div class="field"><label>API key <small style="color:var(--muted)">(Brevo / SendGrid / Mailgun / SES)</small></label><input class="inline-input" id="emApiKey" type="password" autocomplete="new-password" style="width:100%"><small class="hint">Only needed for API sending. Leave blank to keep the saved key — it is never shown back.</small></div>
+        <div class="field"><label>SMTP host</label><input class="inline-input" id="emHost" type="text" placeholder="smtp-relay.brevo.com" style="width:100%"><small class="hint">Your mail server's hostname.</small></div>
+        <div class="field"><label>SMTP port</label><input class="inline-input" id="emPort" type="number" min="1" max="65535" style="width:100%"><small class="hint">Usually 587 for TLS or 465 for SSL.</small></div>
+        <div class="field"><label>Encryption</label>
+          <select class="inline-input" id="emEnc" style="width:100%">
+            <option value="tls">TLS (STARTTLS)</option>
+            <option value="ssl">SSL</option>
+            <option value="none">None</option>
+          </select>
+          <small class="hint">How the connection to your mail server is secured.</small></div>
+        <div class="field"><label>SMTP username</label><input class="inline-input" id="emUser" type="text" autocomplete="off" style="width:100%"><small class="hint">Often your full email address or an API username.</small></div>
+        <div class="field"><label>SMTP password</label><input class="inline-input" id="emPass" type="password" autocomplete="new-password" style="width:100%"><small class="hint">Leave blank to keep the saved password — it is never shown back.</small></div>
+        <div class="field"><label>From name</label><input class="inline-input" id="emFromName" type="text" style="width:100%"><small class="hint">The sender name clients see.</small></div>
+        <div class="field"><label>From email</label><input class="inline-input" id="emFromEmail" type="email" style="width:100%"><small class="hint">Must be a sender identity verified with your provider.</small></div>
+      </div>
+      <div style="margin-top:12px"><button class="btn btn-ghost btn-sm" id="testMailBtn" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4z"/></svg>Send test email (demo — preview only)</button></div>
+    </div>
+
+    <div class="panel">
+      <h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>Notification events</h2>
+      <p style="color:var(--muted);font-size:.85rem;margin-bottom:12px">Choose which events trigger an email in production. Demo: nothing is actually sent — these toggles are stored with the platform configuration.</p>
+      <div class="switch-row"><div><div class="lbl">Welcome email</div><div class="desc">Sent when a new demo account is created.</div></div><label class="toggle"><input type="checkbox" id="ntWelcome"><span class="track"></span></label></div>
+      <div class="switch-row"><div><div class="lbl">Deposit received</div><div class="desc">Sent when a client submits a deposit request.</div></div><label class="toggle"><input type="checkbox" id="ntDeposit"><span class="track"></span></label></div>
+      <div class="switch-row"><div><div class="lbl">Withdrawal approved</div><div class="desc">Sent when you approve a withdrawal request.</div></div><label class="toggle"><input type="checkbox" id="ntWdOk"><span class="track"></span></label></div>
+      <div class="switch-row"><div><div class="lbl">Withdrawal rejected</div><div class="desc">Sent when you reject a withdrawal, including your reason.</div></div><label class="toggle"><input type="checkbox" id="ntWdNo"><span class="track"></span></label></div>
+      <div class="switch-row"><div><div class="lbl">Tournament win</div><div class="desc">Sent to tournament prize winners.</div></div><label class="toggle"><input type="checkbox" id="ntTourWin"><span class="track"></span></label></div>
+    </div>
+
+    <div class="panel">
       <h2>Danger zone</h2>
       <p style="color:var(--muted);font-size:.88rem;margin-bottom:12px">Reset the entire demo dataset (users, trades, assets, requests, settings) back to the seeded state.</p>
       <button class="btn btn-ghost btn-sm" id="resetBtn" type="button">Reset demo data</button>
@@ -106,13 +173,131 @@
 </div>
 <div class="toast" id="toast" style="position:fixed;left:50%;bottom:30px;transform:translateX(-50%);background:#0D1830;color:#fff;border:1px solid var(--brand);padding:12px 20px;border-radius:12px;opacity:0;pointer-events:none;transition:.3s;z-index:200"></div>
 
-<script src="../shared/store.js?v=20260929u"></script>
-<script src="admin.js?v=20260929e"></script>
+<div class="modal-veil" id="mailVeil">
+  <div class="modal" role="dialog" aria-label="Test email preview">
+    <h2>Test email — preview</h2>
+    <div class="mail-preview" id="mailPreview"></div>
+    <p style="font-size:.8rem;color:var(--muted);margin-top:12px">Demo preview — no real email was sent. Real delivery is handled by the production server.</p>
+    <div style="display:flex;gap:10px;margin-top:16px">
+      <button class="btn btn-primary" id="mailClose" type="button">Close</button>
+    </div>
+  </div>
+</div>
+
+<script src="../shared/store.js?v=20260929v"></script>
+<script src="admin.js?v=20260929f"></script>
 <script>
 (function(){
   "use strict";
   var $ = ADM.$;
   var s = TX.load();
+
+  function paintStrip(){
+    var grid = $("setStrip"); if (!grid) return;
+    var st = s.settings;
+    grid.innerHTML =
+      ADM.chip("#2f80ff", "Default payout", (st.defaultPayout || 0) + "%", '<circle cx="12" cy="12" r="9"/><path d="M12 7v10M15 9.5c-.7-1-1.8-1.5-3-1.5-1.7 0-3 .9-3 2.3 0 3 6 1.4 6 4.4 0 1.4-1.3 2.3-3 2.3-1.2 0-2.3-.5-3-1.5"/>') +
+      ADM.chip("#22c55e", "Trade limits", TX.fmt(st.minTrade || 0) + " – " + TX.fmt(st.maxTrade || 0), '<path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/>') +
+      ADM.chip(st.signups ? "#22c55e" : "#64748b", "New signups", st.signups ? "Open" : "Closed", '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.2 3.4-5 6.5-5s5.7 1.8 6.5 5"/><circle cx="17.5" cy="9.5" r="2.5"/><path d="M16 15.2c2.6.3 4.7 1.9 5.5 4.8"/>') +
+      ADM.chip(st.maintenance ? "#f23645" : "#22c55e", "Maintenance", st.maintenance ? "ON" : "Off", '<path d="M12 3v9"/><path d="M6.3 6.3a8 8 0 1 0 11.4 0"/>') +
+      ADM.chip("#8b5cf6", "Emails enabled", notifOn() + "/5", '<rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3 7l9 6 9-6"/>');
+  }
+  /* ----- Company branding + Email & notifications ----- */
+  var brLogoData = "";
+  function brg(){ return s.settings.branding || {}; }
+  function eml(){ return s.settings.email || {}; }
+  function ntf(){ return s.settings.notifications || {}; }
+  function notifOn(){
+    var n = ntf();
+    return ["welcome", "deposit", "wdApproved", "wdRejected", "tourWin"].filter(function(k){ return n[k] !== false; }).length;
+  }
+
+  var SMTP_PRESETS = {
+    brevo:    { host: "smtp-relay.brevo.com", port: 587, enc: "tls" },
+    sendgrid: { host: "smtp.sendgrid.net",    port: 587, enc: "tls" },
+    mailgun:  { host: "smtp.mailgun.org",     port: 587, enc: "tls" },
+    ses:      { host: "email-smtp.us-east-1.amazonaws.com", port: 587, enc: "tls" }
+  };
+
+  /* secret fields are never displayed back: left blank with a "saved" placeholder */
+  function secretField(el, val){
+    el.value = "";
+    el.placeholder = val ? "•••••••• (saved)" : "Not set";
+  }
+  function paintLogoPrev(){
+    var im = $("brLogoPrev");
+    if (brLogoData) { im.src = brLogoData; im.style.display = "block"; }
+    else im.style.display = "none";
+  }
+  function fillBrandingEmail(){
+    var b = brg(), e = eml(), n = ntf();
+    brLogoData = b.logo || "";
+    paintLogoPrev();
+    $("brCompany").value = b.company || "Trexora";
+    $("brSupport").value = b.supportEmail || "";
+    $("brWebsite").value = b.website || "";
+    $("emProvider").value = e.provider || "smtp";
+    $("emHost").value = e.smtpHost || "";
+    $("emPort").value = e.smtpPort || 587;
+    $("emEnc").value = e.encryption || "tls";
+    $("emUser").value = e.smtpUser || "";
+    secretField($("emPass"), e.smtpPass);
+    secretField($("emApiKey"), e.apiKey);
+    $("emFromName").value = e.fromName || "";
+    $("emFromEmail").value = e.fromEmail || "";
+    $("ntWelcome").checked = n.welcome !== false;
+    $("ntDeposit").checked = n.deposit !== false;
+    $("ntWdOk").checked = n.wdApproved !== false;
+    $("ntWdNo").checked = n.wdRejected !== false;
+    $("ntTourWin").checked = n.tourWin !== false;
+  }
+
+  $("brLogoFile").addEventListener("change", function(){
+    var f = $("brLogoFile").files[0]; if (!f) return;
+    if (!/^image\//.test(f.type)) { ADM.toast("Choose an image file."); return; }
+    var rd = new FileReader();
+    rd.onload = function(){
+      var im = new Image();
+      im.onload = function(){
+        var mx = 256, w = im.width, h = im.height, sc = Math.min(1, mx / Math.max(w, h));
+        var cv = document.createElement("canvas"); cv.width = Math.round(w * sc); cv.height = Math.round(h * sc);
+        cv.getContext("2d").drawImage(im, 0, 0, cv.width, cv.height);
+        brLogoData = cv.toDataURL("image/png");
+        paintLogoPrev();
+        ADM.toast("Logo preview updated — save to keep it.");
+      };
+      im.src = rd.result;
+    };
+    rd.readAsDataURL(f);
+  });
+  $("brLogoRemove").addEventListener("click", function(){
+    brLogoData = ""; $("brLogoFile").value = ""; paintLogoPrev();
+  });
+
+  $("emProvider").addEventListener("change", function(){
+    var p = SMTP_PRESETS[$("emProvider").value];
+    if (p) { $("emHost").value = p.host; $("emPort").value = p.port; $("emEnc").value = p.enc; }
+  });
+
+  $("testMailBtn").addEventListener("click", function(){
+    var from = $("emFromEmail").value.trim(), host = $("emHost").value.trim();
+    if (!/.+@.+\..+/.test(from)) { ADM.toast("Enter a valid From email first."); return; }
+    if (!host) { ADM.toast("Enter an SMTP host first."); return; }
+    var co = $("brCompany").value.trim() || "Trexora";
+    var sup = $("brSupport").value.trim(), web = $("brWebsite").value.trim();
+    var logo = brLogoData ? '<img src="' + brLogoData + '" alt="">' : "";
+    $("mailPreview").innerHTML =
+      '<div class="mp-head">' + logo + '<div><b>' + TX.esc(co) + '</b><small>Test email</small></div></div>' +
+      '<div class="mp-body"><p><strong>Subject:</strong> Test email from ' + TX.esc(co) + '</p>' +
+      '<p><strong>From:</strong> ' + TX.esc($("emFromName").value.trim() || co) + ' &lt;' + TX.esc(from) + '&gt;</p>' +
+      '<p>Hi Demo Trader,</p><p>This is a test email from the ' + TX.esc(co) + ' admin panel. If you received this, your mail settings are working.</p>' +
+      '<p>— The ' + TX.esc(co) + ' team</p></div>' +
+      '<div class="mp-foot">' + TX.esc(co) + (web ? ' · ' + TX.esc(web) : '') + (sup ? ' · ' + TX.esc(sup) : '') + '</div>';
+    $("mailVeil").classList.add("open");
+    ADM.toast("Demo preview — no real email was sent.");
+  });
+  $("mailClose").addEventListener("click", function(){ $("mailVeil").classList.remove("open"); });
+  $("mailVeil").addEventListener("click", function(e){ if (e.target === $("mailVeil")) $("mailVeil").classList.remove("open"); });
 
   function fill(){
     if (s.settings.maxOpenPerUser == null) s.settings.maxOpenPerUser = 10;
@@ -126,8 +311,10 @@
     $("tglSignups").checked = !!s.settings.signups;
     $("tglMaint").checked = !!s.settings.maintenance;
     fillChart();
+    fillBrandingEmail();
   }
   fill();
+  paintStrip();
 
   /* ----- Charts & Market Data (single Deriv-fed chart, no provider) ----- */
   function chartDef() {
@@ -177,14 +364,44 @@
     ch.tf = tfv === 300 ? 300 : tfv === 900 ? 900 : 60;
     ch.up = $("setChartUp").value;
     ch.down = $("setChartDown").value;
+    /* company branding */
+    s.settings.branding = {
+      logo: brLogoData,
+      company: $("brCompany").value.trim() || "Trexora",
+      supportEmail: $("brSupport").value.trim(),
+      website: $("brWebsite").value.trim()
+    };
+    /* email provider — secrets only overwrite when typed, never displayed back */
+    var em = s.settings.email || {};
+    em.provider = $("emProvider").value;
+    em.smtpHost = $("emHost").value.trim();
+    em.smtpPort = Math.max(1, parseInt($("emPort").value, 10) || 587);
+    em.encryption = $("emEnc").value;
+    em.smtpUser = $("emUser").value.trim();
+    if ($("emPass").value) em.smtpPass = $("emPass").value;
+    if ($("emApiKey").value) em.apiKey = $("emApiKey").value;
+    em.fromName = $("emFromName").value.trim();
+    em.fromEmail = $("emFromEmail").value.trim();
+    s.settings.email = em;
+    /* notification events */
+    s.settings.notifications = {
+      welcome: $("ntWelcome").checked,
+      deposit: $("ntDeposit").checked,
+      wdApproved: $("ntWdOk").checked,
+      wdRejected: $("ntWdNo").checked,
+      tourWin: $("ntTourWin").checked
+    };
     TX.save(s);
+    fillBrandingEmail();
     ADM.toast("Settings saved — the client terminal reads them immediately.");
+    paintStrip();
   });
 
   $("resetBtn").addEventListener("click", function(){
     if (!confirm("Reset ALL demo data to the seeded state? This cannot be undone.")) return;
     s = TX.resetDemo();
     fill();
+    paintStrip();
     ADM.toast("Demo data has been reset.");
   });
 })();

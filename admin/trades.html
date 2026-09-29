@@ -7,7 +7,7 @@
 <meta name="robots" content="noindex">
 <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
 <link rel="stylesheet" href="../styles.css?v=20260929p">
-<link rel="stylesheet" href="admin.css?v=20260929u">
+<link rel="stylesheet" href="admin.css?v=20260929v">
 <script>try{var t=localStorage.getItem('trexora-theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}</script>
 </head>
 <body class="admin-body" data-page="trades">
@@ -37,11 +37,22 @@
       <button class="icon-btn mobile-nav-toggle" id="mobileNavToggle" aria-label="Menu">☰</button>
       <h1>Trades</h1>
       <span class="spacer"></span>
+      <span class="live-pill"><i class="live-dot"></i>DEMO DATA</span>
       <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme" style="width:36px;height:36px">
         <svg class="icon-sun" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M2 12h2.5M19.5 12H22M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></svg>
         <svg class="icon-moon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
       </button>
     </div>
+
+    <div class="page-head reveal">
+      <span class="ph-ico" style="--tint:#f23645" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v18l-2-1.5L14 21l-2-1.5L10 21l-2-1.5L6 21z"/><path d="M9 8h6M9 12h6"/></svg></span>
+      <div>
+        <h2>Trades</h2>
+        <p>Every position placed from the terminal — filter by status or result, review the tape, and see live P/L. Demo funds only.</p>
+      </div>
+    </div>
+
+    <div class="sum-strip reveal" id="tradesStrip" style="--d:.08s" aria-live="polite"></div>
 
     <div class="toolbar">
       <input type="search" id="q" placeholder="Search user or asset…">
@@ -50,10 +61,10 @@
     </div>
 
     <div class="stat-grid" style="grid-template-columns:repeat(4,1fr)">
-      <div class="stat-card reveal" style="--d:.02s;--tint:#2f80ff"><small>Filtered volume</small><div class="num" id="tVol" style="font-size:1.4rem">$0</div></div>
-      <div class="stat-card reveal" style="--d:.08s;--tint:#22c55e"><small>Trader P/L</small><div class="num" id="tPL" style="font-size:1.4rem">$0</div></div>
-      <div class="stat-card reveal" style="--d:.14s;--tint:#f23645"><small>House P/L</small><div class="num" id="tHouse" style="font-size:1.4rem">$0</div></div>
-      <div class="stat-card reveal" style="--d:.2s;--tint:#d9a441"><small>Win rate</small><div class="num" id="tWR" style="font-size:1.4rem">—</div></div>
+      <div class="stat-card reveal" style="--d:.02s;--tint:#2f80ff"><div class="stat-top"><span class="stat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M15 9.5c-.7-1-1.8-1.5-3-1.5-1.7 0-3 .9-3 2.3 0 3 6 1.4 6 4.4 0 1.4-1.3 2.3-3 2.3-1.2 0-2.3-.5-3-1.5"/></svg></span><small>Filtered volume</small></div><div class="num" id="tVol" style="font-size:1.4rem">$0</div></div>
+      <div class="stat-card reveal" style="--d:.08s;--tint:#22c55e"><div class="stat-top"><span class="stat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg></span><small>Trader P/L</small></div><div class="num" id="tPL" style="font-size:1.4rem">$0</div></div>
+      <div class="stat-card reveal" style="--d:.14s;--tint:#f23645"><div class="stat-top"><span class="stat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 7l6 6 4-4 8 8"/><path d="M15 17h6v-6"/></svg></span><small>House P/L</small></div><div class="num" id="tHouse" style="font-size:1.4rem">$0</div></div>
+      <div class="stat-card reveal" style="--d:.2s;--tint:#d9a441"><div class="stat-top"><span class="stat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1" fill="currentColor"/></svg></span><small>Win rate</small></div><div class="num" id="tWR" style="font-size:1.4rem">—</div></div>
     </div>
 
     <div class="tbl-wrap"><table class="data" id="tradesTable">
@@ -65,13 +76,25 @@
 </div>
 <div class="toast" id="toast" style="position:fixed;left:50%;bottom:30px;transform:translateX(-50%);background:#0D1830;color:#fff;border:1px solid var(--brand);padding:12px 20px;border-radius:12px;opacity:0;pointer-events:none;transition:.3s;z-index:200"></div>
 
-<script src="../shared/store.js?v=20260929u"></script>
-<script src="admin.js?v=20260929e"></script>
+<script src="../shared/store.js?v=20260929v"></script>
+<script src="admin.js?v=20260929f"></script>
 <script>
 (function(){
   "use strict";
   var $ = ADM.$;
   var s = TX.load();
+
+  function paintStrip(){
+    var grid = $("tradesStrip"); if (!grid) return;
+    var open = s.trades.filter(function(t){ return t.status === "open"; }).length;
+    var vol = s.trades.reduce(function(a,t){ return a + t.amount; }, 0);
+    grid.innerHTML =
+      ADM.chip("#f23645", "All trades", s.trades.length, '<path d="M6 3h12v18l-2-1.5L14 21l-2-1.5L10 21l-2-1.5L6 21z"/><path d="M9 8h6M9 12h6"/>') +
+      ADM.chip("#d9a441", "Open now", open, '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/>') +
+      ADM.chip("#2f80ff", "Total volume", TX.fmt(vol), '<circle cx="12" cy="12" r="9"/><path d="M12 7v10M15 9.5c-.7-1-1.8-1.5-3-1.5-1.7 0-3 .9-3 2.3 0 3 6 1.4 6 4.4 0 1.4-1.3 2.3-3 2.3-1.2 0-2.3-.5-3-1.5"/>') +
+      ADM.chip("#22c55e", "Assets traded", (function(){ var k = {}; s.trades.forEach(function(t){ k[t.assetId] = 1; }); return Object.keys(k).length; })(), '<path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/>');
+  }
+  paintStrip();
 
   function render(){
     var q = $("q").value.trim().toLowerCase();

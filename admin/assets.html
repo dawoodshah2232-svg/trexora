@@ -7,7 +7,7 @@
 <meta name="robots" content="noindex">
 <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
 <link rel="stylesheet" href="../styles.css?v=20260929p">
-<link rel="stylesheet" href="admin.css?v=20260929u">
+<link rel="stylesheet" href="admin.css?v=20260929v">
 <script>try{var t=localStorage.getItem('trexora-theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}</script>
 </head>
 <body class="admin-body" data-page="assets">
@@ -37,13 +37,23 @@
       <button class="icon-btn mobile-nav-toggle" id="mobileNavToggle" aria-label="Menu">☰</button>
       <h1>Assets</h1>
       <span class="spacer"></span>
+      <span class="live-pill"><i class="live-dot"></i>DEMO DATA</span>
       <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme" style="width:36px;height:36px">
         <svg class="icon-sun" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M2 12h2.5M19.5 12H22M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></svg>
         <svg class="icon-moon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
       </button>
     </div>
 
-    <p style="color:var(--muted);font-size:.88rem;margin-bottom:16px">Changes here apply to the client terminal <strong>immediately</strong> — same data store. Settlement uses live CoinGecko quotes: crypto assets need a CoinGecko coin id (e.g. <code>bitcoin</code>, <code>pax-gold</code>); forex pairs need base/quote currency codes (e.g. EUR / USD).</p>
+    <div class="page-head reveal">
+      <span class="ph-ico" style="--tint:#f23645" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/></svg></span>
+      <div>
+        <h2>Assets</h2>
+        <p>Control every tradable asset — payouts, limits and availability apply to the terminal <strong>immediately</strong>. Crypto assets need a CoinGecko coin id (e.g. <code>bitcoin</code>); forex pairs need base/quote codes (e.g. EUR / USD).</p>
+      </div>
+    </div>
+
+    <div class="sum-strip reveal" id="assetsStrip" style="--d:.08s" aria-live="polite"></div>
+
 
     <div class="panel">
       <h2>Add asset</h2>
@@ -55,7 +65,7 @@
         <div class="field"><label>Payout %</label><input class="inline-input" id="nPayout" type="number" min="1" max="100" value="80" style="width:100%"></div>
         <div class="field"><label>Min / max trade (USD)</label><div style="display:flex;gap:8px"><input class="inline-input" id="nMin" type="number" min="1" value="1" style="width:100%"><input class="inline-input" id="nMax" type="number" min="1" value="1000" style="width:100%"></div></div>
       </div>
-      <button class="btn btn-primary btn-sm" id="addBtn" type="button" style="margin-top:12px">Add asset</button>
+      <button class="btn btn-primary btn-sm" id="addBtn" type="button" style="margin-top:12px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add asset</button>
     </div>
 
     <div class="tbl-wrap"><table class="data" id="assetsTable">
@@ -66,19 +76,31 @@
 </div>
 <div class="toast" id="toast" style="position:fixed;left:50%;bottom:30px;transform:translateX(-50%);background:#0D1830;color:#fff;border:1px solid var(--brand);padding:12px 20px;border-radius:12px;opacity:0;pointer-events:none;transition:.3s;z-index:200"></div>
 
-<script src="../shared/store.js?v=20260929u"></script>
-<script src="admin.js?v=20260929e"></script>
+<script src="../shared/store.js?v=20260929v"></script>
+<script src="admin.js?v=20260929f"></script>
 <script>
 (function(){
   "use strict";
   var $ = ADM.$;
   var s = TX.load();
 
+  function paintStrip(){
+    var grid = $("assetsStrip"); if (!grid) return;
+    function n(kind){ return s.assets.filter(function(a){ return a.kind === kind; }).length; }
+    var en = s.assets.filter(function(a){ return a.enabled; }).length;
+    grid.innerHTML =
+      ADM.chip("#f23645", "Total assets", s.assets.length, '<path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/>') +
+      ADM.chip("#22c55e", "Enabled", en, '<path d="M12 3v9"/><path d="M6.3 6.3a8 8 0 1 0 11.4 0"/>') +
+      ADM.chip("#2f80ff", "Forex pairs", n("fiat"), '<path d="M4 8h13l-3.5-3.5M20 16H7l3.5 3.5"/>') +
+      ADM.chip("#d9a441", "Crypto & metals", n("crypto"), '<circle cx="12" cy="12" r="9"/><path d="M12 7v10M14.6 9.3c-.6-.8-1.5-1.1-2.6-1.1-1.4 0-2.5.8-2.5 2 0 2.6 5 1.2 5 3.8 0 1.2-1.1 2-2.5 2-1.1 0-2-.4-2.6-1.1"/>');
+  }
+
   function srcLabel(a){
     return a.kind === "crypto" ? ("CG: " + (a.code || "—")) : ("FX: " + (a.base || "?") + "/" + (a.quote || "?"));
   }
 
   function render(){
+    paintStrip();
     var tb = $("assetsTable").querySelector("tbody"); tb.innerHTML = "";
     s.assets.forEach(function(a){
       var ats = s.trades.filter(function(t){ return t.assetId === a.id; });

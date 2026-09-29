@@ -7,7 +7,7 @@
 <meta name="robots" content="noindex">
 <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
 <link rel="stylesheet" href="../styles.css?v=20260929p">
-<link rel="stylesheet" href="admin.css?v=20260929u">
+<link rel="stylesheet" href="admin.css?v=20260929v">
 <script>try{var t=localStorage.getItem('trexora-theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}</script>
 </head>
 <body class="admin-body" data-page="payments">
@@ -37,11 +37,22 @@
       <button class="icon-btn mobile-nav-toggle" id="mobileNavToggle" aria-label="Menu">☰</button>
       <h1>Payment methods</h1>
       <span class="spacer"></span>
+      <span class="live-pill"><i class="live-dot"></i>DEMO DATA</span>
       <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme" style="width:36px;height:36px">
         <svg class="icon-sun" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M2 12h2.5M19.5 12H22M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></svg>
         <svg class="icon-moon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
       </button>
     </div>
+
+    <div class="page-head reveal">
+      <span class="ph-ico" style="--tint:#22c55e" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="3"/><path d="M2 10h20M6 15h4"/></svg></span>
+      <div>
+        <h2>Payment methods</h2>
+        <p>Configure every way clients can deposit — cards, e-wallets, crypto and bank. Only <strong>enabled</strong> methods appear in the terminal's Deposit tab. Crypto is manual: your wallet address + QR, you confirm each payment.</p>
+      </div>
+    </div>
+
+    <div class="sum-strip reveal" id="payStrip" style="--d:.08s" aria-live="polite"></div>
 
     <p class="pay-warn">⚠️ <strong>Demo payments only — no real money moves.</strong> Methods ship <strong>disabled</strong>; only enabled ones appear in the terminal's Deposit tab. Crypto is fully manual (your wallet address + QR, the user sends funds themselves, you confirm). Never hardcode real API keys in code or chat — production secrets belong server-side, never in localStorage.</p>
 
@@ -53,7 +64,7 @@
         <div class="field"><label>Provider preset</label><select id="nProv" class="inline-input" style="width:100%"></select></div>
         <div class="field"><label>Sort order (lower = first)</label><input class="inline-input" id="nSort" type="number" min="0" value="50" style="width:100%"></div>
       </div>
-      <button class="btn btn-primary btn-sm" id="addBtn" type="button" style="margin-top:12px">Add method</button>
+      <button class="btn btn-primary btn-sm" id="addBtn" type="button" style="margin-top:12px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add method</button>
     </div>
 
     <div class="tbl-wrap"><table class="data" id="payTable">
@@ -114,8 +125,8 @@
 
 <div class="toast" id="toast" style="position:fixed;left:50%;bottom:30px;transform:translateX(-50%);background:#0D1830;color:#fff;border:1px solid var(--brand);padding:12px 20px;border-radius:12px;opacity:0;pointer-events:none;transition:.3s;z-index:200"></div>
 
-<script src="../shared/store.js?v=20260929u"></script>
-<script src="admin.js?v=20260929e"></script>
+<script src="../shared/store.js?v=20260929v"></script>
+<script src="admin.js?v=20260929f"></script>
 <script>
 (function(){
   "use strict";
@@ -124,6 +135,34 @@
   s.settings = s.settings || {};
   if (!Array.isArray(s.settings.payMethods)) s.settings.payMethods = TX.defaultPayMethods();
   var editing = null, qrData = "";
+
+  /* stroke icons for row buttons + empty state */
+  var IC = {
+    edit: '<path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/>',
+    del: '<path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/>',
+    grid: '<rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/>',
+    check: '<path d="M20 6L9 17l-5-5"/>',
+    card: '<rect x="2" y="5" width="20" height="14" rx="3"/><path d="M2 10h20"/>',
+    zap: '<path d="M13 2L3 14h7l-1 8 10-12h-7z"/>',
+    coin: '<circle cx="12" cy="12" r="9"/><path d="M12 7v10M14.6 9.3c-.6-.8-1.5-1.1-2.6-1.1-1.4 0-2.5.8-2.5 2 0 2.6 5 1.2 5 3.8 0 1.2-1.1 2-2.5 2-1.1 0-2-.4-2.6-1.1"/>',
+    bank: '<path d="M3 9.5L12 4l9 5.5"/><path d="M4.5 10v8M9 10v8M15 10v8M19.5 10v8"/><path d="M2.5 20.5h19"/>'
+  };
+  var EMPTY_CARD = '<svg class="eill" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" style="color:#2f80ff"><rect x="2" y="5" width="20" height="14" rx="3"/><path d="M2 10h20M6 15h4"/></svg>';
+
+  /* honest summary strip from the live store */
+  function paintStrip(){
+    var grid = $("payStrip"); if (!grid) return;
+    var list = s.settings.payMethods || [];
+    function count(t){ return list.filter(function(m){ return m.type === t; }).length; }
+    var enabled = list.filter(function(m){ return m.enabled; }).length;
+    grid.innerHTML =
+      ADM.chip("#2f80ff", "Total methods", list.length, IC.grid) +
+      ADM.chip("#22c55e", "Enabled · live in terminal", enabled, IC.check) +
+      ADM.chip("#8b5cf6", "Card gateways", count("card"), IC.card) +
+      ADM.chip("#f59e0b", "E-wallets", count("ewallet"), IC.zap) +
+      ADM.chip("#d9a441", "Crypto · manual", count("crypto"), IC.coin) +
+      ADM.chip("#0ea5e9", "Bank transfer", count("bank"), IC.bank);
+  }
 
   function typeLabel(t){ return (TX.PAY_TYPES && TX.PAY_TYPES[t]) || t; }
   function provLabel(m){
@@ -150,7 +189,15 @@
 
   function render(){
     var tb = $("payTable").querySelector("tbody"); tb.innerHTML = "";
-    s.settings.payMethods.slice().sort(function(a,b){ return (a.sort||0)-(b.sort||0); }).forEach(function(m){
+    paintStrip();
+    var list = (s.settings.payMethods || []).slice().sort(function(a,b){ return (a.sort||0)-(b.sort||0); });
+    if (!list.length) {
+      tb.innerHTML = '<tr><td colspan="8"><div class="empty">' + EMPTY_CARD +
+        '<p><strong>No payment methods yet.</strong></p>' +
+        '<p style="font-size:.8rem;margin-top:4px">Add your first method above — it stays disabled until you enable it.</p></div></td></tr>';
+      return;
+    }
+    list.forEach(function(m){
       var tr = document.createElement("tr");
       tr.innerHTML =
         "<td><strong>" + TX.esc(m.name) + "</strong></td>" +
@@ -160,8 +207,8 @@
         '<td><input class="inline-input" data-f="max" data-id="' + m.id + '" type="number" min="0" value="' + (m.max || 0) + '" style="width:90px"></td>' +
         '<td><input class="inline-input" data-f="sort" data-id="' + m.id + '" type="number" min="0" value="' + (m.sort || 0) + '" style="width:70px"></td>' +
         '<td><label class="toggle"><input type="checkbox" data-f="enabled" data-id="' + m.id + '"' + (m.enabled ? " checked" : "") + '><span class="track"></span></label></td>' +
-        '<td><div class="row-actions"><button class="btn btn-ghost btn-xs" data-edit="' + m.id + '" type="button">Edit</button>' +
-        '<button class="btn btn-ghost btn-xs" data-del="' + m.id + '" type="button">Delete</button></div></td>';
+        '<td><div class="row-actions"><button class="btn btn-ghost btn-xs" data-edit="' + m.id + '" type="button" aria-label="Edit ' + TX.esc(m.name) + '">' + ADM.svgIcon(IC.edit) + 'Edit</button>' +
+        '<button class="btn btn-ghost btn-xs" data-del="' + m.id + '" type="button" aria-label="Delete ' + TX.esc(m.name) + '">' + ADM.svgIcon(IC.del) + 'Delete</button></div></td>';
       tb.appendChild(tr);
     });
     tb.querySelectorAll("input[data-f]").forEach(function(inp){

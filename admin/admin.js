@@ -27,8 +27,25 @@
     statusPill: function (st) {
       var map = { win: "result-win", loss: "result-loss", void: "result-void", tie: "result-void", early: "result-void", pending: "status-pending", approved: "status-approved", rejected: "status-rejected", open: "status-open", closed: "status-closed" };
       return '<span class="' + (map[st] || "") + '">' + TX.esc(st) + "</span>";
+    },
+    svgIcon: function (paths) {
+      return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + paths + "</svg>";
+    },
+    chip: function (tint, label, value, paths) {
+      return '<div class="sum-chip"><span class="sc-ico" style="--tint:' + tint + '">' +
+        ADM.svgIcon(paths || '<path d="M13 2L3 14h7l-1 8 10-12h-7z"/>') +
+        "</span><div><b>" + value + "</b><small>" + label + "</small></div></div>";
     }
   };
+
+  /* clickable cards — [data-href] navigates on click / Enter / Space */
+  document.querySelectorAll("[data-href]").forEach(function (el) {
+    function go() { window.location.href = el.getAttribute("data-href"); }
+    el.addEventListener("click", go);
+    el.addEventListener("keydown", function (ev) {
+      if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); go(); }
+    });
+  });
 
   var root = document.documentElement;
   var tt = $("themeToggle");
@@ -51,4 +68,12 @@
       if (a.getAttribute("data-nav") === page) a.classList.add("active");
     });
   }
+
+  /* company branding — uploaded logo replaces the sidebar brand mark on every admin page */
+  try {
+    var _br = (TX.load().settings || {}).branding || {};
+    if (_br.logo) {
+      document.querySelectorAll(".sidebar .brand img").forEach(function (im) { im.src = _br.logo; });
+    }
+  } catch (e) {}
 })();

@@ -7,7 +7,7 @@
 <meta name="robots" content="noindex">
 <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
 <link rel="stylesheet" href="../styles.css?v=20260929p">
-<link rel="stylesheet" href="admin.css?v=20260929u">
+<link rel="stylesheet" href="admin.css?v=20260929v">
 <script>try{var t=localStorage.getItem('trexora-theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}</script>
 </head>
 <body class="admin-body" data-page="integrations">
@@ -37,13 +37,23 @@
       <button class="icon-btn mobile-nav-toggle" id="mobileNavToggle" aria-label="Menu">☰</button>
       <h1>Integrations &amp; APIs</h1>
       <span class="spacer"></span>
+      <span class="live-pill"><i class="live-dot"></i>DEMO DATA</span>
       <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme" style="width:36px;height:36px">
         <svg class="icon-sun" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M2 12h2.5M19.5 12H22M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></svg>
         <svg class="icon-moon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
       </button>
     </div>
 
-    <p style="color:var(--muted);font-size:.88rem;margin:0 0 16px">Connect the services that run the business — verification, email, SMS, payments and your own API. Credentials are stored with the platform configuration; live calls are made by the production server. <b>Demo:</b> nothing here sends real traffic yet.</p>
+    <div class="page-head reveal">
+      <span class="ph-ico" style="--tint:#8b5cf6" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 7V3M15 7V3M7 7h10v4a5 5 0 0 1-10 0zM12 16v5"/></svg></span>
+      <div>
+        <h2>Integrations & APIs</h2>
+        <p>Connect verification, email, SMS, payments and your own API. Credentials are stored with the platform configuration; live calls are made by the production server. <strong>Demo:</strong> nothing here sends real traffic yet.</p>
+      </div>
+    </div>
+
+    <div class="sum-strip reveal" id="intStrip" style="--d:.08s" aria-live="polite"></div>
+
 
     <!-- KYC -->
     <div class="panel">
@@ -160,8 +170,8 @@
 </div>
 <div class="toast" id="toast" style="position:fixed;left:50%;bottom:30px;transform:translateX(-50%);background:#0D1830;color:#fff;border:1px solid var(--brand);padding:12px 20px;border-radius:12px;opacity:0;pointer-events:none;transition:.3s;z-index:200"></div>
 
-<script src="../shared/store.js?v=20260929u"></script>
-<script src="admin.js?v=20260929e"></script>
+<script src="../shared/store.js?v=20260929v"></script>
+<script src="admin.js?v=20260929f"></script>
 <script>
 (function(){
   "use strict";
@@ -173,6 +183,15 @@
   function pay(){ return s.settings.payments || {}; }
   function api(){ return s.settings.api || {}; }
 
+  function paintStrip(){
+    var grid = $("intStrip"); if (!grid) return;
+    var ky = kyc(), em = eml(), sm = sms(), ap = api();
+    grid.innerHTML =
+      ADM.chip("#8b5cf6", "KYC mode", TX.esc((ky.mode || "manual").toUpperCase()) + " · " + TX.esc(ky.provider || "sumsub"), '<path d="M9 7V3M15 7V3M7 7h10v4a5 5 0 0 1-10 0zM12 16v5"/>') +
+      ADM.chip("#2f80ff", "Email provider", TX.esc(em.provider || "smtp"), '<rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3 7l9 6 9-6"/>') +
+      ADM.chip("#22c55e", "SMS provider", TX.esc(sm.provider || "twilio"), '<path d="M4 5h16v11H8l-4 4z"/>') +
+      ADM.chip(ap.enabled ? "#22c55e" : "#64748b", "API access", ap.enabled ? "Enabled" : "Disabled", '<circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M17 4l3 3M14 7l3 3"/>');
+  }
   function paintProv(){
     var auto = $("kycMode").value === "auto";
     $("kycProvWrap").style.display = auto ? "" : "none";
@@ -214,6 +233,7 @@
     paintProv();
   }
   fill();
+  paintStrip();
 
   ["kycMode", "emProvider"].forEach(function(id){
     $(id).addEventListener("change", paintProv);
@@ -248,6 +268,7 @@
       apiKey: $("emKey").value,
       smtpHost: $("emHost").value.trim(),
       smtpPort: Math.max(1, parseInt($("emPort").value, 10) || 587),
+      encryption: (s.settings.email && s.settings.email.encryption) || "tls",
       smtpUser: $("emUser").value.trim(),
       smtpPass: $("emPass").value,
       fromName: $("emFromName").value.trim() || "Trexora",
@@ -275,6 +296,7 @@
     };
     TX.save(s);
     ADM.toast("Integrations saved — the terminal and production server read them immediately.");
+    paintStrip();
   });
 })();
 </script>
