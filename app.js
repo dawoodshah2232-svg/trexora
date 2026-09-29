@@ -149,7 +149,7 @@
     if (!cv || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     var ctx = cv.getContext('2d');
     var W = 0, H = 0, dpr = Math.min(window.devicePixelRatio || 1, 2);
-    var COL = '242,54,69'; /* single brand color for every candle */
+    var COL = '47,128,255'; /* single brand-blue for every candle */
     function resize(){
       var r = cv.parentElement.getBoundingClientRect();
       W = Math.max(1, r.width); H = Math.max(1, r.height);

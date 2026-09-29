@@ -224,12 +224,14 @@
 
   /* ---------- TradingView chart ---------- */
   var tvLoading = false;
+  var tvQueue = [];
   function ensureTV(cb) {
     if (typeof TradingView !== "undefined") { cb(true); return; }
+    tvQueue.push(cb);
     if (tvLoading) return;
     tvLoading = true;
     var done = false;
-    function fin(ok) { if (!done) { done = true; tvLoading = false; cb(ok); } }
+    function fin(ok) { if (!done) { done = true; tvLoading = false; var q = tvQueue; tvQueue = []; q.forEach(function (fn) { try { fn(ok); } catch (e) {} }); } }
     var s = document.createElement("script");
     s.src = "https://s3.tradingview.com/tv.js";
     s.async = true;
@@ -656,7 +658,7 @@
       }
     });
   }
-  setInterval(function () { tickCountdowns(); settleDue(); tourTick(); }, 1000);
+  setInterval(function () { tickCountdowns(); settleDue(); tourCdTick(); }, 1000);
 
   /* ---------- history ---------- */
   var histFilter = "";
