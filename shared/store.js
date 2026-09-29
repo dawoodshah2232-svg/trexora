@@ -86,7 +86,8 @@
         email: { provider: "smtp", apiKey: "", smtpHost: "", smtpPort: 587, smtpUser: "", smtpPass: "", fromName: "Trexora", fromEmail: "noreply@trexora.example" },
         sms: { provider: "twilio", apiKey: "", apiSecret: "", senderId: "Trexora" },
         payments: { provider: "manual", apiKey: "", secretKey: "", merchantId: "" },
-        api: { enabled: false, key: "", whTrade: "", whDeposit: "", whKyc: "", whWithdraw: "" } }
+        api: { enabled: false, key: "", whTrade: "", whDeposit: "", whKyc: "", whWithdraw: "" },
+        chart: { provider: "tradingview", tvStyle: "candles", tvTheme: "auto", tvTf: "5", lwTf: 60, lwUp: "#2F80FF", lwDown: "#F23645" } }
     };
   }
 
@@ -136,6 +137,11 @@
     }
     if (s.settings.payments == null || typeof s.settings.payments !== "object") {
       s.settings.payments = { provider: "manual", apiKey: "", secretKey: "", merchantId: "" };
+      changed = true;
+    }
+    /* charts: admin-operated chart provider for the client terminal */
+    if (s.settings.chart == null || typeof s.settings.chart !== "object") {
+      s.settings.chart = { provider: "tradingview", tvStyle: "candles", tvTheme: "auto", tvTf: "5", lwTf: 60, lwUp: "#2F80FF", lwDown: "#F23645" };
       changed = true;
     }
     if (s.settings.api == null || typeof s.settings.api !== "object") {

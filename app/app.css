@@ -535,6 +535,8 @@ table.data tr:last-child td{border-bottom:0}
 .tour-grid2{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:16px;margin-bottom:10px}
 .tx-card{position:relative;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;overflow:hidden;animation:rise .4s both}
 .tx-card::before{content:'🏆';position:absolute;right:8px;top:-6px;font-size:7rem;opacity:.06;pointer-events:none}
+/* winner's card: rich 3D golden trophy melts into the card behind the text */
+.tx-card.won::before{content:'';right:-16px;top:-16px;width:200px;height:200px;background:url('../assets/trophy-gold-3d.png') center/contain no-repeat;opacity:.9;mix-blend-mode:screen}
 .tx-cd{display:inline-flex;align-items:center;gap:6px;background:#2563eb;color:#fff;font-size:.7rem;font-weight:800;letter-spacing:.04em;border-radius:8px;padding:7px 12px;margin-bottom:12px;font-variant-numeric:tabular-nums}
 .tx-cd.live{background:#22c55e}
 .tx-card h4{font-size:1.35rem;margin-bottom:8px}
@@ -743,11 +745,10 @@ table.data tr:last-child td{border-bottom:0}
 .qx-page{padding:18px 18px 40px}
 #view-trade.active{display:flex;flex-direction:column;position:relative;min-height:0}
 #view-trade{height:calc(100svh - 58px);min-height:480px}
-#view-trade .qx-tabs{position:absolute;top:10px;left:10px;right:10px;z-index:8;margin:0}
+#view-trade .qx-tabs{position:static;z-index:auto;margin:0;background:var(--bg-soft);border-bottom:1px solid var(--line);padding:10px 14px}
 #view-trade .qx-chartzone{flex:1;min-height:0;display:block;position:relative}
 #view-trade .qx-chart{height:100%;min-height:0;border:0;border-radius:0;background:var(--bg)}
 #view-trade .qx-sent{position:absolute;left:8px;top:50%;transform:translateY(-50%);z-index:7;height:min(46%,320px);min-height:140px;background:rgba(12,7,9,.55);border:1px solid var(--line);border-radius:99px;backdrop-filter:blur(6px);padding:10px 0}
-#view-trade .qx-tradebar{top:64px;left:10px;right:10px}
 @media(min-width:900px){
   #view-trade{height:calc(100vh - 58px)}
 }
@@ -927,11 +928,12 @@ table.data tr:last-child td{border-bottom:0}
   .help-nofind a{color:#2F80FF;font-weight:800;text-decoration:none}
 
   /* trade view full-bleed on phones */
-  #view-trade .qx-tabs{top:8px;left:8px;right:8px}
+  #view-trade .qx-tabs{padding:8px 10px}
 }
 
 /* ---- live feed badge + timeframe pills (Deriv chart) ---- */
 .chart-toolbar{position:absolute;top:10px;left:12px;right:12px;display:flex;align-items:center;justify-content:space-between;gap:8px;pointer-events:none;z-index:5}
+.chart-src-label{font-size:.68rem;color:var(--muted);letter-spacing:.05em;background:rgba(10,12,18,.6);border:1px solid var(--line-soft);border-radius:999px;padding:4px 10px;backdrop-filter:blur(6px)}
 .feed-badge{pointer-events:auto;display:inline-flex;align-items:center;gap:7px;padding:5px 10px;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:.04em;background:rgba(10,12,18,.72);border:1px solid var(--line);color:#cdd3e0;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
 .feed-badge i{width:8px;height:8px;border-radius:50%;background:#8a93a6;flex:none}
 .feed-badge em{font-style:normal;font-weight:600;opacity:.65;font-size:10px}
