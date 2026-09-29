@@ -57,6 +57,8 @@
     if (name === "account") renderWallet();
     if (name === "markets") renderMarkets();
     if (name === "tournaments") renderTours();
+    if (name === "market") renderMarket();
+    if (name === "analytics") renderAnalytics();
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
   document.querySelectorAll("#rail button[data-view], #mobileBar button[data-view]").forEach(function (b) {
@@ -75,8 +77,14 @@
   /* ---------- balance ---------- */
   function renderBalance() {
     $("topBal").textContent = TX.fmt(user.balance);
-    $("walletBal").textContent = TX.fmt(user.balance);
-    $("acctEmail").textContent = user.email;
+    if ($("acctBal")) $("acctBal").textContent = TX.fmt(user.balance);
+    if ($("acctAvail")) $("acctAvail").textContent = TX.fmt(user.balance);
+    if ($("wdBal")) $("wdBal").textContent = TX.fmt(user.balance);
+    if ($("wdAvail")) $("wdAvail").textContent = TX.fmt(user.balance);
+    if ($("amDemoBal")) $("amDemoBal").textContent = TX.fmt(user.balance);
+    if ($("amEmail")) $("amEmail").textContent = user.email;
+    if ($("amId")) $("amId").textContent = String(user.id).replace(/[^0-9]/g, "").slice(-8) || "94064839";
+    renderWdReq();
   }
   $("refillBtn").addEventListener("click", function () {
     user.balance = 10000; TX.save(store); renderBalance();
@@ -658,40 +666,102 @@
 
   /* ---------- tournaments (demo) ---------- */
   var TOURS = [
-    { id: "sprint", name: "Demo Sprint", desc: "All assets · highest demo P/L wins", prize: 500, days: 7 },
-    { id: "crypto", name: "Crypto Clash", desc: "BTC & ETH only · highest demo P/L wins", prize: 250, days: 3 },
-    { id: "rookie", name: "Rookie Cup", desc: "Accounts under 30 days · highest win rate", prize: 100, days: 5 }
+    { id: "wed", name: "Crazy Wednesday", prize: 9000, entry: 10, dur: "1 day", startInH: 21.3, desc: "One day, all assets. Highest demo P/L takes the prize pool." },
+    { id: "fri", name: "Free Friday", prize: 1000, entry: 0, dur: "1 day", startInH: 49, desc: "Free-entry Friday sprint. Highest demo P/L wins." },
+    { id: "wknd", name: "Weekend Battle", prize: 5000, entry: 1, dur: "2 days", startInH: 73, desc: "Two-day battle on crypto & forex. Highest demo P/L wins." }
   ];
-  function tourEnd(t) {
-    var now = new Date();
-    var end = new Date(now.getTime() + t.days * 86400000);
-    return end.getTime();
+  var TOURS_DONE = [
+    { id: "mon", name: "Monday Rush", prize: 2000, winner: "fx_hunter", wpl: 1840, when: "Finished 28 Sep" },
+    { id: "thu", name: "Thursday Turbo", prize: 1500, winner: "gold_digger", wpl: 1215, when: "Finished 25 Sep" }
+  ];
+  function tourStartAt(t) {
+    var m = {};
+    try { m = JSON.parse(localStorage.getItem("tx_tour_starts") || "{}"); } catch (e) {}
+    if (!m[t.id]) {
+      m[t.id] = Date.now() + t.startInH * 3600000;
+      try { localStorage.setItem("tx_tour_starts", JSON.stringify(m)); } catch (e2) {}
+    }
+    return m[t.id];
   }
   function tourJoined() {
     try { return JSON.parse(sessionStorage.getItem("tx_tours") || "[]"); }
     catch (e) { return []; }
   }
   function renderTours() {
+    renderTourCards();
+    renderTourDone();
+    renderTourBoard();
+    tourCdTick();
+  }
+  function renderTourCards() {
     var grid = $("tourGrid"); grid.innerHTML = "";
-    var joined = tourJoined();
+    var joined = tourJoined(), now = Date.now(), avail = 0;
     TOURS.forEach(function (t) {
-      var d = document.createElement("div");
-      d.className = "tour-card";
-      var isIn = joined.indexOf(t.id) !== -1;
+      var start = tourStartAt(t), live = now >= start, isIn = joined.indexOf(t.id) !== -1;
+      if (!live) avail++;
+      var d = document.createElement("div"); d.className = "tx-card";
       d.innerHTML =
-        '<div class="tour-top"><span class="tour-ico">🏆</span><div><b>' + t.name + "</b><small>" + t.desc + "</small></div></div>" +
-        '<div class="tour-meta"><span>Prize <b class="gold">$' + t.prize + ' <small>virtual</small></b></span>' +
-        '<span>Ends in <b class="countdown tour-cd" data-tour="' + t.id + '">--:--</b></span></div>' +
-        '<button class="btn ' + (isIn ? "btn-ghost" : "btn-primary") + ' btn-sm" type="button" style="width:100%">' + (isIn ? "Joined ✓" : "Join free") + "</button>";
-      if (!isIn) d.querySelector("button").addEventListener("click", function () {
-        joined.push(t.id);
-        try { sessionStorage.setItem("tx_tours", JSON.stringify(joined)); } catch (e) {}
-        toast("You're in the " + t.name + " — good luck (demo).");
-        renderTours();
-      });
+        '<span class="tx-cd' + (live ? " live" : "") + '" data-tourcd="' + t.id + '">' + (live ? "● LIVE" : "🕐 UNTIL START: --:--:--") + "</span>" +
+        "<h4>" + TX.esc(t.name) + "</h4>" +
+        '<div class="tx-prize"><small>PRIZE POOL</small><b>' + t.prize.toLocaleString("en-US") + " $</b></div>" +
+        '<div class="tx-meta"><div><b>' + (t.entry ? t.entry + " $" : "Free") + "</b><small>Entry fee</small></div>" +
+        "<div><b>" + t.dur + "</b><small>Duration</small></div></div>" +
+        '<button class="tx-details" type="button" data-td="' + t.id + '">Details ⓘ</button>' +
+        (isIn ? '<button class="tx-join joined" type="button" disabled>Joined ✓</button>'
+              : '<button class="tx-join" type="button" data-tj="' + t.id + '">Join' + (t.entry ? " — " + t.entry + " $" : " free") + "</button>");
       grid.appendChild(d);
     });
-    /* leaderboard — demo P/L this week */
+    $("tourAvailN").textContent = avail;
+    $("tourActiveN").textContent = TOURS.length;
+    grid.querySelectorAll("[data-td]").forEach(function (b) {
+      b.addEventListener("click", function () { openTourModal(b.getAttribute("data-td")); });
+    });
+    grid.querySelectorAll("[data-tj]").forEach(function (b) {
+      b.addEventListener("click", function () { joinTour(b.getAttribute("data-tj")); });
+    });
+  }
+  function renderTourDone() {
+    var grid = $("tourDoneGrid"); grid.innerHTML = "";
+    TOURS_DONE.forEach(function (t) {
+      var d = document.createElement("div"); d.className = "tx-card";
+      d.innerHTML = '<span class="tx-cd">🏁 ' + TX.esc(t.when) + "</span><h4>" + TX.esc(t.name) + "</h4>" +
+        '<div class="tx-prize"><small>PRIZE POOL</small><b>' + t.prize.toLocaleString("en-US") + " $</b></div>" +
+        '<div class="tx-meta"><div><b>🥇 ' + TX.esc(t.winner) + "</b><small>Winner</small></div>" +
+        '<div><b>+' + TX.fmt(t.wpl) + "</b><small>Winning P/L</small></div></div>";
+      grid.appendChild(d);
+    });
+  }
+  function joinTour(id) {
+    var t = null;
+    TOURS.forEach(function (x) { if (x.id === id) t = x; });
+    if (!t) return;
+    if (t.entry > user.balance) { toast("Not enough demo balance for the entry fee."); return; }
+    if (t.entry) {
+      user.balance -= t.entry;
+      store.requests.push({ id: TX.uid("r"), userId: user.id, userEmail: user.email, type: "tournament", amount: t.entry, method: t.name, status: "approved", createdAt: Date.now() });
+    }
+    var j = tourJoined(); j.push(id);
+    try { sessionStorage.setItem("tx_tours", JSON.stringify(j)); } catch (e) {}
+    TX.save(store); renderBalance(); renderTours();
+    toast("You're in the " + t.name + " — good luck (demo).");
+  }
+  function openTourModal(id) {
+    var t = null;
+    TOURS.forEach(function (x) { if (x.id === id) t = x; });
+    if (!t) return;
+    var isIn = tourJoined().indexOf(id) !== -1;
+    $("tourMName").textContent = t.name;
+    $("tourMBody").innerHTML = "<p>" + TX.esc(t.desc) + "</p>" +
+      '<ul class="tour-m-rules"><li>Entry fee: ' + (t.entry ? t.entry + " $ (virtual)" : "free") + "</li>" +
+      "<li>Duration: " + t.dur + "</li><li>Prize pool: " + t.prize.toLocaleString("en-US") + " $ (virtual)</li>" +
+      "<li>Winners are ranked by demo P/L on eligible trades.</li><li>One account per trader. Demo contest — no real money.</li></ul>" +
+      (isIn ? '<button class="tx-join joined" type="button" disabled>Joined ✓</button>'
+            : '<button class="tx-join" type="button" id="tourMJoin">Join' + (t.entry ? " — " + t.entry + " $" : " free") + "</button>");
+    $("tourBack").hidden = false; $("tourModal").hidden = false;
+    var jb = $("tourMJoin");
+    if (jb) jb.addEventListener("click", function () { $("tourBack").hidden = true; $("tourModal").hidden = true; joinTour(id); });
+  }
+  function renderTourBoard() {
     var weekAgo = Date.now() - 7 * 86400000;
     var rows = store.users.filter(function (u) { return !u.disabled; }).map(function (u) {
       var ts = store.trades.filter(function (x) { return x.userId === u.id && x.status === "closed" && x.closedAt >= weekAgo && x.result !== "void"; });
@@ -711,19 +781,31 @@
       tb.appendChild(tr);
     });
     if (!rows.length) tb.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--faint)">No demo trades this week yet.</td></tr>';
-    tourTick();
   }
-  function tourTick() {
+  function tourCdTick() {
     var now = Date.now();
-    document.querySelectorAll(".tour-cd").forEach(function (el) {
+    document.querySelectorAll("[data-tourcd]").forEach(function (el) {
       var t = null;
-      for (var i = 0; i < TOURS.length; i++) if (TOURS[i].id === el.getAttribute("data-tour")) t = TOURS[i];
+      TOURS.forEach(function (x) { if (x.id === el.getAttribute("data-tourcd")) t = x; });
       if (!t) return;
-      var ms = tourEnd(t) - now;
-      var d = Math.floor(ms / 86400000), h = Math.floor(ms % 86400000 / 3600000), m = Math.floor(ms % 3600000 / 60000);
-      el.textContent = d + "d " + h + "h " + m + "m";
+      var ms = tourStartAt(t) - now;
+      if (ms <= 0) { el.classList.add("live"); el.textContent = "● LIVE"; return; }
+      var h = Math.floor(ms / 3600000), m = Math.floor(ms % 3600000 / 60000), s = Math.floor(ms % 60000 / 1000);
+      el.textContent = "🕐 UNTIL START: " + String(h).padStart(2, "0") + ":" + String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0");
     });
   }
+  $("tourTabActive").addEventListener("click", function () {
+    $("tourTabActive").classList.add("active"); $("tourTabDone").classList.remove("active");
+    $("tourGrid").hidden = false; $("tourDoneGrid").hidden = true; $("tourAvailWrap").hidden = false;
+  });
+  $("tourTabDone").addEventListener("click", function () {
+    $("tourTabDone").classList.add("active"); $("tourTabActive").classList.remove("active");
+    $("tourGrid").hidden = true; $("tourDoneGrid").hidden = false; $("tourAvailWrap").hidden = true;
+  });
+  $("tourClose").addEventListener("click", function () { $("tourBack").hidden = true; $("tourModal").hidden = true; });
+  $("tourBack").addEventListener("click", function () { $("tourBack").hidden = true; $("tourModal").hidden = true; });
+  setInterval(tourCdTick, 1000);
+
 
   /* ---------- wallet ---------- */
   function renderWallet() {
@@ -750,10 +832,12 @@
       }
     });
     store.requests.filter(function (r) { return r.userId === user.id && r.status !== "pending"; }).forEach(function (r) {
+      var lbl = r.type === "deposit" ? "Deposit via " + r.method : r.type === "withdrawal" ? "Withdrawal via " + r.method :
+        r.type === "bonus" ? "Promo bonus " + r.method : r.type === "tournament" ? "Tournament entry — " + r.method : r.type;
       moves.push({
         at: r.createdAt,
-        label: (r.type === "deposit" ? "Deposit via " : "Withdrawal via ") + r.method + (r.status === "rejected" ? " — rejected" : ""),
-        amt: r.status === "approved" ? (r.type === "deposit" ? r.amount : -r.amount) : 0
+        label: lbl + (r.status === "rejected" ? " — rejected" : ""),
+        amt: r.status === "approved" ? (r.type === "deposit" || r.type === "bonus" ? r.amount : -r.amount) : 0
       });
     });
     moves.sort(function (a, b) { return b.at - a.at; });
@@ -783,6 +867,512 @@
     TX.save(store); renderWallet();
     toast("Withdrawal request sent — admin will approve it.");
   });
+
+    /* ---------- account tabs ---------- */
+  var ACCT_TABS = [
+    { id: "withdrawal", label: "Withdrawal", kind: "pane" },
+    { id: "payments", label: "Payments", kind: "pane" },
+    { id: "trades", label: "Trades", kind: "view", view: "history" },
+    { id: "account", label: "My account", kind: "pane" },
+    { id: "market", label: "Market", kind: "view", view: "market" },
+    { id: "tournaments", label: "Tournaments", kind: "view", view: "tournaments" },
+    { id: "analytics", label: "Analytics", kind: "view", view: "analytics" }
+  ];
+  function paintAcctTabs(activeId) {
+    document.querySelectorAll("[data-accttabs] .acct-tab").forEach(function (b) {
+      b.classList.toggle("active", b.getAttribute("data-atab") === activeId);
+    });
+  }
+  function showAccountTab(id) {
+    var t = null; ACCT_TABS.forEach(function (x) { if (x.id === id) t = x; });
+    if (!t) return;
+    if (t.kind === "view") { showView(t.view); paintAcctTabs(id); return; }
+    showView("account");
+    ACCT_TABS.forEach(function (x) { var p = $("atab-" + x.id); if (p) p.hidden = x.id !== id; });
+    paintAcctTabs(id);
+    if (id === "payments") renderWallet();
+    if (id === "account") fillProfile();
+  }
+  document.querySelectorAll("[data-accttabs]").forEach(function (wrap) {
+    ACCT_TABS.forEach(function (t) {
+      var b = document.createElement("button");
+      b.className = "acct-tab"; b.type = "button"; b.setAttribute("data-atab", t.id);
+      b.textContent = t.label;
+      b.addEventListener("click", function () { showAccountTab(t.id); });
+      wrap.appendChild(b);
+    });
+  });
+  var curChange = document.querySelector(".acct-balstrip .cur-change");
+  if (curChange) curChange.addEventListener("click", function () {
+    toast("USD is the only currency on the demo terminal.");
+  });
+
+  /* ---------- withdrawal requests (latest 5) ---------- */
+  function renderWdReq() {
+    var tb = $("reqRows"); if (!tb) return;
+    tb.innerHTML = "";
+    var rows = store.requests.filter(function (r) { return r.userId === user.id; })
+      .sort(function (a, b) { return b.createdAt - a.createdAt; }).slice(0, 5);
+    rows.forEach(function (r) {
+      var tr = document.createElement("tr");
+      tr.innerHTML = "<td style='text-transform:capitalize'>" + r.type + "</td><td>" + TX.fmt(r.amount) + "</td>" +
+        "<td>" + TX.esc(r.method) + "</td>" + '<td class="status-' + r.status + '">' + r.status + "</td>" +
+        "<td>" + TX.fmtTime(r.createdAt) + "</td>";
+      tb.appendChild(tr);
+    });
+    if (!rows.length) tb.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--faint)">No requests yet.</td></tr>';
+  }
+  $("wdMakeDep").addEventListener("click", function () { showAccountTab("payments"); });
+  $("wdFullHist").addEventListener("click", function () { showAccountTab("payments"); });
+  $("wdFaqAll").addEventListener("click", function () { openSupport(); });
+  document.querySelectorAll(".faq-q").forEach(function (q) {
+    q.addEventListener("click", function () {
+      var a = q.nextElementSibling, open = a.hidden;
+      document.querySelectorAll(".faq-a").forEach(function (x) { x.hidden = true; });
+      a.hidden = !open;
+      q.classList.toggle("open", open);
+    });
+  });
+
+  /* ---------- profile ---------- */
+  var COUNTRIES = ["United Arab Emirates", "Saudi Arabia", "Qatar", "Kuwait", "Bahrain", "Oman", "India", "Pakistan", "Bangladesh", "Philippines", "Egypt", "Jordan", "Lebanon", "United Kingdom", "United States", "Canada", "Australia", "Germany", "France", "Spain", "Italy", "Netherlands", "Turkey", "Nigeria", "South Africa", "Kenya", "Indonesia", "Malaysia", "Singapore", "Thailand", "Vietnam", "China", "Japan", "South Korea", "Brazil", "Mexico", "Argentina", "Colombia", "Ukraine", "Kazakhstan", "Uzbekistan", "Morocco", "Algeria", "Tunisia", "Iraq"];
+  var TZS = ["(UTC+04:00) Dubai", "(UTC+00:00) London", "(UTC+01:00) Berlin", "(UTC+03:00) Moscow", "(UTC+05:30) Mumbai", "(UTC+08:00) Singapore", "(UTC-05:00) New York", "(UTC-08:00) Los Angeles", "(UTC+10:00) Sydney"];
+  function fillSel(sel, items) {
+    if (!sel || sel.options.length) return;
+    items.forEach(function (z) { var o = document.createElement("option"); o.textContent = z; sel.appendChild(o); });
+  }
+  fillSel($("tzSel"), TZS); fillSel($("setTz"), TZS); fillSel($("pfCountry"), COUNTRIES);
+  function getProfile() {
+    try { return JSON.parse(localStorage.getItem("tx_profile") || "{}"); } catch (e) { return {}; }
+  }
+  function numericId() { return String(user.id).replace(/[^0-9]/g, "").slice(-8) || "94064839"; }
+  function fillProfile() {
+    var p = getProfile();
+    $("pfNick").value = p.nick || user.email.split("@")[0];
+    $("pfFirst").value = p.first || "";
+    $("pfLast").value = p.last || "";
+    $("pfDob").value = p.dob || "";
+    $("pfEmail2").value = p.email || user.email;
+    if (p.country) $("pfCountry").value = p.country;
+    $("pfAddr").value = p.addr || "";
+    if (p.tz) $("tzSel").value = p.tz;
+    $("pfDob").max = new Date().toISOString().slice(0, 10);
+    $("pEmail").textContent = p.email || user.email;
+    $("pId").textContent = numericId();
+    renderVerify();
+  }
+  $("pfSave").addEventListener("click", function () {
+    var em = $("pfEmail2").value.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)) { toast("Enter a valid email address."); return; }
+    if ($("pfDob").value && new Date($("pfDob").value) > new Date()) { toast("Date of birth can't be in the future."); return; }
+    var p = { nick: $("pfNick").value.trim(), first: $("pfFirst").value.trim(), last: $("pfLast").value.trim(), dob: $("pfDob").value, email: em, country: $("pfCountry").value, addr: $("pfAddr").value.trim(), tz: $("tzSel").value };
+    try { localStorage.setItem("tx_profile", JSON.stringify(p)); } catch (e) {}
+    $("pEmail").textContent = em;
+    toast("Profile saved.");
+  });
+
+  /* ---------- verification (demo) ---------- */
+  function getVerify() {
+    try { return JSON.parse(localStorage.getItem("tx_verify") || '{"state":"none"}'); }
+    catch (e) { return { state: "none" }; }
+  }
+  function renderVerify() {
+    var v = getVerify(), badge = $("vBadge");
+    if (v.state === "verified") { badge.textContent = "✓ Verified"; badge.className = "vbadge ok"; }
+    else if (v.state === "pending") { badge.textContent = "◷ Pending review"; badge.className = "vbadge pend"; }
+    else { badge.textContent = "✕ Not verified"; badge.className = "vbadge not"; }
+    $("verifyWarn").hidden = v.state !== "none";
+    $("verifyOk").hidden = v.state !== "verified";
+    $("verifyOpen").style.display = v.state === "verified" ? "none" : "";
+  }
+  $("verifyOpen").addEventListener("click", function () { $("vBack").hidden = false; $("vModal").hidden = false; });
+  $("vClose").addEventListener("click", function () { $("vBack").hidden = true; $("vModal").hidden = true; });
+  $("vCancel").addEventListener("click", function () { $("vBack").hidden = true; $("vModal").hidden = true; });
+  $("vSubmit").addEventListener("click", function () {
+    if (!$("vDocNum").value.trim() || !$("vName").value.trim()) { toast("Enter document number and full name."); return; }
+    try { localStorage.setItem("tx_verify", JSON.stringify({ state: "pending", at: Date.now() })); } catch (e) {}
+    $("vBack").hidden = true; $("vModal").hidden = true; renderVerify();
+    toast("Demo verification submitted — practice flow, nothing is checked.");
+  });
+
+  /* ---------- security ---------- */
+  function secGet() { try { return JSON.parse(localStorage.getItem("tx_sec") || "{}"); } catch (e) { return {}; } }
+  function secPaint() {
+    var s = secGet();
+    $("tfaLogin").checked = !!s.faLogin;
+    $("tfaWd").checked = !!s.faWd;
+  }
+  function secToggle(k, on) {
+    var s = secGet(); s[k] = on;
+    try { localStorage.setItem("tx_sec", JSON.stringify(s)); } catch (e) {}
+    toast((on ? "Enabled" : "Disabled") + " (demo setting).");
+  }
+  $("tfaLogin").addEventListener("change", function () { secToggle("faLogin", $("tfaLogin").checked); });
+  $("tfaWd").addEventListener("change", function () { secToggle("faWd", $("tfaWd").checked); });
+  $("pwChange").addEventListener("click", function () { $("pwForm").hidden = !$("pwForm").hidden; });
+  $("pwSave").addEventListener("click", function () {
+    if ($("pwNew").value.length < 6) { toast("Password must be at least 6 characters."); return; }
+    $("pwNew").value = ""; $("pwForm").hidden = true;
+    toast("Password change is disabled on the demo terminal.");
+  });
+  var delArmed = false;
+  $("delAcct").addEventListener("click", function () {
+    if (!delArmed) {
+      delArmed = true; $("delAcct").textContent = "✕ Click again to confirm";
+      setTimeout(function () { delArmed = false; $("delAcct").textContent = "✕ Delete My account"; }, 4000);
+      return;
+    }
+    delArmed = false; $("delAcct").textContent = "✕ Delete My account";
+    toast("Demo accounts can't be deleted from the terminal.");
+  });
+
+  /* ---------- language / timezone ---------- */
+  $("langSel").addEventListener("change", function () {
+    try { localStorage.setItem("tx_lang", $("langSel").value); } catch (e) {}
+    if ($("langSel").value !== "English") toast("English is the active language on this demo.");
+  });
+  (function () { try { var l = localStorage.getItem("tx_lang"); if (l) $("langSel").value = l; } catch (e) {} })();
+  $("tzSel").addEventListener("change", function () {
+    try { localStorage.setItem("tx_tz", $("tzSel").value); } catch (e) {}
+    toast("Timezone preference saved (demo).");
+  });
+  (function () { try { var z = localStorage.getItem("tx_tz"); if (z) $("tzSel").value = z; } catch (e) {} })();
+
+  /* ---------- market / promo codes ---------- */
+  var PROMO_CATS = [
+    { id: "risk", icon: "🛡", cls: "c-blue", title: "Risk Free", sub: "0 PROMO CODES AVAILABLE" },
+    { id: "cashback", icon: "💜", cls: "c-purple", title: "Cashback", sub: "0 PROMO CODES AVAILABLE" },
+    { id: "deposit", icon: "💰", cls: "c-orange", title: "Deposit Bonus", sub: "3 PROMO CODES AVAILABLE", green: true },
+    { id: "turnover", icon: "％", cls: "c-pink", title: "Percentage of turnover", sub: "0 PROMO CODES AVAILABLE" },
+    { id: "balance", icon: "🎁", cls: "c-indigo", title: "Balance Bonus", sub: "0 PROMO CODES AVAILABLE" },
+    { id: "cancelx", icon: "🗑", cls: "c-teal", title: "Cancel X points", sub: "0 PROMO CODES AVAILABLE" }
+  ];
+  var PROMOS = {
+    DEPOSIT30: { pct: 30, exp: "29/10/2030" },
+    DEPOSIT40: { pct: 40, exp: "29/10/2030" },
+    DEPOSIT50: { pct: 50, exp: "29/10/2030" }
+  };
+  function userPromos() {
+    try { return JSON.parse(localStorage.getItem("tx_promos") || "{}"); } catch (e) { return {}; }
+  }
+  function renderMarket() {
+    var grid = $("promoGrid"); grid.innerHTML = "";
+    var used = userPromos(), avail = 0;
+    Object.keys(PROMOS).forEach(function (c) { if (!used[c]) avail++; });
+    PROMO_CATS.forEach(function (cat) {
+      var d = document.createElement("div"); d.className = "promo-card";
+      var body = "";
+      if (cat.id === "deposit") {
+        body = Object.keys(PROMOS).map(function (code) {
+          var u = used[code];
+          return '<div class="promo-row"><div><b>' + code + "</b><small>(" + PROMOS[code].pct + "%)</small></div>" +
+            '<span class="promo-exp">' + (u ? "✓ used" : "✓ " + PROMOS[code].exp) + "</span>" +
+            (u ? "" : '<button class="promo-use" type="button" data-puse="' + code + '">Use it ›</button>') + "</div>";
+        }).join("");
+      } else {
+        body = '<div class="promo-table-h"><span>PROMO CODE</span><span>STATUS</span><span>USING</span></div>' +
+          '<div class="promo-empty"><span class="box">📦</span><p>You don\'t have a promo code history yet. You can add a promo code using the button below.</p></div>';
+      }
+      d.innerHTML = '<div class="promo-head"><span class="promo-ico ' + cat.cls + '">' + cat.icon + "</span><div><h4>" + cat.title + "</h4>" +
+        '<small class="' + (cat.green ? "green" : "") + '">' + (cat.id === "deposit" && avail === 0 ? "0 PROMO CODES AVAILABLE" : cat.sub) + "</small></div></div>" +
+        body +
+        '<div class="promo-foot"><button class="showall" type="button" data-pshow="' + cat.id + '">🕐 Show all</button>' +
+        '<button class="btn btn-primary btn-sm" type="button" data-penter="' + cat.title + '">Enter promo code</button></div>';
+      grid.appendChild(d);
+    });
+    var mb = $("marketBadge");
+    mb.textContent = avail; mb.style.display = avail ? "" : "none";
+    grid.querySelectorAll("[data-puse]").forEach(function (b) {
+      b.addEventListener("click", function () { applyPromo(b.getAttribute("data-puse")); });
+    });
+    grid.querySelectorAll("[data-penter]").forEach(function (b) {
+      b.addEventListener("click", function () { openCodeModal(b.getAttribute("data-penter")); });
+    });
+    grid.querySelectorAll("[data-pshow]").forEach(function (b) {
+      b.addEventListener("click", function () { toast("Promo history is empty — activate a code to start."); });
+    });
+  }
+  function openCodeModal(title) {
+    $("codeTitle").textContent = title || "Promo code";
+    $("codeInput").value = "";
+    $("codeBack").hidden = false; $("codeModal").hidden = false;
+    setTimeout(function () { $("codeInput").focus(); }, 60);
+  }
+  function closeCodeModal() { $("codeBack").hidden = true; $("codeModal").hidden = true; }
+  $("codeClose").addEventListener("click", closeCodeModal);
+  $("codeCancel").addEventListener("click", closeCodeModal);
+  $("codeBack").addEventListener("click", closeCodeModal);
+  $("codeApply").addEventListener("click", function () {
+    var code = $("codeInput").value.trim().toUpperCase();
+    if (!code) { toast("Enter a promo code."); return; }
+    if (!PROMOS[code]) { toast("This code isn't valid on the demo."); return; }
+    closeCodeModal(); applyPromo(code);
+  });
+  function applyPromo(code) {
+    var used = userPromos();
+    if (used[code]) { toast("Code already used."); return; }
+    var pct = PROMOS[code].pct;
+    var bonus = Math.max(Math.round(user.balance * pct) / 100, 1);
+    user.balance = Math.round((user.balance + bonus) * 100) / 100;
+    used[code] = { at: Date.now(), pct: pct, bonus: bonus };
+    try { localStorage.setItem("tx_promos", JSON.stringify(used)); } catch (e) {}
+    store.requests.push({ id: TX.uid("r"), userId: user.id, userEmail: user.email, type: "bonus", amount: bonus, method: code + " (" + pct + "% virtual bonus)", status: "approved", createdAt: Date.now() });
+    TX.save(store); renderBalance(); renderMarket();
+    toast("+" + TX.fmt(bonus) + " virtual bonus applied (" + code + ").");
+  }
+  $("promoBanner").addEventListener("click", function () { showView("market"); paintAcctTabs("market"); });
+
+  /* ---------- signals drawer ---------- */
+  var SIGS = [];
+  function genSignals() {
+    if (SIGS.length) return SIGS;
+    var assets = enabledAssets().slice(0, 8);
+    var deals = ["5m", "10m", "15m", "45m", "1h"];
+    assets.forEach(function (a, i) {
+      var dir = Math.random() < 0.5 ? "up" : "down";
+      SIGS.push({ asset: a.name, assetId: a.id, dir: dir, deal: deals[i % deals.length], payout: a.payout, mom: Math.round(60 + Math.random() * 35) });
+    });
+    return SIGS;
+  }
+  function sigCard(s) {
+    var d = document.createElement("div"); d.className = "sig-card";
+    d.innerHTML = '<div class="sig-top"><b>' + TX.esc(s.asset) + '</b><span class="sig-dir ' + s.dir + '">' + (s.dir === "up" ? "▲" : "▼") + "</span></div>" +
+      '<div class="sig-meta"><span>Deal time: <b>' + s.deal + "</b></span><span>Payout: <b>" + s.payout + "%</b></span><span>Momentum: <b>" + s.mom + "%</b></span></div>" +
+      '<div class="sig-act"><button class="btn btn-primary btn-sm" type="button" data-sigtrade>Place Trade</button><small class="kyc-demo">Demo signal — paper trade only.</small></div>';
+    d.querySelector("[data-sigtrade]").addEventListener("click", function () {
+      var idx = EXP_L.indexOf(s.deal); if (idx < 0) idx = 2;
+      state.expIdx = idx; state.amount = 1;
+      selectAsset(s.assetId); updatePreview();
+      $("sigBack").hidden = true; $("sigDrawer").hidden = true;
+      showView("trade");
+      toast("Signal loaded on " + s.asset + " (" + s.dir.toUpperCase() + ", " + s.deal + ") — paper trade.");
+    });
+    return d;
+  }
+  function renderSignals() {
+    var sigs = genSignals();
+    var cur = $("sigCur"); cur.innerHTML = "";
+    sigs.slice(0, 4).forEach(function (s) { cur.appendChild(sigCard(s)); });
+    var past = $("sigPast"); past.innerHTML = "";
+    sigs.forEach(function (s) {
+      var win = s.mom >= 65;
+      var r = document.createElement("div"); r.className = "sig-past-row";
+      r.innerHTML = "<b>" + TX.esc(s.asset) + "</b><span>" + (s.dir === "up" ? "▲" : "▼") + " " + s.deal + "</span>" +
+        '<span class="' + (win ? "win" : "loss") + '">' + (win ? "WIN" : "LOSS") + "</span>";
+      past.appendChild(r);
+    });
+  }
+  function openSig() { renderSignals(); $("sigBack").hidden = false; $("sigDrawer").hidden = false; }
+  $("sigClose").addEventListener("click", function () { $("sigBack").hidden = true; $("sigDrawer").hidden = true; });
+  $("sigBack").addEventListener("click", function () { $("sigBack").hidden = true; $("sigDrawer").hidden = true; });
+  $("aboutSig").addEventListener("click", function () {
+    toast("Signals are demo momentum hints — paper-trade them, never financial advice.");
+  });
+
+  /* ---------- leaderboard (TOP) drawer ---------- */
+  function weeklyRows() {
+    var weekAgo = Date.now() - 7 * 86400000;
+    return store.users.filter(function (u) { return !u.disabled; }).map(function (u) {
+      var ts = store.trades.filter(function (x) { return x.userId === u.id && x.status === "closed" && x.closedAt >= weekAgo && x.result !== "void"; });
+      var pl = ts.reduce(function (s, x) { return s + (x.pl || 0); }, 0);
+      return { email: u.email, n: ts.length, pl: pl };
+    }).filter(function (r) { return r.n > 0; }).sort(function (a, b) { return b.pl - a.pl; });
+  }
+  function renderTop() {
+    var rows = weeklyRows().slice(0, 20);
+    var box = $("topList"); box.innerHTML = "";
+    var myPos = "-", myPL = 0;
+    weeklyRows().forEach(function (r, i) { if (r.email === user.email) { myPos = i + 1; myPL = r.pl; } });
+    $("topMyId").textContent = numericId();
+    $("topMyPos").textContent = myPos;
+    $("topMyPL").textContent = (myPL >= 0 ? "+" : "−") + TX.fmt(Math.abs(myPL));
+    rows.forEach(function (r, i) {
+      var d = document.createElement("div"); d.className = "top-row" + (r.email === user.email ? " me" : "");
+      var medal = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : (i + 1);
+      d.innerHTML = "<span>" + medal + "</span><b>" + TX.esc(r.email.split("@")[0]) + (r.email === user.email ? " (you)" : "") + "</b>" +
+        "<span>" + r.n + " trades</span>" +
+        '<b style="color:' + (r.pl >= 0 ? "#4ade80" : "#ff8a94") + '">' + (r.pl >= 0 ? "+" : "−") + TX.fmt(Math.abs(r.pl)) + "</b>";
+      box.appendChild(d);
+    });
+    if (!rows.length) box.innerHTML = '<p class="empty-note">No demo traders ranked this week yet.</p>';
+  }
+  function openTop() { renderTop(); $("topBack").hidden = false; $("topDrawer").hidden = false; }
+  $("topClose").addEventListener("click", function () { $("topBack").hidden = true; $("topDrawer").hidden = true; });
+  $("topBack").addEventListener("click", function () { $("topBack").hidden = true; $("topDrawer").hidden = true; });
+  $("topHow").addEventListener("click", function () {
+    toast("Ranked by demo P/L over the last 7 days. One account per trader.");
+  });
+
+  /* ---------- settings drawer ---------- */
+  function applyTemplate(v, silent) {
+    root.setAttribute("data-theme", v === "twilight" ? "twilight" : v === "light" ? "light" : "dark");
+    try { localStorage.setItem("tx_template", v); } catch (e) {}
+    document.querySelectorAll('.tpl-row input[name="tpl"]').forEach(function (inp) {
+      inp.checked = inp.value === v || (v === "night" && inp.value === "dark");
+      inp.closest(".tpl-row").classList.toggle("sel", inp.checked);
+    });
+    if (state.assetId) loadChart();
+    if (!silent) toast("Template: " + v);
+  }
+  function openSettings() { $("setBack").hidden = false; $("setDrawer").hidden = false; }
+  $("setClose").addEventListener("click", function () { $("setBack").hidden = true; $("setDrawer").hidden = true; });
+  $("setBack").addEventListener("click", function () { $("setBack").hidden = true; $("setDrawer").hidden = true; });
+  document.querySelectorAll('.tpl-row input[name="tpl"]').forEach(function (inp) {
+    inp.closest(".tpl-row").addEventListener("click", function () { applyTemplate(inp.value === "dark" ? "night" : inp.value); });
+  });
+  $("setLang").addEventListener("change", function () { $("langSel").value = "English"; toast("English is the active language on this demo."); });
+  $("setTz").addEventListener("change", function () {
+    try { localStorage.setItem("tx_tz", $("setTz").value); } catch (e) {}
+    toast("Timezone preference saved (demo).");
+  });
+  (function () {
+    try {
+      var v = localStorage.getItem("tx_template"), z = localStorage.getItem("tx_tz");
+      if (v) applyTemplate(v, true);
+      if (z && $("setTz").options.length) $("setTz").value = z;
+    } catch (e) {}
+  })();
+
+  /* ---------- more drawer ---------- */
+  function openMore() { $("moreBack").hidden = false; $("moreDrawer").hidden = false; }
+  $("moreBtn").addEventListener("click", openMore);
+  $("moreClose").addEventListener("click", function () { $("moreBack").hidden = true; $("moreDrawer").hidden = true; });
+  $("moreBack").addEventListener("click", function () { $("moreBack").hidden = true; $("moreDrawer").hidden = true; });
+  document.querySelectorAll(".qx-more-link").forEach(function (b) {
+    b.addEventListener("click", function () {
+      $("moreBack").hidden = true; $("moreDrawer").hidden = true;
+      var g = b.getAttribute("data-goto");
+      if (g === "signals") openSig();
+      else if (g === "tournaments") openTop();
+      else if (g === "settings") openSettings();
+      else if (g === "market") { showView("market"); paintAcctTabs("market"); }
+      else if (g === "history") { showView("analytics"); paintAcctTabs("analytics"); }
+    });
+  });
+
+  /* ---------- analytics ---------- */
+  function svgLine(pts, w, h) {
+    if (!pts.length) return '<p class="empty-note">No data yet.</p>';
+    var min = Math.min.apply(null, pts.concat([0])), max = Math.max.apply(null, pts.concat([0]));
+    var rng = (max - min) || 1;
+    var step = w / Math.max(pts.length - 1, 1);
+    var zero = (h - 8 - (0 - min) / rng * (h - 16)).toFixed(1);
+    var d = pts.map(function (p, i) {
+      var x = (i * step).toFixed(1), y = (h - 8 - (p - min) / rng * (h - 16)).toFixed(1);
+      return (i ? "L" : "M") + x + "," + y;
+    }).join(" ");
+    var up = pts[pts.length - 1] >= 0;
+    return '<svg viewBox="0 0 ' + w + " " + h + '" class="an-svg"><line x1="0" y1="' + zero + '" x2="' + w + '" y2="' + zero + '" class="an-zero"/>' +
+      '<path d="' + d + '" class="an-line ' + (up ? "up" : "dn") + '"/></svg>';
+  }
+  function svgBars(rows, w, h) {
+    if (!rows.length) return '<p class="empty-note">No data yet.</p>';
+    var max = Math.max.apply(null, rows.map(function (r) { return Math.abs(r.v); }).concat([1]));
+    var slot = (w - 20) / rows.length, bw = Math.min(46, slot - 10);
+    var s = rows.map(function (r, i) {
+      var bh = Math.max(3, Math.abs(r.v) / max * (h - 40));
+      var x = 10 + i * slot + (slot - bw) / 2;
+      var y = r.v >= 0 ? (h - 30 - bh) : (h - 30);
+      return '<rect x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" width="' + bw.toFixed(1) + '" height="' + bh.toFixed(1) +
+        '" rx="4" class="' + (r.v >= 0 ? "b-up" : "b-dn") + '"/>' +
+        '<text x="' + (x + bw / 2).toFixed(1) + '" y="' + (h - 12) + '" class="an-tick">' + TX.esc(r.k) + "</text>";
+    }).join("");
+    return '<svg viewBox="0 0 ' + w + " " + h + '" class="an-svg">' + s + "</svg>";
+  }
+  function renderAnalytics() {
+    var per = parseInt($("anPeriod").value, 10) || 30;
+    var cut = Date.now() - per * 86400000;
+    var ts = store.trades.filter(function (t) { return t.userId === user.id && t.status === "closed" && t.closedAt >= cut && t.result !== "void"; });
+    var wins = ts.filter(function (t) { return t.result === "win"; }).length;
+    var pl = ts.reduce(function (s, t) { return s + (t.pl || 0); }, 0);
+    var avg = ts.length ? pl / ts.length : 0;
+    var best = ts.length ? Math.max.apply(null, ts.map(function (t) { return t.pl || 0; })) : 0;
+    $("anEmail").textContent = user.email;
+    $("anId").textContent = numericId();
+    try { $("anLoc").textContent = getProfile().country || "United Arab Emirates"; } catch (e) {}
+    $("anReal").textContent = TX.fmt(0);
+    $("anDemo").textContent = TX.fmt(user.balance);
+    var wr = ts.length ? Math.round(wins / ts.length * 100) : 0;
+    $("anGen").innerHTML =
+      '<div class="g"><span class="ring">' + ts.length + '</span><b>Deals</b><small>Total closed trades in the selected period</small></div>' +
+      '<div class="g"><span class="ring">' + wr + '%</span><b>Win rate</b><small>Share of winning trades</small></div>' +
+      '<div class="g"><b>' + (pl >= 0 ? "+" : "−") + TX.fmt(Math.abs(pl)) + '</b><small>Net P/L across all trades</small></div>' +
+      '<div class="g"><b>' + (avg >= 0 ? "+" : "−") + TX.fmt(Math.abs(avg)) + '</b><small>Average P/L per trade</small></div>' +
+      '<div class="g"><b>' + (best >= 0 ? "+" : "−") + TX.fmt(Math.abs(best)) + '</b><small>Best single trade</small></div>' +
+      '<div class="g"><b>' + TX.fmt(user.balance) + '</b><small>Current demo balance</small></div>';
+    var cum = [], s2 = 0;
+    ts.slice().sort(function (a, b) { return a.closedAt - b.closedAt; }).forEach(function (t) { s2 += t.pl || 0; cum.push(Math.round(s2 * 100) / 100); });
+    $("anChartPL").innerHTML = svgLine(cum, 600, 180);
+    var byDay = {};
+    ts.forEach(function (t) {
+      var d = new Date(t.closedAt).toISOString().slice(5, 10);
+      byDay[d] = byDay[d] || { w: 0, n: 0 };
+      byDay[d].n++; if (t.result === "win") byDay[d].w++;
+    });
+    var wrows = Object.keys(byDay).sort().slice(-10).map(function (k) {
+      return { k: k, v: Math.round(byDay[k].w / byDay[k].n * 100) };
+    });
+    $("anChartWR").innerHTML = svgBars(wrows, 600, 170);
+    var byInst = {};
+    ts.forEach(function (t) { byInst[t.assetName] = (byInst[t.assetName] || 0) + (t.pl || 0); });
+    var irows = Object.keys(byInst).map(function (k) { return { k: k.length > 7 ? k.slice(0, 7) : k, v: Math.round(byInst[k] * 100) / 100 }; })
+      .sort(function (a, b) { return b.v - a.v; }).slice(0, 8);
+    $("anPLByInst").innerHTML = svgBars(irows, 600, 190);
+    var tot2 = ts.length || 1, cnt = {};
+    ts.forEach(function (t) { cnt[t.assetName] = (cnt[t.assetName] || 0) + 1; });
+    var drows = Object.keys(cnt).map(function (k) { return { k: k.length > 7 ? k.slice(0, 7) : k, v: Math.round(cnt[k] / tot2 * 100) }; })
+      .sort(function (a, b) { return b.v - a.v; }).slice(0, 8);
+    $("anDistInst").innerHTML = svgBars(drows, 600, 170);
+    var byCount = {};
+    ts.forEach(function (t) { byCount[t.assetName] = (byCount[t.assetName] || 0) + 1; });
+    var top = Object.keys(byCount).map(function (k) { return { k: k, n: byCount[k] }; })
+      .sort(function (a, b) { return b.n - a.n; }).slice(0, 5);
+    var tot = top.reduce(function (s, r) { return s + r.n; }, 0) || 1;
+    var cols = ["#22c55e", "#3b82f6", "#a855f7", "#f59e0b", "#64748b"];
+    var off = 25, segs = "";
+    top.forEach(function (r, i) {
+      var len = r.n / tot * 100;
+      segs += '<circle cx="60" cy="60" r="45" class="donut-seg" stroke="' + cols[i] + '" stroke-dasharray="' + len.toFixed(1) + ' 100" stroke-dashoffset="' + (-off).toFixed(1) + '"/>';
+      off += len;
+    });
+    $("anDonut").innerHTML = segs ? '<circle cx="60" cy="60" r="45" class="donut-bg"/>' + segs : "";
+    var lg = $("anLegend"); lg.innerHTML = "";
+    top.forEach(function (r, i) {
+      var li = document.createElement("li");
+      li.innerHTML = '<i style="background:' + cols[i] + '"></i><span>' + TX.esc(r.k) + "</span><b>" + r.n + "</b>";
+      lg.appendChild(li);
+    });
+    if (!top.length) lg.innerHTML = '<li><span class="empty-note">No data yet.</span></li>';
+  }
+  $("anPeriod").addEventListener("change", renderAnalytics);
+
+  /* ---------- account dropdown ---------- */
+  var balHidden = false;
+  function setBalText(t) {
+    ["topBal", "amDemoBal", "acctBal", "wdBal", "anDemo"].forEach(function (id) { var el = $(id); if (el) el.textContent = t; });
+  }
+  $("amEye").addEventListener("click", function (e) {
+    e.stopPropagation(); e.preventDefault();
+    balHidden = !balHidden;
+    setBalText(balHidden ? "••••••" : TX.fmt(user.balance));
+    $("amEye").textContent = balHidden ? "🙈" : "👁";
+  });
+  $("amRefill").addEventListener("click", function (e) {
+    e.stopPropagation(); e.preventDefault();
+    user.balance = 10000; TX.save(store); renderBalance();
+    toast("Demo balance refilled to $10,000.");
+  });
+  $("amCurChange").addEventListener("click", function (e) { e.stopPropagation(); e.preventDefault(); toast("USD is the only currency on the demo terminal."); });
+  $("amSetLimit").addEventListener("click", function (e) { e.stopPropagation(); e.preventDefault(); toast("Daily limits apply to live accounts — demo has none."); });
+  $("amLogout").addEventListener("click", function () { TX.setClientSession(null); window.location.replace("login.html"); });
+  document.querySelectorAll("[data-amgo]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      $("acctMenu").hidden = true;
+      showAccountTab(b.getAttribute("data-amgo"));
+    });
+  });
+  showAccountTab("account");
+  secPaint();
 
   /* ---------- welcome modal + onboarding tour ---------- */
   (function welcome() {

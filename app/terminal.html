@@ -7,8 +7,8 @@
 <meta name="description" content="Trexora demo trading terminal with live charts.">
 <meta name="robots" content="noindex">
 <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
-<link rel="stylesheet" href="../styles.css?v=20260929g">
-<link rel="stylesheet" href="app.css?v=20260929g">
+<link rel="stylesheet" href="../styles.css?v=20260929h">
+<link rel="stylesheet" href="app.css?v=20260929h">
 <script>try{var t=localStorage.getItem('trexora-theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}</script>
 <script src="https://s3.tradingview.com/tv.js"></script>
 </head>
@@ -21,6 +21,7 @@
     <span class="qx-tag">WEB TRADING PLATFORM</span>
   </a>
   <div class="qx-top-right">
+    <button class="promo-banner" id="promoBanner" type="button">🚀 Get a <b>50% bonus</b> on your deposit! <span>50%</span></button>
     <button class="qx-bell" id="bellBtn" aria-label="Notifications">🔔<i id="bellBadge" hidden></i></button>
     <div class="qx-acct-wrap">
       <button class="qx-acct" id="acctBtn" aria-haspopup="true" aria-expanded="false">
@@ -28,9 +29,20 @@
         <span class="qx-acct-t"><small>DEMO ACCOUNT</small><b id="topBal">$10,000.00</b></span>
         <span class="qx-chev">▾</span>
       </button>
-      <div class="qx-acct-menu" id="acctMenu" hidden>
-        <button class="qx-acct-opt active" type="button"><span><b>Demo account</b><small>Virtual funds · practice trading</small></span><i>✓</i></button>
-        <button class="qx-acct-opt" type="button" disabled><span><b>Real account</b><small>Coming soon</small></span></button>
+      <div class="qx-acct-menu rich" id="acctMenu" hidden>
+        <div class="am-std"><span class="am-flag">➤</span><div><small>STANDARD:</small><b>+0% profit</b></div><button class="icon-btn" id="amEye" type="button" aria-label="Hide balance">👁</button></div>
+        <div class="am-id"><b id="amEmail">—</b><small>ID: <span id="amId">—</span></small></div>
+        <div class="am-cur">Currency: <b>USD</b> <button class="link" id="amCurChange" type="button">CHANGE</button></div>
+        <label class="am-row"><input type="radio" name="amtype" disabled><span class="am-radio"></span><span class="am-t"><b>Live Account</b><b>$0.00</b><small>The daily limit is not set</small><button class="link" id="amSetLimit" type="button">SET LIMIT</button></span></label>
+        <label class="am-row sel"><input type="radio" name="amtype" checked><span class="am-radio"></span><span class="am-t"><b>Demo Account</b><b id="amDemoBal">$10,000.00</b></span><button class="icon-btn" id="amRefill" type="button" title="Refill demo balance to $10,000">⟳</button></label>
+        <div class="am-links">
+          <button data-amgo="deposit" type="button">Deposit</button>
+          <button data-amgo="withdrawal" type="button">Withdrawal</button>
+          <button data-amgo="payments" type="button">Payments</button>
+          <button data-amgo="trades" type="button">Trades</button>
+          <button data-amgo="account" type="button">My account</button>
+          <button class="out" id="amLogout" type="button">⎋ Logout</button>
+        </div>
       </div>
     </div>
     <button class="qx-dep" id="depTop" type="button">+ Deposit</button>
@@ -46,10 +58,43 @@
     <button data-view="tournaments"><span class="ico">🏆</span>Tournaments</button>
     <button data-view="history"><span class="ico">🕘</span>History</button>
     <button data-view="account"><span class="ico">👛</span>Account</button>
+    <button id="moreBtn" type="button"><span class="ico">···</span>More</button>
     <span class="rail-sp"></span>
     <button id="supportBtn"><span class="ico">💬</span>Support<span class="coach" id="onboardTip" hidden>👉 You can return to the onboarding here anytime.</span></button>
     <button id="themeToggle2"><span class="ico">🌗</span>Theme</button>
     <button id="logoutBtn"><span class="ico">⏻</span>Log out</button>
+  </aside>
+  <!-- SIGNALS drawer -->
+  <div class="qx-more-back" id="sigBack" hidden></div>
+  <aside class="qx-more wide" id="sigDrawer" aria-label="Trading Signals" hidden>
+    <div class="qx-more-head"><h3>‹ Trading Signals</h3><button class="icon-btn" id="sigClose" type="button" aria-label="Close">✕</button></div>
+    <button class="about-sig" id="aboutSig" type="button">ⓘ ABOUT SIGNALS</button>
+    <h4 class="drawer-sec"><span class="dot"></span>CURRENT SIGNALS</h4>
+    <div id="sigCur"></div>
+    <h4 class="drawer-sec">PAST SIGNALS</h4>
+    <div id="sigPast"></div>
+  </aside>
+
+  <!-- LEADERBOARD drawer -->
+  <div class="qx-more-back" id="topBack" hidden></div>
+  <aside class="qx-more wide" id="topDrawer" aria-label="Leader Board" hidden>
+    <div class="qx-more-head"><h3>‹ Leader Board</h3><button class="icon-btn" id="topClose" type="button" aria-label="Close">✕</button></div>
+    <p class="drawer-sub">of the Day</p>
+    <div class="top-me"><span class="p-ava sm">👤</span><div><b>#<span id="topMyId">—</span></b><small>Your position: <b id="topMyPos">-</b></small></div><b class="top-me-pl" id="topMyPL">$0.00</b></div>
+    <button class="about-sig" id="topHow" type="button">🏆 How does this rating work?</button>
+    <div id="topList"></div>
+  </aside>
+
+  <!-- SETTINGS drawer -->
+  <div class="qx-more-back" id="setBack" hidden></div>
+  <aside class="qx-more" id="setDrawer" aria-label="Settings" hidden>
+    <div class="qx-more-head"><h3>Settings</h3><button class="icon-btn" id="setClose" type="button" aria-label="Close">✕</button></div>
+    <div class="field"><label for="setLang">Language</label><select id="setLang"><option>English</option><option>Русский</option><option>Español</option><option>Português</option><option>العربية</option><option>हिन्दी</option></select></div>
+    <div class="field"><label for="setTz">Timezone</label><select id="setTz"></select></div>
+    <h4 class="drawer-sec">TEMPLATE</h4>
+    <label class="tpl-row"><span>☀️ Light Mode</span><span class="switch"><input type="radio" name="tpl" value="light"><i></i></span></label>
+    <label class="tpl-row"><span>🌅 Twilight</span><span class="switch"><input type="radio" name="tpl" value="twilight"><i></i></span></label>
+    <label class="tpl-row"><span>🌙 Full Night</span><span class="switch"><input type="radio" name="tpl" value="dark"><i></i></span></label>
   </aside>
 
   <main class="qx-main">
@@ -89,8 +134,11 @@
     <!-- TOURNAMENTS -->
     <section class="view" id="view-tournaments">
       <div class="qx-page">
-        <div class="qx-page-head"><h2>Tournaments</h2><p>Demo contests on virtual funds. Climb the leaderboard — prizes are virtual.</p></div>
-        <div class="tour-grid" id="tourGrid"></div>
+        <div class="qx-page-head"><h2>Tournaments</h2><p>Demo contests on virtual funds. Prizes are virtual.</p></div>
+        <div class="tour-tabs"><button class="active" id="tourTabActive" type="button">ACTIVE <span id="tourActiveN">3</span></button><button id="tourTabDone" type="button">COMPLETED</button></div>
+        <h3 class="tour-avail" id="tourAvailWrap">Available for participation (<span id="tourAvailN">3</span>)</h3>
+        <div class="tour-grid2" id="tourGrid"></div>
+        <div class="tour-grid2" id="tourDoneGrid" hidden></div>
         <h3 class="qx-sub">Leaderboard <small style="color:var(--muted);font-weight:500">· demo P/L this week</small></h3>
         <div class="tbl-wrap"><table class="data" id="tourTable">
           <thead><tr><th>#</th><th>Trader</th><th>Trades</th><th>Win rate</th><th>P/L</th></tr></thead>
@@ -124,44 +172,173 @@
 
     <!-- ACCOUNT -->
     <section class="view" id="view-account">
-      <div class="qx-page">
-        <div class="qx-page-head"><h2>Account</h2><p>Balance, funding requests and the full ledger.</p></div>
-        <div class="wallet-grid">
-          <div class="wallet-bal"><small>Demo balance</small><div class="big" id="walletBal">$0.00</div>
-            <div class="acct-row"><span id="acctEmail">—</span><button class="btn btn-ghost btn-sm" id="refillBtn" type="button">Refill $10,000</button></div>
-          </div>
-          <div class="req-form">
-            <h3>Fund your demo</h3>
-            <p class="sub" style="color:var(--muted);font-size:.85rem;margin-bottom:12px">Requests go to the admin for approval. Demo funds only.</p>
-            <div class="two-col">
-              <div class="req-form" style="padding:0;border:0">
-                <div class="field"><label for="depAmt">Deposit amount (USD)</label><input id="depAmt" type="number" min="10" value="100"></div>
-                <div class="field"><label for="depMethod">Method</label><select id="depMethod"><option>Visa</option><option>Mastercard</option><option>Bank transfer</option><option>Crypto</option></select></div>
-                <button class="btn btn-primary btn-sm" id="depBtn" type="button" style="width:100%">Request deposit</button>
+      <div class="qx-page acct">
+        <div class="acct-tabs" data-accttabs></div>
+        <div class="acct-balstrip">
+          <div><small>My current currency</small><b>$ USD <span class="cur-change">CHANGE</span></b></div>
+          <div><small>Available for withdrawal</small><b id="acctAvail">$0.00</b></div>
+          <div><small>In the account</small><b><span id="acctBal">$0.00</span> <button class="link" id="refillBtn" type="button" title="Refill demo balance to $10,000">refill</button></b></div>
+        </div>
+
+        <div class="acct-pane" id="atab-withdrawal" hidden>
+          <div class="wd-cols">
+            <div class="wd-col">
+              <h4>Account:</h4>
+              <p class="wd-lbl">In the account:</p><p class="wd-val" id="wdBal">—</p>
+              <p class="wd-lbl">Available for withdrawal:</p><p class="wd-val" id="wdAvail">—</p>
+              <h4 style="margin-top:22px">New request (demo):</h4>
+              <div class="wd-form">
+                <div class="field"><label for="wdAmt">Amount (USD)</label><input id="wdAmt" inputmode="decimal" placeholder="10.00"></div>
+                <div class="field"><label for="wdMethod">Method</label><select id="wdMethod"><option>Visa •••• 4321</option><option>Mastercard •••• 8765</option><option>Crypto wallet</option><option>E-wallet</option></select></div>
+                <button class="btn btn-primary" id="wdBtn" type="button" style="width:100%">Request withdrawal</button>
+                <p class="kyc-demo">Demo requests only — no real money moves. Admin reviews demo requests.</p>
               </div>
-              <div class="req-form" style="padding:0;border:0">
-                <div class="field"><label for="wdAmt">Withdraw amount (USD)</label><input id="wdAmt" type="number" min="10" value="100"></div>
-                <div class="field"><label for="wdMethod">Method</label><select id="wdMethod"><option>Visa</option><option>Mastercard</option><option>Bank transfer</option><option>Crypto</option></select></div>
-                <button class="btn btn-ghost btn-sm" id="wdBtn" type="button" style="width:100%">Request withdrawal</button>
+            </div>
+            <div class="wd-col">
+              <h4>Withdrawal:</h4>
+              <div class="wd-warn"><span>ⓘ</span><div><p>You can withdraw money from your balance to the same method you used for depositing. You can request a withdrawal any time. Requests are processed in 3 business days.</p><button class="link" id="wdMakeDep" type="button">Make a deposit</button></div></div>
+              <h4>FAQ:</h4>
+              <div class="faq-list" id="wdFaq">
+                <button class="faq-q" type="button">How to withdraw money from the account?</button><div class="faq-a" hidden>Open Withdrawal, enter the amount and your method, then submit. This demo sends a virtual request for practice.</div>
+                <button class="faq-q" type="button">How long does it take to withdraw funds?</button><div class="faq-a" hidden>Demo requests are reviewed in the demo admin panel. Real withdrawals would take 1–5 business days.</div>
+                <button class="faq-q" type="button">What is the minimum withdrawal amount?</button><div class="faq-a" hidden>$10 on the demo terminal.</div>
+                <button class="faq-q" type="button">Is there any fee for depositing or withdrawing?</button><div class="faq-a" hidden>The demo charges $0 fees. First 2 demo withdrawals in 24 hours are free; then a 3% demo fee applies.</div>
+                <button class="faq-q" type="button">Do I need to provide documents to withdraw?</button><div class="faq-a" hidden>On a real account, yes — identity verification is required. The demo never asks for real documents.</div>
+                <button class="faq-q" type="button">What is account verification?</button><div class="faq-a" hidden>Confirming your identity so funds can be released safely. Try the demo flow under My account → Verification.</div>
+              </div>
+              <button class="link faq-all" id="wdFaqAll" type="button">Check out full FAQ</button>
+            </div>
+          </div>
+          <div class="wd-req">
+            <h4>Some of your latest requests:</h4>
+            <button class="link" id="wdFullHist" type="button">All financial history</button>
+          </div>
+          <table class="req-table"><thead><tr><th>Type</th><th>Amount</th><th>Method</th><th>Status</th><th>Requested</th></tr></thead><tbody id="reqRows"></tbody></table>
+          <div class="wd-foot">
+            <ul><li>🏦 Minimum deposit amount: <b>$10</b></li><li>💳 Minimum withdrawal amount: <b>$10</b></li><li>≫ Quick withdrawal from your account</li><li>％ First 2 withdrawals in 24 hours are commission-free; then a 3% fee applies</li></ul>
+            <div class="pay-badges"><span>Verified by VISA</span><span>SECURE PAYMENT</span><span>MasterCard SecureCode</span><span>3D SECURE online payments</span><span>SECURE SSL ENCRYPTION</span></div>
+          </div>
+        </div>
+
+        <div class="acct-pane" id="atab-payments" hidden>
+          <div class="acct-card">
+            <h3>Fund your demo</h3>
+            <p class="acct-note">Requests go to the admin for approval. Demo funds only.</p>
+            <div class="two-col">
+              <div class="field"><label for="depAmt">Deposit amount (USD)</label><input id="depAmt" type="number" min="10" value="100"></div>
+              <div class="field"><label for="depMethod">Method</label><select id="depMethod"><option>Visa</option><option>Mastercard</option><option>Bank transfer</option><option>Crypto</option></select></div>
+            </div>
+            <button class="btn btn-primary" id="depBtn" type="button">Request deposit</button>
+          </div>
+          <h3 class="qx-sub">My requests</h3>
+          <div class="tbl-wrap"><table class="data" id="reqTable">
+            <thead><tr><th>Time</th><th>Type</th><th>Amount</th><th>Method</th><th>Status</th></tr></thead>
+            <tbody></tbody>
+          </table></div>
+          <div class="empty" id="reqEmpty" hidden>No requests yet.</div>
+          <h3 class="qx-sub">Ledger — every balance movement</h3>
+          <div class="tbl-wrap"><table class="data" id="ledgerTable">
+            <thead><tr><th>Time</th><th>Description</th><th>Amount</th></tr></thead>
+            <tbody></tbody>
+          </table></div>
+          <div class="empty" id="ledgerEmpty" hidden>No movements yet.</div>
+        </div>
+
+        <div class="acct-pane" id="atab-account">
+          <div class="acct-cols">
+            <div class="acct-card">
+              <h3>Personal data</h3>
+              <div class="p-id"><span class="p-ava">👤</span>
+                <div><b id="pEmail">—</b><small>ID: <span id="pId">—</span></small><span class="vbadge not" id="vBadge">✕ Not verified</span></div>
+              </div>
+              <div class="p-grid">
+                <div class="field"><label for="pfNick">Nickname</label><input id="pfNick" placeholder="e.g. trader_01"></div>
+                <div class="field"><label for="pfFirst">First Name</label><input id="pfFirst" placeholder="Empty"></div>
+                <div class="field"><label for="pfLast">Last Name</label><input id="pfLast" placeholder="Empty"></div>
+                <div class="field"><label for="pfDob">Date of birth</label><input id="pfDob" type="date"></div>
+                <div class="field"><label for="pfEmail2">Email</label><input id="pfEmail2" placeholder="Empty"></div>
+                <div class="field"><label for="pfCountry">Country</label><select id="pfCountry"></select></div>
+                <div class="field"><label for="pfAddr">Address</label><input id="pfAddr" placeholder="Empty"></div>
+              </div>
+              <button class="btn btn-primary" id="pfSave" type="button">Save</button>
+            </div>
+            <div class="acct-col2">
+              <div class="acct-card">
+                <h3>Documents verification</h3>
+                <div class="verify-warn" id="verifyWarn"><span>⚠</span><p>You need to fill identity information before verifying your account.</p></div>
+                <div class="verify-ok" id="verifyOk" hidden><span>✓</span><p>Your identity is verified on this demo account.</p></div>
+                <button class="btn btn-ghost" id="verifyOpen" type="button">Start verification</button>
+              </div>
+              <div class="acct-card">
+                <h3>Security</h3>
+                <div class="sec-line"><span>🔐</span><div><b>Two-step verification</b><small>Receiving codes via Email</small></div></div>
+                <label class="switch-row"><span>To enter the platform</span><span class="switch"><input type="checkbox" id="tfaLogin"><i></i></span></label>
+                <label class="switch-row"><span>To withdraw funds</span><span class="switch"><input type="checkbox" id="tfaWd"><i></i></span></label>
+                <div class="sec-line"><span>🔒</span><div><b>Password</b><small>Change your account password</small></div><button class="link" id="pwChange" type="button">Change</button></div>
+                <div class="pw-form" id="pwForm" hidden>
+                  <div class="field"><label for="pwNew">New password</label><input type="password" id="pwNew" autocomplete="new-password"></div>
+                  <button class="btn btn-primary btn-sm" id="pwSave" type="button">Update password</button>
+                </div>
+              </div>
+              <div class="acct-card">
+                <div class="field"><label for="langSel">Language</label><select id="langSel"><option>English</option><option>Русский</option><option>Español</option><option>Português</option><option>العربية</option><option>हिन्दी</option></select></div>
+                <div class="field"><label for="tzSel">Timezone</label><select id="tzSel"></select></div>
+                <button class="del-acct" id="delAcct" type="button">✕ Delete My account</button>
               </div>
             </div>
           </div>
         </div>
-        <h3 class="qx-sub">My requests</h3>
-        <div class="tbl-wrap"><table class="data" id="reqTable">
-          <thead><tr><th>Time</th><th>Type</th><th>Amount</th><th>Method</th><th>Status</th></tr></thead>
-          <tbody></tbody>
-        </table></div>
-        <div class="empty" id="reqEmpty" hidden>No requests yet.</div>
-        <h3 class="qx-sub">Ledger — every balance movement</h3>
-        <div class="tbl-wrap"><table class="data" id="ledgerTable">
-          <thead><tr><th>Time</th><th>Description</th><th>Amount</th></tr></thead>
-          <tbody></tbody>
-        </table></div>
-        <div class="empty" id="ledgerEmpty" hidden>No movements yet.</div>
+      </div>
+    </section>
+    <!-- MARKET (promo codes) -->
+    <section class="view" id="view-market">
+      <div class="qx-page acct">
+        <div class="acct-tabs" data-accttabs></div>
+        <div class="promo-grid" id="promoGrid"></div>
+      </div>
+    </section>
+
+    <!-- ANALYTICS -->
+    <section class="view" id="view-analytics">
+      <div class="qx-page acct">
+        <div class="acct-tabs" data-accttabs></div>
+        <div class="an-strip">
+          <div class="an-user"><span class="p-ava sm">👤</span><div><b id="anEmail">—</b><small>ID: <span id="anId">—</span> <i class="plane">➤</i></small></div></div>
+          <div class="an-cell"><small>Location</small><b id="anLoc">United Arab Emirates</b></div>
+          <div class="an-cell"><small>In the account</small><b id="anReal">$0.00</b></div>
+          <div class="an-cell"><small>In the demo</small><b id="anDemo">$10,000.00</b></div>
+          <select class="an-period" id="anPeriod"><option value="30">Month</option><option value="7">Week</option><option value="90">3 months</option><option value="365">Year</option></select>
+        </div>
+        <div class="an-grid">
+          <div class="an-card">
+            <h3>General data</h3>
+            <div class="an-gen" id="anGen"></div>
+            <div class="an-scale"><span class="g1"></span><span class="g2"></span><span class="g3"></span><span class="g4"></span><small>-1K–0&nbsp;&nbsp;0–1K&nbsp;&nbsp;+1K</small></div>
+          </div>
+          <div class="an-col">
+            <div class="an-card"><h3>Statistics of profitable trades</h3><div class="an-chart" id="anChartPL"></div></div>
+            <div class="an-card"><h3>Percentage % of profitable trades</h3><div class="an-chart" id="anChartWR"></div></div>
+            <div class="an-duo">
+              <div class="an-card"><h3>Statistics Profit &amp; Loss by instruments</h3><div id="anPLByInst"></div></div>
+              <div class="an-card"><h3>Distribution of trades by instruments, %</h3><div id="anDistInst"></div></div>
+            </div>
+          </div>
+        </div>
+        <div class="an-card"><h3>Top 5 most profitable instruments among traders</h3><div class="an-donutwrap"><svg class="an-donut" id="anDonut" viewBox="0 0 120 120"></svg><ul class="an-legend" id="anLegend"></ul></div></div>
       </div>
     </section>
   </main>
+
+  <!-- MORE drawer -->
+  <div class="qx-more-back" id="moreBack" hidden></div>
+  <aside class="qx-more" id="moreDrawer" aria-label="More" hidden>
+    <div class="qx-more-head"><h3>More</h3><button class="icon-btn" id="moreClose" type="button" aria-label="Close">✕</button></div>
+    <button class="qx-more-link" data-goto="history" type="button"><span>📊</span>Analytics<i>›</i></button>
+    <button class="qx-more-link" data-goto="tournaments" type="button"><span>🏅</span>TOP<i>›</i></button>
+    <button class="qx-more-link" data-goto="signals" type="button"><span>📡</span>Signals<i>›</i></button>
+    <button class="qx-more-link" data-goto="market" type="button"><span>🎁</span>Market<i class="qx-more-badge" id="marketBadge">3</i><i>›</i></button>
+    <button class="qx-more-link" data-goto="settings" type="button"><span>⚙️</span>Settings<i>›</i></button>
+  </aside>
 
   <!-- RIGHT TRADE PANEL -->
   <aside class="qx-panel" id="tradePanel" aria-label="Trade ticket">
@@ -223,6 +400,55 @@
 </div>
 
 <div class="qx-modal-back" id="supportBack" hidden></div>
+<div class="qx-modal-back" id="verifyBack" hidden></div>
+<div class="qx-modal qx-verify" id="verifyModal" role="dialog" aria-modal="true" aria-label="Verify your account" hidden>
+  <button class="qx-welc-x" id="verifyX" type="button" aria-label="Close">✕</button>
+  <div class="qx-welc-ico">🪪</div>
+  <h3>Verify your account</h3>
+  <p>Verify your account to confirm your identity and unlock full access to all features.</p>
+  <div id="verifyIntro">
+    <button class="qx-welc-go" id="verifyStart" type="button">Start verification</button>
+    <button class="qx-verify-later" id="verifyLater" type="button">Later</button>
+  </div>
+  <div id="kycForm" hidden>
+    <div class="field"><label for="kycType">Document type</label><select id="kycType"><option>Passport</option><option>National ID</option><option>Driving licence</option></select></div>
+    <div class="field"><label for="kycNum">Document number</label><input id="kycNum" placeholder="e.g. A1234567"></div>
+    <div class="field"><label for="kycName">Full name (as on document)</label><input id="kycName" placeholder="Your full name"></div>
+    <button class="qx-welc-go" id="kycSubmit" type="button">Submit for review</button>
+    <p class="kyc-demo">Demo verification — no real documents are checked or stored.</p>
+  </div>
+</div>
+
+<div class="qx-modal-back" id="vBack" hidden></div>
+<div class="qx-modal" id="vModal" role="dialog" aria-modal="true" aria-label="Verification" hidden>
+  <div class="sheet-head"><h3>Identity verification</h3><button class="icon-btn" id="vClose" type="button" aria-label="Close">✕</button></div>
+  <div class="field"><label for="vDocType">Document type</label><select id="vDocType"><option>Passport</option><option>National ID</option><option>Driving licence</option></select></div>
+  <div class="field"><label for="vDocNum">Document number</label><input id="vDocNum" placeholder="e.g. A1234567"></div>
+  <div class="field"><label for="vName">Full name</label><input id="vName" placeholder="As on the document"></div>
+  <button class="btn btn-primary" id="vSubmit" type="button" style="width:100%">Submit for review</button>
+  <button class="btn btn-ghost" id="vCancel" type="button" style="width:100%;margin-top:8px">Cancel</button>
+  <p class="kyc-demo">Demo flow — no real documents are checked or stored.</p>
+</div>
+<div class="qx-modal-back blur" id="codeBack" hidden></div>
+<div class="qx-modal qx-code" id="codeModal" role="dialog" aria-modal="true" aria-label="Enter promo code" hidden>
+  <span class="qx-code-ico">🎁</span>
+  <button class="qx-welc-x" id="codeClose" type="button" aria-label="Close">✕</button>
+  <h3 id="codeTitle">Cashback</h3>
+  <p>Enter your promo code now and activate it. You can use it at any time.</p>
+  <div class="code-field"><label for="codeInput">Promo code:</label><input id="codeInput" placeholder="XXXXXXXXX" autocapitalize="characters" autocomplete="off"></div>
+  <div class="code-btns">
+    <button class="code-yes" id="codeApply" type="button">✓&nbsp;&nbsp;Yes, activate</button>
+    <button class="code-no" id="codeCancel" type="button">Cancel</button>
+  </div>
+  <p class="kyc-demo">Demo promo codes add virtual bonus funds. Try DEPOSIT30, DEPOSIT40 or DEPOSIT50.</p>
+</div>
+
+<div class="qx-modal-back" id="tourBack" hidden></div>
+<div class="qx-modal" id="tourModal" role="dialog" aria-modal="true" aria-label="Tournament details" hidden>
+  <div class="sheet-head"><h3 id="tourMName">Tournament</h3><button class="icon-btn" id="tourClose" type="button" aria-label="Close">✕</button></div>
+  <div class="tour-m-body" id="tourMBody"></div>
+</div>
+
 <div class="qx-modal" id="supportModal" role="dialog" aria-modal="true" aria-label="Support" hidden>
   <div class="sheet-head"><h3>Support</h3><button class="icon-btn" id="supportClose" type="button" aria-label="Close">✕</button></div>
   <div class="sup-list">
@@ -259,7 +485,7 @@
 
 <div class="toast" id="toast"></div>
 
-<script src="../shared/store.js?v=20260929g"></script>
-<script src="app.js?v=20260929g"></script>
+<script src="../shared/store.js?v=20260929h"></script>
+<script src="app.js?v=20260929h"></script>
 </body>
 </html>
