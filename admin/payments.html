@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Payment Methods — Trexora Admin</title>
+<meta name="robots" content="noindex">
+<link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
+<link rel="stylesheet" href="../styles.css?v=20260929p">
+<link rel="stylesheet" href="admin.css?v=20260929u">
+<script>try{var t=localStorage.getItem('trexora-theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}</script>
+</head>
+<body class="admin-body" data-page="payments">
+<div class="admin-shell">
+  <aside class="sidebar" id="sidebar">
+    <a class="brand" href="dashboard.html" aria-label="Trexora admin">
+      <img class="logo logo-dark" src="../assets/logo-dark.svg" alt="Trexora" height="32">
+      <img class="logo logo-light" src="../assets/logo-light.svg" alt="Trexora" height="32">
+    </a>
+    <a class="side-link" data-nav="dashboard" href="dashboard.html"><span class="ico">📊</span>Dashboard</a>
+    <a class="side-link" data-nav="users" href="users.html"><span class="ico">👥</span>Users</a>
+    <a class="side-link" data-nav="assets" href="assets.html"><span class="ico">💹</span>Assets</a>
+    <a class="side-link" data-nav="trades" href="trades.html"><span class="ico">📑</span>Trades</a>
+    <a class="side-link" data-nav="requests" href="requests.html"><span class="ico">💸</span>Requests</a>
+    <a class="side-link active" data-nav="payments" href="payments.html"><span class="ico">💳</span>Payments</a>
+    <a class="side-link" data-nav="integrations" href="integrations.html"><span class="ico">🔌</span>Integrations</a>
+    <a class="side-link" data-nav="settings" href="settings.html"><span class="ico">⚙️</span>Settings</a>
+    <div class="side-foot">
+      <a class="side-link" href="../index.html"><span class="ico">🌐</span>View website</a>
+      <a class="side-link" href="../app/terminal.html"><span class="ico">📈</span>Client terminal</a>
+      <button class="side-link" id="logoutBtn" type="button" style="background:none;border:0;width:100%;text-align:left;cursor:pointer;font-family:var(--font)"><span class="ico">⏻</span>Log out</button>
+    </div>
+  </aside>
+
+  <main class="admin-main">
+    <div class="admin-top">
+      <button class="icon-btn mobile-nav-toggle" id="mobileNavToggle" aria-label="Menu">☰</button>
+      <h1>Payment methods</h1>
+      <span class="spacer"></span>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme" style="width:36px;height:36px">
+        <svg class="icon-sun" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M2 12h2.5M19.5 12H22M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+      </button>
+    </div>
+
+    <p class="pay-warn">⚠️ <strong>Demo payments only — no real money moves.</strong> Methods ship <strong>disabled</strong>; only enabled ones appear in the terminal's Deposit tab. Crypto is fully manual (your wallet address + QR, the user sends funds themselves, you confirm). Never hardcode real API keys in code or chat — production secrets belong server-side, never in localStorage.</p>
+
+    <div class="panel">
+      <h2>Add payment method</h2>
+      <div class="form-grid two">
+        <div class="field"><label>Name</label><input class="inline-input" id="nName" type="text" placeholder="e.g. Skrill" style="width:100%"></div>
+        <div class="field"><label>Type</label><select id="nType" class="inline-input" style="width:100%"></select></div>
+        <div class="field"><label>Provider preset</label><select id="nProv" class="inline-input" style="width:100%"></select></div>
+        <div class="field"><label>Sort order (lower = first)</label><input class="inline-input" id="nSort" type="number" min="0" value="50" style="width:100%"></div>
+      </div>
+      <button class="btn btn-primary btn-sm" id="addBtn" type="button" style="margin-top:12px">Add method</button>
+    </div>
+
+    <div class="tbl-wrap"><table class="data" id="payTable">
+      <thead><tr><th>Method</th><th>Type</th><th>Provider</th><th>Min</th><th>Max</th><th>Sort</th><th>Enabled</th><th></th></tr></thead>
+      <tbody></tbody>
+    </table></div>
+  </main>
+</div>
+
+<div class="modal-veil" id="pmVeil">
+  <div class="modal" role="dialog" aria-label="Edit payment method">
+    <h2 id="pmTitle">Edit payment method</h2>
+    <div class="form-grid two">
+      <div class="field"><label>Name</label><input class="inline-input" id="pmName" type="text" style="width:100%"></div>
+      <div class="field"><label>Type</label><select id="pmType" class="inline-input" style="width:100%"></select></div>
+      <div class="field"><label>Provider preset</label><select id="pmProv" class="inline-input" style="width:100%"></select></div>
+      <div class="field"><label>Enabled (shows in terminal)</label><select id="pmEnabled" class="inline-input" style="width:100%"><option value="1">Enabled</option><option value="0">Disabled</option></select></div>
+      <div class="field"><label>Sort order</label><input class="inline-input" id="pmSort" type="number" min="0" style="width:100%"></div>
+      <div class="field"><label>Instructions (shown to the user)</label><textarea class="inline-input" id="pmInstr" rows="2" style="width:100%"></textarea></div>
+      <div class="field"><label>Min deposit (USD)</label><input class="inline-input" id="pmMin" type="number" min="1" style="width:100%"></div>
+      <div class="field"><label>Max deposit (USD, 0 = none)</label><input class="inline-input" id="pmMax" type="number" min="0" style="width:100%"></div>
+    </div>
+
+    <div id="pmApiWrap" style="margin-top:16px">
+      <h3 style="font-size:.85rem;margin-bottom:10px">Gateway credentials (demo only — keep real keys server-side)</h3>
+      <div class="form-grid two">
+        <div class="field"><label>API key</label><input class="inline-input" id="pmKey" type="text" autocomplete="off" style="width:100%"></div>
+        <div class="field"><label>API secret</label><input class="inline-input" id="pmSecret" type="password" autocomplete="off" style="width:100%"></div>
+        <div class="field"><label>Merchant ID</label><input class="inline-input" id="pmMerchant" type="text" autocomplete="off" style="width:100%"></div>
+      </div>
+    </div>
+
+    <div id="pmCryptoWrap" style="margin-top:16px;display:none">
+      <h3 style="font-size:.85rem;margin-bottom:10px">Manual crypto details (no API needed)</h3>
+      <div class="form-grid two">
+        <div class="field"><label>Coin</label><input class="inline-input" id="pmCoin" type="text" placeholder="BTC" style="width:100%"></div>
+        <div class="field"><label>Network</label><input class="inline-input" id="pmNetwork" type="text" placeholder="Bitcoin / TRC20 / ERC20" style="width:100%"></div>
+        <div class="field" style="grid-column:1/-1"><label>Your wallet address</label><input class="inline-input" id="pmWallet" type="text" autocomplete="off" style="width:100%"></div>
+        <div class="field" style="grid-column:1/-1"><label>QR code image</label><input id="pmQrFile" type="file" accept="image/*" style="font-size:.85rem"><img id="pmQrPrev" alt="" style="display:none;width:120px;height:120px;object-fit:contain;border-radius:10px;border:1px solid var(--line);margin-top:8px;background:#fff"></div>
+      </div>
+    </div>
+
+    <div id="pmBankWrap" style="margin-top:16px;display:none">
+      <h3 style="font-size:.85rem;margin-bottom:10px">Bank details (shown to the user)</h3>
+      <div class="form-grid two">
+        <div class="field"><label>Bank name</label><input class="inline-input" id="pmBankName" type="text" style="width:100%"></div>
+        <div class="field"><label>Account name</label><input class="inline-input" id="pmAccName" type="text" style="width:100%"></div>
+        <div class="field" style="grid-column:1/-1"><label>IBAN / account number</label><input class="inline-input" id="pmIban" type="text" autocomplete="off" style="width:100%"></div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:10px;margin-top:20px">
+      <button class="btn btn-primary" id="pmSave" type="button">Save</button>
+      <button class="btn btn-ghost" id="pmCancel" type="button">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" style="position:fixed;left:50%;bottom:30px;transform:translateX(-50%);background:#0D1830;color:#fff;border:1px solid var(--brand);padding:12px 20px;border-radius:12px;opacity:0;pointer-events:none;transition:.3s;z-index:200"></div>
+
+<script src="../shared/store.js?v=20260929u"></script>
+<script src="admin.js?v=20260929e"></script>
+<script>
+(function(){
+  "use strict";
+  var $ = ADM.$;
+  var s = TX.load();
+  s.settings = s.settings || {};
+  if (!Array.isArray(s.settings.payMethods)) s.settings.payMethods = TX.defaultPayMethods();
+  var editing = null, qrData = "";
+
+  function typeLabel(t){ return (TX.PAY_TYPES && TX.PAY_TYPES[t]) || t; }
+  function provLabel(m){
+    var list = (TX.PAY_PROVIDERS && TX.PAY_PROVIDERS[m.type]) || [];
+    for (var i = 0; i < list.length; i++) if (list[i][0] === m.provider) return list[i][1];
+    return m.provider || "—";
+  }
+  function fillTypeSel(sel, val){
+    sel.innerHTML = "";
+    Object.keys(TX.PAY_TYPES || {}).forEach(function(k){
+      var o = document.createElement("option"); o.value = k; o.textContent = TX.PAY_TYPES[k];
+      if (k === val) o.selected = true;
+      sel.appendChild(o);
+    });
+  }
+  function fillProvSel(sel, type, val){
+    sel.innerHTML = "";
+    ((TX.PAY_PROVIDERS || {})[type] || [["custom", "Custom"]]).forEach(function(p){
+      var o = document.createElement("option"); o.value = p[0]; o.textContent = p[1];
+      if (p[0] === val) o.selected = true;
+      sel.appendChild(o);
+    });
+  }
+
+  function render(){
+    var tb = $("payTable").querySelector("tbody"); tb.innerHTML = "";
+    s.settings.payMethods.slice().sort(function(a,b){ return (a.sort||0)-(b.sort||0); }).forEach(function(m){
+      var tr = document.createElement("tr");
+      tr.innerHTML =
+        "<td><strong>" + TX.esc(m.name) + "</strong></td>" +
+        '<td style="font-size:.78rem;color:var(--muted)">' + TX.esc(typeLabel(m.type)) + "</td>" +
+        '<td style="font-size:.78rem;color:var(--muted)">' + TX.esc(provLabel(m)) + "</td>" +
+        '<td><input class="inline-input" data-f="min" data-id="' + m.id + '" type="number" min="1" value="' + (m.min || 0) + '" style="width:80px"></td>' +
+        '<td><input class="inline-input" data-f="max" data-id="' + m.id + '" type="number" min="0" value="' + (m.max || 0) + '" style="width:90px"></td>' +
+        '<td><input class="inline-input" data-f="sort" data-id="' + m.id + '" type="number" min="0" value="' + (m.sort || 0) + '" style="width:70px"></td>' +
+        '<td><label class="toggle"><input type="checkbox" data-f="enabled" data-id="' + m.id + '"' + (m.enabled ? " checked" : "") + '><span class="track"></span></label></td>' +
+        '<td><div class="row-actions"><button class="btn btn-ghost btn-xs" data-edit="' + m.id + '" type="button">Edit</button>' +
+        '<button class="btn btn-ghost btn-xs" data-del="' + m.id + '" type="button">Delete</button></div></td>';
+      tb.appendChild(tr);
+    });
+    tb.querySelectorAll("input[data-f]").forEach(function(inp){
+      inp.addEventListener("change", function(){
+        var m = byId(inp.getAttribute("data-id")); if (!m) return;
+        var f = inp.getAttribute("data-f");
+        if (f === "enabled") m.enabled = inp.checked;
+        else if (f === "min") m.min = Math.max(1, parseFloat(inp.value) || 10);
+        else if (f === "max") m.max = Math.max(0, parseFloat(inp.value) || 0);
+        else if (f === "sort") m.sort = Math.max(0, parseInt(inp.value, 10) || 0);
+        TX.save(s); render();
+        ADM.toast("Method updated — live in the terminal now.");
+      });
+    });
+    tb.querySelectorAll("[data-edit]").forEach(function(b){ b.addEventListener("click", function(){ openEdit(byId(b.getAttribute("data-edit"))); }); });
+    tb.querySelectorAll("[data-del]").forEach(function(b){ b.addEventListener("click", function(){
+      var m = byId(b.getAttribute("data-del"));
+      if (m && confirm('Delete "' + m.name + '"?')) {
+        s.settings.payMethods = s.settings.payMethods.filter(function(x){ return x.id !== m.id; });
+        TX.save(s); render(); ADM.toast("Method deleted.");
+      }
+    }); });
+  }
+  function byId(id){
+    for (var i = 0; i < s.settings.payMethods.length; i++) if (s.settings.payMethods[i].id === id) return s.settings.payMethods[i];
+    return null;
+  }
+
+  function openEdit(m){
+    if (!m) return;
+    editing = m; qrData = m.qr || "";
+    $("pmTitle").textContent = 'Edit — ' + m.name;
+    $("pmName").value = m.name || "";
+    fillTypeSel($("pmType"), m.type);
+    fillProvSel($("pmProv"), m.type, m.provider);
+    $("pmEnabled").value = m.enabled ? "1" : "0";
+    $("pmSort").value = m.sort || 0;
+    $("pmInstr").value = m.instructions || "";
+    $("pmMin").value = m.min || 10;
+    $("pmMax").value = m.max || 0;
+    $("pmKey").value = m.apiKey || "";
+    $("pmSecret").value = m.apiSecret || "";
+    $("pmMerchant").value = m.merchantId || "";
+    $("pmCoin").value = m.coin || "";
+    $("pmNetwork").value = m.network || "";
+    $("pmWallet").value = m.wallet || "";
+    $("pmBankName").value = m.bankName || "";
+    $("pmAccName").value = m.accountName || "";
+    $("pmIban").value = m.iban || "";
+    $("pmQrFile").value = "";
+    var prev = $("pmQrPrev");
+    if (qrData) { prev.src = qrData; prev.style.display = "block"; } else prev.style.display = "none";
+    paintTypeWraps(m.type);
+    $("pmVeil").classList.add("open");
+  }
+  function paintTypeWraps(t){
+    $("pmApiWrap").style.display = (t === "card" || t === "ewallet") ? "" : "none";
+    $("pmCryptoWrap").style.display = t === "crypto" ? "" : "none";
+    $("pmBankWrap").style.display = t === "bank" ? "" : "none";
+  }
+  $("pmType").addEventListener("change", function(){ paintTypeWraps($("pmType").value); fillProvSel($("pmProv"), $("pmType").value, ""); });
+  $("pmQrFile").addEventListener("change", function(){
+    var f = $("pmQrFile").files[0]; if (!f) return;
+    if (!/^image\//.test(f.type)) { ADM.toast("Choose an image file."); return; }
+    var rd = new FileReader();
+    rd.onload = function(){
+      var im = new Image();
+      im.onload = function(){
+        var mx = 512, w = im.width, h = im.height, sc = Math.min(1, mx / Math.max(w, h));
+        var cv = document.createElement("canvas"); cv.width = Math.round(w * sc); cv.height = Math.round(h * sc);
+        cv.getContext("2d").drawImage(im, 0, 0, cv.width, cv.height);
+        qrData = cv.toDataURL("image/png");
+        var prev = $("pmQrPrev"); prev.src = qrData; prev.style.display = "block";
+      };
+      im.src = rd.result;
+    };
+    rd.readAsDataURL(f);
+  });
+  $("pmSave").addEventListener("click", function(){
+    if (!editing) return;
+    var m = editing, nm = $("pmName").value.trim();
+    if (!nm) { ADM.toast("Name is required."); return; }
+    m.name = nm; m.type = $("pmType").value; m.provider = $("pmProv").value;
+    m.enabled = $("pmEnabled").value === "1";
+    m.sort = Math.max(0, parseInt($("pmSort").value, 10) || 0);
+    m.instructions = $("pmInstr").value.trim();
+    m.min = Math.max(1, parseFloat($("pmMin").value) || 10);
+    m.max = Math.max(0, parseFloat($("pmMax").value) || 0);
+    m.apiKey = $("pmKey").value.trim();
+    m.apiSecret = $("pmSecret").value;
+    m.merchantId = $("pmMerchant").value.trim();
+    m.coin = $("pmCoin").value.trim();
+    m.network = $("pmNetwork").value.trim();
+    m.wallet = $("pmWallet").value.trim();
+    m.qr = qrData;
+    m.bankName = $("pmBankName").value.trim();
+    m.accountName = $("pmAccName").value.trim();
+    m.iban = $("pmIban").value.trim();
+    TX.save(s); editing = null;
+    $("pmVeil").classList.remove("open");
+    render();
+    ADM.toast("Method saved — live in the terminal now.");
+  });
+  function closeEdit(){ editing = null; $("pmVeil").classList.remove("open"); }
+  $("pmCancel").addEventListener("click", closeEdit);
+  $("pmVeil").addEventListener("click", function(e){ if (e.target === $("pmVeil")) closeEdit(); });
+
+  /* add new method */
+  fillTypeSel($("nType"), "card");
+  fillProvSel($("nProv"), "card", "");
+  $("nType").addEventListener("change", function(){ fillProvSel($("nProv"), $("nType").value, ""); });
+  $("addBtn").addEventListener("click", function(){
+    var nm = $("nName").value.trim();
+    if (!nm) { ADM.toast("Give the method a name."); return; }
+    var t = $("nType").value;
+    var m = {
+      id: TX.uid("pm"), name: nm, type: t, provider: $("nProv").value || "custom",
+      enabled: false, sort: Math.max(0, parseInt($("nSort").value, 10) || 50), min: 10, max: 10000,
+      instructions: "", apiKey: "", apiSecret: "", merchantId: "",
+      coin: "", network: "", wallet: "", qr: "",
+      bankName: "", accountName: "", iban: ""
+    };
+    s.settings.payMethods.push(m);
+    TX.save(s);
+    $("nName").value = "";
+    render();
+    ADM.toast('"' + nm + '" added (disabled). Enable it when ready.');
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>

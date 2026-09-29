@@ -36,8 +36,8 @@
     TX.setClientSession(null); window.location.replace("login.html");
   });
   $("burger").addEventListener("click", function () { $("rail").classList.toggle("open"); });
-  $("depTop").addEventListener("click", function () { showView("account"); });
-  $("wdTop").addEventListener("click", function () { showView("account"); });
+  $("depTop").addEventListener("click", function () { showAccountTab("payments"); });
+  $("wdTop").addEventListener("click", function () { showAccountTab("withdrawal"); });
   $("acctBtn").addEventListener("click", function (e) {
     e.stopPropagation();
     var m = $("acctMenu"), open = m.hidden;
@@ -76,19 +76,21 @@
 
   /* ---------- balance ---------- */
   function renderBalance() {
-    $("topBal").textContent = TX.fmt(user.balance);
-    if ($("acctBal")) $("acctBal").textContent = TX.fmt(user.balance);
-    if ($("acctAvail")) $("acctAvail").textContent = TX.fmt(user.balance);
-    if ($("wdBal")) $("wdBal").textContent = TX.fmt(user.balance);
-    if ($("wdAvail")) $("wdAvail").textContent = TX.fmt(user.balance);
-    if ($("amDemoBal")) $("amDemoBal").textContent = TX.fmt(user.balance);
+    var c = getCur();
+    $("topBal").textContent = curFmt(user.balance);
+    if ($("acctBal")) $("acctBal").textContent = curFmt(user.balance);
+    if ($("acctAvail")) $("acctAvail").textContent = curFmt(user.balance);
+    if ($("wdBal")) $("wdBal").textContent = curFmt(user.balance);
+    if ($("wdAvail")) $("wdAvail").textContent = curFmt(user.balance);
+    if ($("amDemoBal")) $("amDemoBal").textContent = curFmt(user.balance);
+    if ($("curLabel")) $("curLabel").textContent = c.sym + " " + c.code;
     if ($("amEmail")) $("amEmail").textContent = user.email;
     if ($("amId")) $("amId").textContent = String(user.id).replace(/[^0-9]/g, "").slice(-8) || "94064839";
     renderWdReq();
   }
   $("refillBtn").addEventListener("click", function () {
     user.balance = 10000; TX.save(store); renderBalance();
-    toast("Demo balance refilled to $10,000.");
+    toast("Demo balance refilled to " + curFmt(10000) + ".");
   });
 
   /* ---------- assets ---------- */
@@ -523,16 +525,42 @@
   }
   window.addEventListener("resize", function () { drawMini(); });
 
-  /* ---------- demo book sentiment ---------- */
+  /* ---------- live demo book sentiment (trader-positioning meter) ----------
+     Core signal: real open demo positions on the current asset. A per-asset
+     seeded baseline (in-memory only, never persisted, drifts gently toward a
+     mild bias) keeps the bar alive when few/no positions are open. Real
+     positions are weighted more as their count grows. This shows how demo
+     traders are positioned — it is NOT a price prediction. */
+  var sentBase = {};
+  function sentSeedFor(aid) {
+    var s = sentBase[aid];
+    if (!s) { var b = 44 + Math.floor(Math.random() * 12); s = sentBase[aid] = { bias: b === 50 ? 52 : b, val: 0 }; s.val = s.bias; }
+    return s;
+  }
   function renderSentiment() {
-    var open = store.trades.filter(function (t) { return t.status === "open"; });
+    var aid = state.assetId;
+    var open = store.trades.filter(function (t) { return t.status === "open" && (!aid || t.assetId === aid); });
     var up = open.filter(function (t) { return t.dir === "up"; }).length;
-    var pct = open.length ? Math.round(up / open.length * 100) : 50;
+    var realPct = open.length ? up / open.length * 100 : null;
+    var seed = sentSeedFor(aid || "all");
+    var wReal = Math.min(1, open.length / 10); /* real positions dominate as they grow */
+    var pct = Math.round(wReal * (realPct == null ? seed.val : realPct) + (1 - wReal) * seed.val);
+    pct = Math.max(2, Math.min(98, pct));
     $("sentUp").textContent = pct + "%";
     $("sentDn").textContent = (100 - pct) + "%";
     $("sentFill").style.height = pct + "%";
-    $("sentBar").title = "Demo book sentiment · " + open.length + " open demo positions";
+    $("sentBar").title = "Trader sentiment · " + pct + "% Up · " + open.length + " open demo positions";
   }
+  setInterval(function () { /* gentle ±1 drift keeps every seeded baseline visibly alive */
+    Object.keys(sentBase).forEach(function (k) {
+      var s = sentBase[k];
+      if (s.val < s.bias) s.val++;
+      else if (s.val > s.bias) s.val--;
+      else s.val += Math.random() < .5 ? -1 : 1;
+      if (s.val < 35) s.val = 35; if (s.val > 65) s.val = 65;
+    });
+    renderSentiment();
+  }, 20000);
 
   /* ---------- trade panel ---------- */
   function limits() {
@@ -1051,7 +1079,7 @@
 
   /* ---------- wallet ---------- */
   function renderWallet() {
-    renderBalance();
+    renderBalance(); renderDeposit(); fillWdMethods();
     var rows = store.requests.filter(function (r) { return r.userId === user.id; })
       .sort(function (a, b) { return b.createdAt - a.createdAt; });
     var tb = $("reqTable").querySelector("tbody"); tb.innerHTML = "";
@@ -1094,13 +1122,115 @@
       lb.appendChild(tr);
     });
   }
-  $("depBtn").addEventListener("click", function () {
-    var amt = Math.round(parseFloat($("depAmt").value) * 100) / 100;
-    if (!(amt >= 10)) { toast("Minimum request is $10."); return; }
-    store.requests.push({ id: TX.uid("r"), userId: user.id, userEmail: user.email, type: "deposit", amount: amt, method: $("depMethod").value, status: "pending", createdAt: Date.now() });
-    TX.save(store); renderWallet();
-    toast("Deposit request sent — admin will approve it.");
-  });
+  /* ---------- deposit: admin-configured payment methods ----------
+     Only enabled methods are shown, grouped by type. Crypto methods are
+     manual: the admin's wallet address + QR are shown, the user sends funds
+     themselves, then taps "I've sent the payment". Card/e-wallet/bank methods
+     show admin instructions and create a pending request for manual admin
+     approval. DEMO ONLY — no real money moves. */
+  function payMethods() {
+    var s = store.settings || {}, list = Array.isArray(s.payMethods) ? s.payMethods : [];
+    return list.filter(function (m) { return m && m.enabled; })
+      .sort(function (a, b) { return (a.sort || 0) - (b.sort || 0); });
+  }
+  function payTypeLabel(t) { return (TX.PAY_TYPES && TX.PAY_TYPES[t]) || t || ""; }
+  var DEP_ICONS = { card: "💳", ewallet: "👛", crypto: "🪙", bank: "🏦", other: "💱" };
+  var DEP_GROUPS = [["card", "Cards"], ["ewallet", "E-wallets"], ["crypto", "Crypto"], ["bank", "Bank & other"], ["other", "Bank & other"]];
+  var depSel = null;
+  function depAmount() { return Math.round(parseFloat($("depAmt").value) * 100) / 100; }
+  function renderDeposit() {
+    var g = $("depGroups"), d = $("depDetail");
+    if (!g) return;
+    depSel = null; d.hidden = true; d.innerHTML = "";
+    var methods = payMethods();
+    g.innerHTML = "";
+    if (!methods.length) {
+      g.innerHTML = '<p class="acct-note">No payment methods are enabled right now. The admin switches them on in Admin → Payments.</p>';
+      return;
+    }
+    DEP_GROUPS.forEach(function (gp) {
+      var items = methods.filter(function (m) { return m.type === gp[0]; });
+      if (!items.length) return;
+      var h = document.createElement("h4"); h.className = "dep-group-t"; h.textContent = gp[1]; g.appendChild(h);
+      var grid = document.createElement("div"); grid.className = "dep-methods"; g.appendChild(grid);
+      items.forEach(function (m) {
+        var b = document.createElement("button");
+        b.type = "button"; b.className = "dep-m"; b.dataset.mid = m.id;
+        var sub = payTypeLabel(m.type) + (m.min ? " · min " + TX.fmt(m.min) : "");
+        b.innerHTML = '<span class="dep-ico">' + (DEP_ICONS[m.type] || "💳") + '</span><span>' + TX.esc(m.name) + '<small>' + TX.esc(sub) + '</small></span>';
+        b.addEventListener("click", function () {
+          depSel = m;
+          Array.prototype.forEach.call(g.querySelectorAll(".dep-m"), function (x) { x.classList.toggle("sel", x === b); });
+          renderDepDetail(m);
+        });
+        grid.appendChild(b);
+      });
+    });
+  }
+  function renderDepDetail(m) {
+    var d = $("depDetail"); d.hidden = false;
+    var h = '<div class="dep-detail-head"><b>' + TX.esc(m.name) + '</b><span class="dep-type">' + TX.esc(payTypeLabel(m.type)) + '</span></div>';
+    if (m.instructions) h += '<p class="acct-note">' + TX.esc(m.instructions) + '</p>';
+    if (m.type === "crypto") {
+      h += '<div class="dep-crypto">';
+      if (m.qr) h += '<img class="dep-qr" src="' + m.qr + '" alt="Payment QR code">';
+      else h += '<div class="dep-qr dep-qr-none">No QR set<br><small>send to the address below</small></div>';
+      h += '<div class="dep-addr-row"><code id="depAddr">' + TX.esc(m.wallet || "Address not set yet — contact support") + '</code><button class="btn btn-ghost btn-sm" id="depCopy" type="button">Copy</button></div>';
+      h += '<p class="acct-note">Network: <b>' + TX.esc(m.network || "—") + '</b>' + (m.coin ? ' · ' + TX.esc(m.coin) : '') + '</p>';
+      h += '<button class="btn btn-primary" id="depSent" type="button" style="width:100%">I’ve sent the payment</button></div>';
+    } else {
+      if (m.type === "bank" && (m.bankName || m.iban || m.accountName)) {
+        h += '<div class="dep-bank">';
+        if (m.bankName) h += '<div class="dep-kv"><span>Bank</span><b>' + TX.esc(m.bankName) + '</b></div>';
+        if (m.accountName) h += '<div class="dep-kv"><span>Account name</span><b>' + TX.esc(m.accountName) + '</b></div>';
+        if (m.iban) h += '<div class="dep-kv"><span>IBAN / account</span><b>' + TX.esc(m.iban) + '</b></div>';
+        h += '</div>';
+      }
+      h += '<button class="btn btn-primary" id="depGo" type="button" style="width:100%">Continue — request ' + TX.fmt(depAmount() || 0) + '</button>';
+    }
+    h += '<p class="kyc-demo">Demo — no real money moves. The admin approves every request manually.</p>';
+    d.innerHTML = h;
+    var cp = $("depCopy");
+    if (cp) cp.addEventListener("click", function () {
+      var t = $("depAddr").textContent;
+      function done() { toast("Address copied."); }
+      function fallback() {
+        var ta = document.createElement("textarea"); ta.value = t; document.body.appendChild(ta); ta.select();
+        try { document.execCommand("copy"); done(); } catch (e) { toast("Copy failed — long-press the address."); }
+        ta.remove();
+      }
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(done, fallback); else fallback();
+    });
+    function submitDeposit() {
+      var amt = depAmount();
+      if (!(amt > 0)) { toast("Enter an amount first."); return; }
+      if (amt < (m.min || 10)) { toast("Minimum for " + m.name + " is " + TX.fmt(m.min || 10) + "."); return; }
+      if (m.max && amt > m.max) { toast("Maximum for " + m.name + " is " + TX.fmt(m.max) + "."); return; }
+      store.requests.push({ id: TX.uid("r"), userId: user.id, userEmail: user.email, type: "deposit", amount: amt, method: m.name, status: "pending", createdAt: Date.now(), note: "demo" });
+      TX.save(store); renderWallet(); renderDeposit();
+      toast("Deposit request sent — the admin will approve it.");
+    }
+    var ds = $("depSent"); if (ds) ds.addEventListener("click", submitDeposit);
+    var dg = $("depGo"); if (dg) dg.addEventListener("click", submitDeposit);
+  }
+  /* withdrawal method select mirrors the admin's enabled payment methods */
+  function fillWdMethods() {
+    var sel = $("wdMethod"); if (!sel) return;
+    var methods = payMethods(), cur = sel.value;
+    sel.innerHTML = "";
+    if (!methods.length) {
+      ["Visa •••• 4321", "Mastercard •••• 8765", "Crypto wallet", "E-wallet"].forEach(function (x) {
+        var o = document.createElement("option"); o.value = x; o.textContent = x; sel.appendChild(o);
+      });
+      return;
+    }
+    methods.forEach(function (m) {
+      var o = document.createElement("option"); o.value = m.name;
+      o.textContent = m.name + " — " + payTypeLabel(m.type);
+      sel.appendChild(o);
+    });
+    if (cur) sel.value = cur;
+  }
   $("wdBtn").addEventListener("click", function () {
     var amt = Math.round(parseFloat($("wdAmt").value) * 100) / 100;
     if (!(amt >= 10)) { toast("Minimum request is $10."); return; }
@@ -1151,10 +1281,46 @@
       wrap.appendChild(b);
     });
   });
+  /* ---------- display currency (demo conversion rates — not live FX; trading stays in USD) ---------- */
+  var CURS = [
+    { code: "USD", sym: "$", rate: 1, name: "US Dollar" },
+    { code: "EUR", sym: "€", rate: 0.92, name: "Euro" },
+    { code: "GBP", sym: "£", rate: 0.79, name: "British Pound" },
+    { code: "AED", sym: "د.إ", rate: 3.67, name: "UAE Dirham" }
+  ];
+  function getCur() {
+    var code = "USD";
+    try { code = getProfile().currency || "USD"; } catch (e) {}
+    for (var i = 0; i < CURS.length; i++) if (CURS[i].code === code) return CURS[i];
+    return CURS[0];
+  }
+  /* convert a USD amount to the display currency */
+  function curFmt(usd) {
+    var c = getCur();
+    return c.sym + (usd * c.rate).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+  function openCur() { renderCurList(); $("curBack").hidden = false; $("curModal").hidden = false; }
+  function closeCur() { $("curBack").hidden = true; $("curModal").hidden = true; }
+  function renderCurList() {
+    var cur = getCur(), el = $("curList"); el.innerHTML = "";
+    CURS.forEach(function (c) {
+      var b = document.createElement("button"); b.type = "button";
+      b.className = "cur-row" + (c.code === cur.code ? " sel" : "");
+      b.innerHTML = '<span class="cur-radio"></span><span><b>' + c.sym + " " + c.code + "</b><small>" + c.name +
+        (c.code === "USD" ? " — trading currency" : " — fixed demo rate " + c.rate) + "</small></span>";
+      b.addEventListener("click", function () {
+        var p = getProfile(); p.currency = c.code;
+        try { localStorage.setItem("tx_profile", JSON.stringify(p)); } catch (e) {}
+        renderBalance(); closeCur();
+        toast("Display currency: " + c.code + " (demo conversion).");
+      });
+      el.appendChild(b);
+    });
+  }
   var curChange = document.querySelector(".acct-balstrip .cur-change");
-  if (curChange) curChange.addEventListener("click", function () {
-    toast("USD is the only currency on the demo terminal.");
-  });
+  if (curChange) curChange.addEventListener("click", openCur);
+  $("curClose").addEventListener("click", closeCur);
+  $("curBack").addEventListener("click", closeCur);
 
   /* ---------- withdrawal requests (latest 5) ---------- */
   function renderWdReq() {
@@ -1195,8 +1361,48 @@
     try { return JSON.parse(localStorage.getItem("tx_profile") || "{}"); } catch (e) { return {}; }
   }
   function numericId() { return String(user.id).replace(/[^0-9]/g, "").slice(-8) || "94064839"; }
+  /* profile photo shown on the account page, the profile menu and analytics */
+  function paintAvatars() {
+    var p = getProfile();
+    var img = p.avatar ? '<img src="' + p.avatar + '" alt="Profile photo">' : "👤";
+    var me = $("pAva");
+    if (me) me.innerHTML = img + '<i class="p-ava-cam">📷</i>';
+    document.querySelectorAll("#view-analytics .an-user .p-ava, #topDrawer .top-me .p-ava").forEach(function (el) { el.innerHTML = img; });
+  }
+  $("pAva").setAttribute("tabindex", "0");
+  $("pAva").setAttribute("role", "button");
+  $("pAva").setAttribute("aria-label", "Change profile photo");
+  $("pAva").addEventListener("click", function () { $("pAvaFile").click(); });
+  $("pAva").addEventListener("keydown", function (e) {
+    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); $("pAvaFile").click(); }
+  });
+  $("pAvaFile").addEventListener("change", function () {
+    var f = $("pAvaFile").files[0]; $("pAvaFile").value = "";
+    if (!f) return;
+    if (!/^image\//.test(f.type)) { toast("Please choose an image file."); return; }
+    var rd = new FileReader();
+    rd.onload = function () {
+      var im = new Image();
+      im.onload = function () {
+        var s = 128, cv = document.createElement("canvas"); cv.width = s; cv.height = s;
+        var cx = cv.getContext("2d"), side = Math.min(im.width, im.height);
+        cx.drawImage(im, (im.width - side) / 2, (im.height - side) / 2, side, side, 0, 0, s, s);
+        var url;
+        try { url = cv.toDataURL("image/jpeg", .82); } catch (e) { toast("Couldn't read that image."); return; }
+        var p = getProfile(); p.avatar = url;
+        try { localStorage.setItem("tx_profile", JSON.stringify(p)); }
+        catch (e) { toast("Photo too large to save on this device."); return; }
+        paintAvatars();
+        toast("Profile photo updated.");
+      };
+      im.onerror = function () { toast("Couldn't read that image."); };
+      im.src = rd.result;
+    };
+    rd.readAsDataURL(f);
+  });
   function fillProfile() {
     var p = getProfile();
+    paintAvatars();
     $("pfNick").value = p.nick || user.email.split("@")[0];
     $("pfFirst").value = p.first || "";
     $("pfLast").value = p.last || "";
@@ -1277,18 +1483,28 @@
   $("pwChange").addEventListener("click", function () { $("pwForm").hidden = !$("pwForm").hidden; });
   $("pwSave").addEventListener("click", function () {
     if ($("pwNew").value.length < 6) { toast("Password must be at least 6 characters."); return; }
+    user.password = $("pwNew").value; TX.save(store);
     $("pwNew").value = ""; $("pwForm").hidden = true;
-    toast("Password change is disabled on the demo terminal.");
+    toast("Password updated on this demo account.");
   });
-  var delArmed = false;
-  $("delAcct").addEventListener("click", function () {
-    if (!delArmed) {
-      delArmed = true; $("delAcct").textContent = "✕ Click again to confirm";
-      setTimeout(function () { delArmed = false; $("delAcct").textContent = "✕ Delete My account"; }, 4000);
-      return;
-    }
-    delArmed = false; $("delAcct").textContent = "✕ Delete My account";
-    toast("Demo accounts can't be deleted from the terminal.");
+  /* delete account: real wipe of the current demo user's data, then sign out */
+  function closeDel() { $("delBack").hidden = true; $("delModal").hidden = true; }
+  $("delAcct").addEventListener("click", function () { $("delBack").hidden = false; $("delModal").hidden = false; });
+  $("delClose").addEventListener("click", closeDel);
+  $("delCancel").addEventListener("click", closeDel);
+  $("delBack").addEventListener("click", closeDel);
+  $("delConfirm").addEventListener("click", function () {
+    try {
+      ["tx_profile", "tx_verify", "tx_sec", "tx_promos", "tx_tour_starts", "tx_lang", "tx_tz"].forEach(function (k) { localStorage.removeItem(k); });
+    } catch (e) {}
+    var s2 = TX.load();
+    s2.requests = s2.requests.filter(function (r) { return r.userId !== user.id; });
+    s2.trades = s2.trades.filter(function (t) { return t.userId !== user.id; });
+    s2.ledger = s2.ledger.filter(function (l) { return l.userId !== user.id; });
+    if (Array.isArray(s2.tourJoins)) s2.tourJoins = s2.tourJoins.filter(function (j) { return j.userId !== user.id; });
+    TX.save(s2);
+    TX.setClientSession(null);
+    window.location.replace("login.html");
   });
 
   /* ---------- language / timezone ---------- */
@@ -1504,7 +1720,7 @@
   $("moreBtn").addEventListener("click", openMore);
   $("moreClose").addEventListener("click", function () { $("moreBack").hidden = true; $("moreDrawer").hidden = true; });
   $("moreBack").addEventListener("click", function () { $("moreBack").hidden = true; $("moreDrawer").hidden = true; });
-  document.querySelectorAll(".qx-more-link").forEach(function (b) {
+  document.querySelectorAll("#moreDrawer [data-goto]").forEach(function (b) {
     b.addEventListener("click", function () {
       $("moreBack").hidden = true; $("moreDrawer").hidden = true;
       var g = b.getAttribute("data-goto");
@@ -1636,15 +1852,17 @@
   $("amRefill").addEventListener("click", function (e) {
     e.stopPropagation(); e.preventDefault();
     user.balance = 10000; TX.save(store); renderBalance();
-    toast("Demo balance refilled to $10,000.");
+    toast("Demo balance refilled to " + curFmt(10000) + ".");
   });
-  $("amCurChange").addEventListener("click", function (e) { e.stopPropagation(); e.preventDefault(); toast("USD is the only currency on the demo terminal."); });
+  $("amCurChange").addEventListener("click", function (e) { e.stopPropagation(); e.preventDefault(); openCur(); });
   $("amSetLimit").addEventListener("click", function (e) { e.stopPropagation(); e.preventDefault(); toast("Daily limits apply to live accounts — demo has none."); });
   $("amLogout").addEventListener("click", function () { TX.setClientSession(null); window.location.replace("login.html"); });
   document.querySelectorAll("[data-amgo]").forEach(function (b) {
     b.addEventListener("click", function () {
       $("acctMenu").hidden = true;
-      showAccountTab(b.getAttribute("data-amgo"));
+      var go = b.getAttribute("data-amgo");
+      if (go === "deposit") go = "payments"; /* deposits live on the payments tab */
+      showAccountTab(go);
     });
   });
   /* init account area state without leaving the default Trade view */

@@ -8,7 +8,7 @@
 <meta name="robots" content="noindex">
 <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
 <link rel="stylesheet" href="../styles.css?v=20260929q">
-<link rel="stylesheet" href="app.css?v=20260929t">
+<link rel="stylesheet" href="app.css?v=20260929u">
 <script>try{var t=localStorage.getItem('trexora-theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}</script>
 </head>
 <body class="qx">
@@ -179,7 +179,7 @@
       <div class="qx-page acct">
         <div class="acct-tabs" data-accttabs></div>
         <div class="acct-balstrip">
-          <div><small>My current currency</small><b>$ USD <span class="cur-change">CHANGE</span></b></div>
+          <div><small>My current currency</small><b><span id="curLabel">$ USD</span> <span class="cur-change">CHANGE</span></b></div>
           <div><small>Available for withdrawal</small><b id="acctAvail">$0.00</b></div>
           <div><small>In the account</small><b><span id="acctBal">$0.00</span> <button class="link" id="refillBtn" type="button" title="Refill demo balance to $10,000">refill</button></b></div>
         </div>
@@ -227,12 +227,11 @@
         <div class="acct-pane" id="atab-payments" hidden>
           <div class="acct-card">
             <h3>Fund your demo</h3>
-            <p class="acct-note">Requests go to the admin for approval. Demo funds only.</p>
-            <div class="two-col">
-              <div class="field"><label for="depAmt">Deposit amount (USD)</label><input id="depAmt" type="number" min="10" value="100"></div>
-              <div class="field"><label for="depMethod">Method</label><select id="depMethod"><option>Visa</option><option>Mastercard</option><option>Bank transfer</option><option>Crypto</option></select></div>
-            </div>
-            <button class="btn btn-primary" id="depBtn" type="button">Request deposit</button>
+            <p class="acct-note">Demo deposits move <b>no real money</b>. Requests go to the admin for manual approval.</p>
+            <div class="field"><label for="depAmt">Deposit amount (USD)</label><input id="depAmt" type="number" min="10" value="100"></div>
+            <h4 class="dep-group-t">Choose a payment method</h4>
+            <div id="depGroups"><p class="acct-note">Loading payment methods…</p></div>
+            <div id="depDetail" hidden></div>
           </div>
           <h3 class="qx-sub">My requests</h3>
           <div class="tbl-wrap"><table class="data" id="reqTable">
@@ -252,7 +251,8 @@
           <div class="acct-cols">
             <div class="acct-card">
               <h3>Personal data</h3>
-              <div class="p-id"><span class="p-ava">👤</span>
+              <div class="p-id"><span class="p-ava p-ava-edit" id="pAva" title="Change profile photo" role="button" tabindex="0" aria-label="Change profile photo">👤<i class="p-ava-cam">📷</i></span>
+                <input type="file" id="pAvaFile" accept="image/*" hidden>
                 <div><b id="pEmail">—</b><small>ID: <span id="pId">—</span></small><span class="vbadge not" id="vBadge">✕ Not verified</span></div>
               </div>
               <div class="p-grid">
@@ -456,6 +456,19 @@
   <button class="btn btn-ghost" id="vCancel" type="button" style="width:100%;margin-top:8px">Cancel</button>
   <p class="kyc-demo">Demo flow — no real documents are checked or stored.</p>
 </div>
+<div class="qx-modal-back" id="delBack" hidden></div>
+<div class="qx-modal" id="delModal" role="dialog" aria-modal="true" aria-label="Delete demo account" hidden>
+  <div class="sheet-head"><h3>Delete demo account?</h3><button class="icon-btn" id="delClose" type="button" aria-label="Close">✕</button></div>
+  <p style="color:var(--muted);font-size:.88rem;margin-bottom:14px">This wipes your demo profile, verification status, security settings and session, removes your demo requests, and resets the demo balance to $10,000. This cannot be undone.</p>
+  <button class="btn btn-primary" id="delConfirm" type="button" style="width:100%;background:#f23645">Yes, wipe my demo data</button>
+  <button class="btn btn-ghost" id="delCancel" type="button" style="width:100%;margin-top:8px">Cancel</button>
+</div>
+<div class="qx-modal-back" id="curBack" hidden></div>
+<div class="qx-modal" id="curModal" role="dialog" aria-modal="true" aria-label="Account currency" hidden>
+  <div class="sheet-head"><h3>Account currency</h3><button class="icon-btn" id="curClose" type="button" aria-label="Close">✕</button></div>
+  <p class="kyc-demo">Demo display only — balances convert at fixed demo rates, not live FX. Trading amounts stay in USD.</p>
+  <div id="curList"></div>
+</div>
 <div class="qx-modal-back blur" id="codeBack" hidden></div>
 <div class="qx-modal qx-code" id="codeModal" role="dialog" aria-modal="true" aria-label="Enter promo code" hidden>
   <span class="qx-code-ico">🎁</span>
@@ -518,9 +531,9 @@
 
 <div class="toast" id="toast"></div>
 
-<script src="../shared/store.js?v=20260929t"></script>
+<script src="../shared/store.js?v=20260929u"></script>
 <script src="vendor/lightweight-charts.standalone.production.js?v=20260929t"></script>
 <script src="feed-deriv.js?v=20260929r"></script>
-<script src="app.js?v=20260929t"></script>
+<script src="app.js?v=20260929u"></script>
 </body>
 </html>

@@ -28,6 +28,64 @@
     ];
   }
 
+  /* ---------- payment methods (demo/paper) ----------
+     Admin-operated list of deposit/withdrawal methods. Crypto = manual QR +
+     address flow (no API): the user sends funds, taps "I've sent the payment",
+     the admin confirms manually. Gateway methods carry API key/secret/
+     merchant-ID fields the admin fills with THEIR OWN keys.
+     DEMO ONLY: credentials live in this demo localStorage store. A real
+     production backend MUST keep secrets server-side (never in localStorage)
+     and deposits must move no real money until licensing, KYC/AML and real
+     payment providers exist. Never hardcode real keys here. */
+  var PAY_TYPES = { card: "Card gateway", ewallet: "E-wallet", crypto: "Crypto", bank: "Bank transfer", other: "Other" };
+  var PAY_PROVIDERS = {
+    card: [["stripe", "Card processor / Stripe"], ["custom", "Custom"]],
+    ewallet: [["skrill", "Skrill"], ["neteller", "Neteller"], ["perfectmoney", "Perfect Money"], ["advcash", "AdvCash"], ["astropay", "AstroPay"], ["jeton", "Jeton"], ["sticpay", "Sticpay"], ["binancepay", "Binance Pay"], ["custom", "Custom"]],
+    crypto: [["manual", "Manual (QR + address, no API)"]],
+    bank: [["manual", "Manual bank transfer"]],
+    other: [["applepay", "Apple Pay"], ["googlepay", "Google Pay"], ["custom", "Custom"]]
+  };
+  function payMethod(o) {
+    return {
+      id: o.id, name: o.name, type: o.type, provider: o.provider || (PAY_PROVIDERS[o.type] ? PAY_PROVIDERS[o.type][0][0] : "custom"),
+      enabled: false, sort: o.sort || 0, min: o.min != null ? o.min : 10, max: o.max != null ? o.max : 10000,
+      instructions: o.instructions || "",
+      apiKey: "", apiSecret: "", merchantId: "",
+      coin: o.coin || "", network: o.network || "", wallet: "", qr: "",
+      bankName: "", accountName: "", iban: ""
+    };
+  }
+  function defaultPayMethods() {
+    var cardNote = "Demo card gateway — paste your processor keys in Admin → Payments, then approve deposits manually. No real money moves on demo.";
+    var ewNote = "Demo e-wallet — configure API credentials in Admin → Payments. Deposits are approved manually until a live integration exists.";
+    var cryptoNote = "Send the exact amount to the wallet address below, then tap “I’ve sent the payment”. The admin confirms it manually — no API needed.";
+    var bankNote = "Transfer to the bank details below, then submit your deposit request. The admin confirms it manually — demo only, no real money moves.";
+    var otherNote = "Demo method — configure it in Admin → Payments. No real money moves on demo.";
+    var list = [
+      payMethod({ id: "pm_visa", name: "Visa", type: "card", sort: 1, instructions: cardNote }),
+      payMethod({ id: "pm_mc", name: "Mastercard", type: "card", sort: 2, instructions: cardNote }),
+      payMethod({ id: "pm_skrill", name: "Skrill", type: "ewallet", provider: "skrill", sort: 3, instructions: ewNote }),
+      payMethod({ id: "pm_neteller", name: "Neteller", type: "ewallet", provider: "neteller", sort: 4, instructions: ewNote }),
+      payMethod({ id: "pm_pm", name: "Perfect Money", type: "ewallet", provider: "perfectmoney", sort: 5, instructions: ewNote }),
+      payMethod({ id: "pm_advcash", name: "AdvCash", type: "ewallet", provider: "advcash", sort: 6, instructions: ewNote }),
+      payMethod({ id: "pm_astropay", name: "AstroPay", type: "ewallet", provider: "astropay", sort: 7, instructions: ewNote }),
+      payMethod({ id: "pm_jeton", name: "Jeton", type: "ewallet", provider: "jeton", sort: 8, instructions: ewNote }),
+      payMethod({ id: "pm_sticpay", name: "Sticpay", type: "ewallet", provider: "sticpay", sort: 9, instructions: ewNote }),
+      payMethod({ id: "pm_btc", name: "Bitcoin (BTC)", type: "crypto", sort: 10, coin: "BTC", network: "Bitcoin", instructions: cryptoNote }),
+      payMethod({ id: "pm_eth", name: "Ethereum (ETH)", type: "crypto", sort: 11, coin: "ETH", network: "Ethereum / ERC20", instructions: cryptoNote }),
+      payMethod({ id: "pm_usdttrc", name: "Tether USDT — TRC20", type: "crypto", sort: 12, coin: "USDT", network: "Tron / TRC20", instructions: cryptoNote }),
+      payMethod({ id: "pm_usdterc", name: "Tether USDT — ERC20", type: "crypto", sort: 13, coin: "USDT", network: "Ethereum / ERC20", instructions: cryptoNote }),
+      payMethod({ id: "pm_ltc", name: "Litecoin (LTC)", type: "crypto", sort: 14, coin: "LTC", network: "Litecoin", instructions: cryptoNote }),
+      payMethod({ id: "pm_trx", name: "Tron (TRX)", type: "crypto", sort: 15, coin: "TRX", network: "Tron / TRC20", instructions: cryptoNote }),
+      payMethod({ id: "pm_bnb", name: "BNB (BEP20)", type: "crypto", sort: 16, coin: "BNB", network: "BNB Smart Chain / BEP20", instructions: cryptoNote }),
+      payMethod({ id: "pm_bank", name: "Bank wire transfer", type: "bank", sort: 17, instructions: bankNote }),
+      payMethod({ id: "pm_binancepay", name: "Binance Pay", type: "ewallet", provider: "binancepay", sort: 18, instructions: ewNote }),
+      payMethod({ id: "pm_applepay", name: "Apple Pay", type: "other", provider: "applepay", sort: 19, instructions: otherNote }),
+      payMethod({ id: "pm_gpay", name: "Google Pay", type: "other", provider: "googlepay", sort: 20, instructions: otherNote })
+    ];
+    return list;
+  }
+
   function seed() {
     var now = Date.now();
     var users = [
@@ -87,7 +145,8 @@
         sms: { provider: "twilio", apiKey: "", apiSecret: "", senderId: "Trexora" },
         payments: { provider: "manual", apiKey: "", secretKey: "", merchantId: "" },
         api: { enabled: false, key: "", whTrade: "", whDeposit: "", whKyc: "", whWithdraw: "" },
-        chart: { style: "candles", theme: "auto", tf: 60, up: "#2F80FF", down: "#F23645" } }
+        chart: { style: "candles", theme: "auto", tf: 60, up: "#2F80FF", down: "#F23645" },
+        payMethods: defaultPayMethods() }
     };
   }
 
@@ -167,6 +226,24 @@
       s.settings.api = { enabled: false, key: "", whTrade: "", whDeposit: "", whKyc: "", whWithdraw: "" };
       changed = true;
     }
+    /* payment methods manager: seed the full demo method list once on old stores.
+       Admin enable/disable/sort/edits are preserved on later loads. */
+    if (!Array.isArray(s.settings.payMethods)) {
+      s.settings.payMethods = defaultPayMethods();
+      changed = true;
+    } else {
+      /* backfill any fields newer code expects, without touching admin values */
+      s.settings.payMethods.forEach(function (m) {
+        if (m.enabled == null) m.enabled = false;
+        if (m.sort == null) m.sort = 0;
+        if (m.min == null) m.min = 10;
+        if (m.max == null) m.max = 10000;
+        if (m.instructions == null) m.instructions = "";
+        ["apiKey", "apiSecret", "merchantId", "coin", "network", "wallet", "qr", "bankName", "accountName", "iban"].forEach(function (k) {
+          if (m[k] == null) m[k] = "";
+        });
+      });
+    }
     /* seed default promos/tournaments/admin role once on old stores */
     var fresh = seed();
     if (!Array.isArray(s.promos)) { s.promos = fresh.promos; changed = true; }
@@ -242,7 +319,20 @@
   function fmt(n, dec) {
     return "$" + Number(n).toLocaleString("en-US", { minimumFractionDigits: dec == null ? 2 : dec, maximumFractionDigits: dec == null ? 2 : dec });
   }
+  var MON_S = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  function pad2(n) { return String(n).padStart(2, "0"); }
   function fmtTime(ts) {
+    /* Honors the client's timezone preference (tx_tz, e.g. "(UTC+04:00) Dubai").
+       Falls back to the browser's local timezone when unset (admin portal). */
+    try {
+      var z = localStorage.getItem("tx_tz") || "";
+      var m = /UTC([+-])(\d{2}):(\d{2})/.exec(z);
+      if (m) {
+        var off = (m[1] === "-" ? -1 : 1) * (parseInt(m[2], 10) * 60 + parseInt(m[3], 10));
+        var d = new Date(ts + off * 60000);
+        return pad2(d.getUTCDate()) + " " + MON_S[d.getUTCMonth()] + ", " + pad2(d.getUTCHours()) + ":" + pad2(d.getUTCMinutes());
+      }
+    } catch (e) {}
     return new Date(ts).toLocaleString("en-GB", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
   }
   function esc(s) {
@@ -279,6 +369,8 @@
     adminAuthed: adminAuthed, setAdminAuthed: setAdminAuthed,
     DEMO_CLIENT: DEMO_CLIENT, DEMO_ADMIN: DEMO_ADMIN,
     defaultAssets: defaultAssets,
+    defaultPayMethods: defaultPayMethods,
+    PAY_TYPES: PAY_TYPES, PAY_PROVIDERS: PAY_PROVIDERS,
     /* Proper asset icons: forex flags (flagcdn), crypto logos (cryptocurrency-icons),
        minted-coin SVG for metals. Falls back to the currency letters if an image fails. */
     CUR_SYM: { EUR: "€", USD: "$", GBP: "£", JPY: "¥", AUD: "A$", CHF: "Fr", XAU: "Au", XAG: "Ag", BTC: "₿", ETH: "Ξ" },

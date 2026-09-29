@@ -129,3 +129,6 @@ table.data tbody tr:hover{background:var(--bg-soft)}
 .mini-row:last-child{border-bottom:0}
 .mini-win{color:#4ade80;font-weight:700}
 .mini-loss{color:#ff8a94;font-weight:700}
+
+/* ---------- payments manager (2026-09-29) ---------- */
+.pay-warn{background:var(--warn-bg,#2a1f0d);border:1px solid var(--warn-line,#8a6d1f);color:var(--text);border-radius:12px;padding:12px 16px;font-size:.85rem;margin-bottom:16px}

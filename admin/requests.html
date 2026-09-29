@@ -7,7 +7,7 @@
 <meta name="robots" content="noindex">
 <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
 <link rel="stylesheet" href="../styles.css?v=20260929p">
-<link rel="stylesheet" href="admin.css?v=20260929e">
+<link rel="stylesheet" href="admin.css?v=20260929u">
 <script>try{var t=localStorage.getItem('trexora-theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}</script>
 </head>
 <body class="admin-body" data-page="requests">
@@ -22,6 +22,7 @@
     <a class="side-link" data-nav="assets" href="assets.html"><span class="ico">💹</span>Assets</a>
     <a class="side-link" data-nav="trades" href="trades.html"><span class="ico">📑</span>Trades</a>
     <a class="side-link" data-nav="requests" href="requests.html"><span class="ico">💸</span>Requests</a>
+    <a class="side-link" data-nav="payments" href="payments.html"><span class="ico">💳</span>Payments</a>
     <a class="side-link" data-nav="integrations" href="integrations.html"><span class="ico">🔌</span>Integrations</a>
     <a class="side-link" data-nav="settings" href="settings.html"><span class="ico">⚙️</span>Settings</a>
     <div class="side-foot">
@@ -52,7 +53,7 @@
     <div class="panel">
       <h2>History</h2>
       <div class="tbl-wrap"><table class="data" id="histTable">
-        <thead><tr><th>Time</th><th>User</th><th>Type</th><th>Amount</th><th>Method</th><th>Status</th></tr></thead>
+        <thead><tr><th>Time</th><th>User</th><th>Type</th><th>Amount</th><th>Method</th><th>Status</th><th>Reason</th></tr></thead>
         <tbody></tbody>
       </table></div>
     </div>
@@ -60,31 +61,45 @@
 </div>
 <div class="toast" id="toast" style="position:fixed;left:50%;bottom:30px;transform:translateX(-50%);background:#0D1830;color:#fff;border:1px solid var(--brand);padding:12px 20px;border-radius:12px;opacity:0;pointer-events:none;transition:.3s;z-index:200"></div>
 
-<script src="../shared/store.js?v=20260929r"></script>
+<script src="../shared/store.js?v=20260929u"></script>
 <script src="admin.js?v=20260929e"></script>
 <script>
 (function(){
   "use strict";
   var $ = ADM.$;
   var s = TX.load();
+  s.settings = s.settings || {};
 
   function decide(id, approve){
     var r = null;
     for (var i = 0; i < s.requests.length; i++) if (s.requests[i].id === id) r = s.requests[i];
-    if (!r || r.status !== "pending") return;
-    var u = ADM.userById(s, r.userId);
-    if (approve && u) {
-      if (r.type === "deposit") {
-        u.balance = Math.round((u.balance + r.amount) * 100) / 100;
-      } else if (r.type === "withdrawal") {
-        if (r.amount > u.balance) { ADM.toast("Insufficient balance — cannot approve."); return; }
-        u.balance = Math.round((u.balance - r.amount) * 100) / 100;
-      }
+    if (!r || r.status !== "pending" || r.processed) return; /* double-click safe */
+    if (!approve) {
+      var reason = prompt("Rejection reason (required — the client will see it):", "");
+      if (reason === null) return; /* cancelled */
+      reason = (reason || "").trim();
+      if (!reason) { ADM.toast("A reason is required to reject."); return; }
+      r.status = "rejected"; r.processed = true; r.reason = reason; r.decidedAt = Date.now();
+      TX.save(s); render();
+      ADM.toast("Request rejected.");
+      return;
     }
-    r.status = approve ? "approved" : "rejected";
-    r.decidedAt = Date.now();
+    var u = ADM.userById(s, r.userId);
+    if (!u) { ADM.toast("User not found."); return; }
+    if (r.type === "deposit") {
+      u.balance = Math.round((u.balance + r.amount) * 100) / 100;
+      /* one-time ledger entry so the client's statement stays honest */
+      s.ledger.push({ id: TX.uid("l"), userId: u.id, type: "deposit", amount: r.amount,
+        label: "Deposit approved — " + (r.method || "payment method"), ref: r.id, at: Date.now() });
+    } else if (r.type === "withdrawal") {
+      if (r.amount > u.balance) { ADM.toast("Insufficient balance — cannot approve."); return; }
+      u.balance = Math.round((u.balance - r.amount) * 100) / 100;
+      s.ledger.push({ id: TX.uid("l"), userId: u.id, type: "withdrawal", amount: -r.amount,
+        label: "Withdrawal approved — " + (r.method || "payment method"), ref: r.id, at: Date.now() });
+    }
+    r.status = "approved"; r.processed = true; r.decidedAt = Date.now();
     TX.save(s); render();
-    ADM.toast(approve ? "Approved — balance updated." : "Request rejected.");
+    ADM.toast("Approved — demo balance updated once.");
   }
 
   function render(){
@@ -102,6 +117,7 @@
           '<div class="pos-meta"><span>Amount <strong>' + TX.fmt(r.amount) + '</strong></span>' +
           "<span>Method <strong>" + TX.esc(r.method) + "</strong></span>" +
           "<span>Requested <strong>" + TX.fmtTime(r.createdAt) + "</strong></span></div>" +
+          (r.note ? '<div class="pos-meta"><span>Note <strong>' + TX.esc(r.note) + "</strong></span></div>" : "") +
           '<div class="pos-actions"><button class="btn btn-primary btn-sm" data-ok="' + r.id + '" type="button">Approve</button>' +
           '<button class="btn btn-ghost btn-sm" data-no="' + r.id + '" type="button">Reject</button></div>';
         pl.appendChild(d);
@@ -115,7 +131,8 @@
       var tr = document.createElement("tr");
       tr.innerHTML = "<td>" + TX.fmtTime(r.createdAt) + "</td><td>" + TX.esc(r.userEmail) + "</td>" +
         "<td style='text-transform:capitalize'>" + r.type + "</td><td>" + TX.fmt(r.amount) + "</td>" +
-        "<td>" + TX.esc(r.method) + "</td><td>" + ADM.statusPill(r.status) + "</td>";
+        "<td>" + TX.esc(r.method) + "</td><td>" + ADM.statusPill(r.status) + "</td>" +
+        "<td>" + (r.status === "rejected" && r.reason ? TX.esc(r.reason) : "—") + "</td>";
       tb.appendChild(tr);
     });
   }
