@@ -236,6 +236,10 @@
   $("amount").addEventListener("input", updatePreview);
   $("amtDown").addEventListener("click", function () { $("amount").value = Math.max(1, amount() - 10); updatePreview(); });
   $("amtUp").addEventListener("click", function () { $("amount").value = amount() + 10; updatePreview(); });
+  $("amtChips").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-amt]"); if (!b) return;
+    $("amount").value = b.getAttribute("data-amt"); updatePreview();
+  });
   $("expRow").addEventListener("click", function (e) {
     var b = e.target.closest(".exp-pill"); if (!b) return;
     document.querySelectorAll("#expRow .exp-pill").forEach(function (p) { p.classList.remove("active"); });
@@ -251,6 +255,9 @@
     if (!(amt >= l.lo)) { toast("Minimum trade is " + TX.fmt(l.lo) + "."); return; }
     if (amt > l.hi) { toast("Maximum trade is " + TX.fmt(l.hi) + "."); return; }
     if (amt > user.balance) { toast("Insufficient demo balance."); return; }
+    var maxOpen = store.settings.maxOpenPerUser || 10;
+    var openN = store.trades.filter(function (t) { return t.userId === user.id && t.status === "open"; }).length;
+    if (openN >= maxOpen) { toast("Position limit reached (" + maxOpen + " open). Close one first."); return; }
     toast("Locking live price…");
     TX.refreshPrices(true).then(function (ok) {
       var entry = TX.priceOf(a);
@@ -299,11 +306,13 @@
       d.className = "pos-card"; d.id = "pos_" + t.id;
       d.innerHTML =
         '<div class="pos-top"><span class="pos-asset">' + TX.esc(t.assetName) + '</span>' +
+        '<span class="pos-live" data-live="' + t.id + '"><i></i><em>live</em></span>' +
         '<span class="pos-dir ' + t.dir + '">' + t.dir + '</span></div>' +
         '<div class="pos-meta"><span>Amount <strong>' + TX.fmt(t.amount) + '</strong></span>' +
         '<span>Payout <strong>' + t.payout + '%</strong></span>' +
         '<span>Entry <strong>' + t.entryPrice + '</strong></span>' +
         '<span>Closes in <strong class="countdown" data-exp="' + t.expiresAt + '">--:--</strong></span></div>' +
+        '<div class="pos-prog"><i data-prog="' + t.id + '" data-open="' + t.openedAt + '" data-exp="' + t.expiresAt + '"></i></div>' +
         (store.settings.earlyClose ? '<div class="pos-actions"><button class="btn btn-ghost btn-sm" data-early="' + t.id + '" type="button">Early close</button></div>' : "");
       box.appendChild(d);
     });
@@ -316,6 +325,21 @@
     var now = Date.now();
     document.querySelectorAll(".countdown").forEach(function (el) {
       el.textContent = fmtCountdown(parseInt(el.getAttribute("data-exp"), 10) - now);
+    });
+    document.querySelectorAll("[data-prog]").forEach(function (el) {
+      var o = parseInt(el.getAttribute("data-open"), 10), x = parseInt(el.getAttribute("data-exp"), 10);
+      var p = x > o ? Math.min(1, Math.max(0, (now - o) / (x - o))) : 1;
+      el.style.width = Math.round(p * 100) + "%";
+    });
+    document.querySelectorAll("[data-live]").forEach(function (el) {
+      var t = null;
+      for (var i = 0; i < store.trades.length; i++) if (store.trades[i].id === el.getAttribute("data-live")) t = store.trades[i];
+      if (!t) return;
+      var a = getAsset(t.assetId), cur = a ? TX.priceOf(a) : null;
+      if (cur == null || t.entryPrice == null) { el.className = "pos-live flat"; return; }
+      var winning = t.dir === "up" ? cur > t.entryPrice : cur < t.entryPrice;
+      var tied = cur === t.entryPrice;
+      el.className = "pos-live " + (tied ? "flat" : winning ? "up" : "down");
     });
   }
 
@@ -435,9 +459,31 @@
   setInterval(function () { tickCountdowns(); settleDue(); }, 1000);
 
   /* ---------- history ---------- */
+  var histFilter = "";
+  $("histFilters").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-f]"); if (!b) return;
+    document.querySelectorAll("#histFilters .fpill").forEach(function (p) { p.classList.remove("active"); });
+    b.classList.add("active");
+    histFilter = b.getAttribute("data-f");
+    renderHistory();
+  });
   function renderHistory() {
-    var rows = store.trades.filter(function (t) { return t.userId === user.id && t.status === "closed"; })
-      .sort(function (a, b) { return b.closedAt - a.closedAt; }).slice(0, 100);
+    var all = store.trades.filter(function (t) { return t.userId === user.id && t.status === "closed"; })
+      .sort(function (a, b) { return b.closedAt - a.closedAt; });
+    /* stats over the full history */
+    var pl = all.reduce(function (x, t) { return x + (t.pl || 0); }, 0);
+    var c = all.filter(function (t) { return t.result !== "void"; });
+    var w = c.filter(function (t) { return t.result === "win"; }).length;
+    var plEl = $("hPL"); plEl.textContent = (pl >= 0 ? "+" : "−") + TX.fmt(Math.abs(pl));
+    plEl.style.color = pl >= 0 ? "#4ade80" : "#ff8a94";
+    $("hWR").textContent = c.length ? Math.round(w / c.length * 100) + "%" : "—";
+    $("hCount").textContent = all.length;
+    var rows = all.filter(function (t) {
+      if (histFilter === "win") return t.result === "win";
+      if (histFilter === "loss") return t.result === "loss";
+      if (histFilter === "other") return t.result !== "win" && t.result !== "loss";
+      return true;
+    }).slice(0, 100);
     var tb = $("histTable").querySelector("tbody"); tb.innerHTML = "";
     $("histEmpty").hidden = rows.length > 0;
     $("histTable").style.display = rows.length ? "" : "none";
@@ -468,6 +514,34 @@
         "<td>" + TX.fmt(r.amount) + "</td><td>" + TX.esc(r.method) + "</td>" +
         '<td class="status-' + r.status + '">' + r.status + "</td>";
       tb.appendChild(tr);
+    });
+    /* ledger — every balance movement, newest first */
+    var moves = [];
+    store.trades.filter(function (t) { return t.userId === user.id; }).forEach(function (t) {
+      moves.push({ at: t.openedAt, label: t.assetName + " " + t.dir.toUpperCase() + " — stake", amt: -t.amount });
+      if (t.status === "closed") {
+        if (t.result === "win") moves.push({ at: t.closedAt, label: t.assetName + " — payout", amt: t.amount + (t.pl || 0) });
+        else if (t.result === "tie" || t.result === "void") moves.push({ at: t.closedAt, label: t.assetName + " — stake refunded", amt: t.amount });
+        else if (t.result === "early") moves.push({ at: t.closedAt, label: t.assetName + " — early close value", amt: t.amount + (t.pl || 0) });
+      }
+    });
+    store.requests.filter(function (r) { return r.userId === user.id && r.status !== "pending"; }).forEach(function (r) {
+      moves.push({
+        at: r.createdAt,
+        label: (r.type === "deposit" ? "Deposit via " : "Withdrawal via ") + r.method + (r.status === "rejected" ? " — rejected" : ""),
+        amt: r.status === "approved" ? (r.type === "deposit" ? r.amount : -r.amount) : 0
+      });
+    });
+    moves.sort(function (a, b) { return b.at - a.at; });
+    var lb = $("ledgerTable").querySelector("tbody"); lb.innerHTML = "";
+    $("ledgerEmpty").hidden = moves.length > 0;
+    $("ledgerTable").style.display = moves.length ? "" : "none";
+    moves.slice(0, 100).forEach(function (m) {
+      var tr = document.createElement("tr");
+      tr.innerHTML = "<td>" + TX.fmtTime(m.at) + "</td><td>" + TX.esc(m.label) + "</td>" +
+        '<td style="font-weight:700;color:' + (m.amt > 0 ? "#4ade80" : m.amt < 0 ? "#ff8a94" : "var(--muted)") + '">' +
+        (m.amt > 0 ? "+" : m.amt < 0 ? "−" : "") + TX.fmt(Math.abs(m.amt)) + "</td>";
+      lb.appendChild(tr);
     });
   }
   $("depBtn").addEventListener("click", function () {

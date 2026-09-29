@@ -6,8 +6,8 @@
 <title>Users — Trexora Admin</title>
 <meta name="robots" content="noindex">
 <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
-<link rel="stylesheet" href="../styles.css?v=20260929d">
-<link rel="stylesheet" href="admin.css?v=20260929d">
+<link rel="stylesheet" href="../styles.css?v=20260929e">
+<link rel="stylesheet" href="admin.css?v=20260929e">
 <script>try{var t=localStorage.getItem('trexora-theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}</script>
 </head>
 <body class="admin-body" data-page="users">
@@ -47,7 +47,7 @@
     </div>
 
     <div class="tbl-wrap"><table class="data" id="usersTable">
-      <thead><tr><th>Name</th><th>Email</th><th>Balance</th><th>Trades</th><th>Status</th><th>Actions</th></tr></thead>
+      <thead><tr><th>Name</th><th>Email</th><th>Balance</th><th>Trades</th><th>Win rate</th><th>P/L</th><th>Status</th><th>Actions</th></tr></thead>
       <tbody></tbody>
     </table></div>
   </main>
@@ -68,8 +68,8 @@
 
 <div class="toast" id="toast" style="position:fixed;left:50%;bottom:30px;transform:translateX(-50%);background:#1c0d11;color:#fff;border:1px solid var(--brand);padding:12px 20px;border-radius:12px;opacity:0;pointer-events:none;transition:.3s;z-index:200"></div>
 
-<script src="../shared/store.js?v=20260929d"></script>
-<script src="admin.js?v=20260929d"></script>
+<script src="../shared/store.js?v=20260929e"></script>
+<script src="admin.js?v=20260929e"></script>
 <script>
 (function(){
   "use strict";
@@ -89,9 +89,15 @@
       if (fs === "disabled" && !u.disabled) return false;
       return true;
     }).forEach(function(u){
+      var uts = s.trades.filter(function(t){ return t.userId === u.id; });
+      var closed = uts.filter(function(t){ return t.status === "closed"; });
+      var wins = closed.filter(function(t){ return t.result === "win"; }).length;
+      var pl = uts.reduce(function(a,t){ return a + (t.pl || 0); }, 0);
       var tr = document.createElement("tr");
       tr.innerHTML = "<td><strong>" + TX.esc(u.name) + "</strong></td><td>" + TX.esc(u.email) + "</td>" +
-        "<td>" + TX.fmt(u.balance) + "</td><td>" + tradeCount(u.id) + "</td>" +
+        "<td>" + TX.fmt(u.balance) + "</td><td>" + uts.length + "</td>" +
+        "<td>" + (closed.length ? Math.round(wins / closed.length * 100) + "%" : "—") + "</td>" +
+        '<td style="color:' + (pl >= 0 ? "#4ade80" : "#ff8a94") + ';font-weight:700">' + (pl >= 0 ? "+" : "") + TX.fmt(pl) + "</td>" +
         '<td><span class="' + (u.disabled ? "pill-disabled" : "pill-active") + '">' + (u.disabled ? "disabled" : "active") + "</span></td>" +
         '<td><div class="row-actions"><button class="btn btn-ghost btn-xs" data-view="' + u.id + '" type="button">View / edit</button></div></td>';
       tb.appendChild(tr);
@@ -106,14 +112,28 @@
     var u = ADM.userById(s, id); if (!u) return;
     $("mTitle").textContent = u.name;
     var uts = s.trades.filter(function(t){ return t.userId === id; });
+    var closed = uts.filter(function(t){ return t.status === "closed"; });
+    var wins = closed.filter(function(t){ return t.result === "win"; }).length;
     var pl = uts.reduce(function(a,t){ return a + (t.pl || 0); }, 0);
+    var vol = uts.reduce(function(a,t){ return a + t.amount; }, 0);
+    var openN = uts.filter(function(t){ return t.status === "open"; }).length;
+    var wr = closed.length ? Math.round(wins / closed.length * 100) : 0;
     $("mBody").innerHTML =
       '<div class="kv"><span>Email</span><strong>' + TX.esc(u.email) + "</strong></div>" +
       '<div class="kv"><span>Balance</span><strong>' + TX.fmt(u.balance) + "</strong></div>" +
       '<div class="kv"><span>Total trades</span><strong>' + uts.length + "</strong></div>" +
-      '<div class="kv"><span>Lifetime P/L</span><strong>' + (pl >= 0 ? "+" : "") + TX.fmt(pl) + "</strong></div>" +
+      '<div class="kv"><span>Open now</span><strong>' + openN + "</strong></div>" +
+      '<div class="kv"><span>Win rate</span><strong>' + wr + "% (" + wins + "/" + closed.length + ")</strong></div>" +
+      '<div class="kv"><span>Total volume</span><strong>' + TX.fmt(vol) + "</strong></div>" +
+      '<div class="kv"><span>Lifetime P/L</span><strong style="color:' + (pl >= 0 ? "#4ade80" : "#ff8a94") + '">' + (pl >= 0 ? "+" : "") + TX.fmt(pl) + "</strong></div>" +
       '<div class="kv"><span>Registered</span><strong>' + TX.fmtTime(u.createdAt) + "</strong></div>" +
-      '<div class="kv"><span>Status</span><strong>' + (u.disabled ? "disabled" : "active") + "</strong></div>";
+      '<div class="kv"><span>Status</span><strong>' + (u.disabled ? "disabled" : "active") + "</strong></div>" +
+      '<h3 class="mini-h">Recent trades</h3>' +
+      (uts.length ? '<div class="mini-trades">' + uts.slice().sort(function(a,b){ return b.openedAt - a.openedAt; }).slice(0, 8).map(function(t){
+        return '<div class="mini-row"><span>' + TX.esc(t.assetName) + ' ' + t.dir.toUpperCase() + '</span><span>' + TX.fmt(t.amount) + '</span>' +
+          '<span class="' + (t.result === "win" ? "mini-win" : t.result === "loss" ? "mini-loss" : "") + '">' +
+          (t.status === "open" ? "open" : (t.pl >= 0 ? "+" : "") + TX.fmt(t.pl || 0)) + "</span></div>";
+      }).join("") + "</div>" : '<div class="empty">No trades yet.</div>');
     $("mToggle").textContent = u.disabled ? "Enable account" : "Disable account";
     $("mAdj").value = "";
     $("userModal").classList.add("open");

@@ -205,3 +205,27 @@ table.data tr:last-child td{border-bottom:0}
   .wallet-grid{grid-template-columns:1fr 1fr}
   .two-col{grid-template-columns:1fr 1fr}
 }
+
+/* ---------- rework: history analytics, filters, live positions, ledger (2026-09-29) ---------- */
+.hist-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px}
+.hist-stat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;animation:rise .45s both}
+.hist-stat:nth-child(2){animation-delay:.07s}.hist-stat:nth-child(3){animation-delay:.14s}
+.hist-stat small{display:block;font-size:.66rem;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:4px}
+.hist-stat strong{font-size:1.25rem;font-weight:800;font-variant-numeric:tabular-nums}
+.filter-pills{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.fpill{padding:8px 16px;border-radius:999px;border:1px solid var(--line);background:var(--card);color:var(--muted);font-size:.8rem;font-weight:700;cursor:pointer;transition:.2s;font-family:var(--font)}
+.fpill.active{background:var(--brand);border-color:var(--brand);color:#fff}
+.amt-chips{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+.amt-chips button{flex:1;min-width:52px;padding:9px 0;border-radius:10px;border:1px solid var(--line);background:var(--bg-soft);color:var(--text);font-weight:700;font-size:.82rem;cursor:pointer;transition:.15s;font-family:var(--font)}
+.amt-chips button:active{transform:scale(.94);background:var(--brand-soft)}
+.pos-live{display:inline-flex;align-items:center;gap:6px;font-size:.66rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+.pos-live i{width:8px;height:8px;border-radius:50%;background:var(--faint)}
+.pos-live em{font-style:normal;color:var(--faint)}
+.pos-live.up i{background:#22c55e;animation:pulse 1.6s infinite}
+.pos-live.up em{color:#4ade80}
+.pos-live.down i{background:#f23645;animation:pulse 1.6s infinite}
+.pos-live.down em{color:#ff8a94}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(34,197,94,.5)}70%{box-shadow:0 0 0 7px rgba(34,197,94,0)}100%{box-shadow:0 0 0 0 rgba(34,197,94,0)}}
+.pos-prog{height:5px;border-radius:99px;background:var(--bg-soft);margin-top:10px;overflow:hidden}
+.pos-prog i{display:block;height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--brand-deep));transition:width 1s linear}
+@keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}

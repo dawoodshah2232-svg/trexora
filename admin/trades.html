@@ -6,8 +6,8 @@
 <title>Trades — Trexora Admin</title>
 <meta name="robots" content="noindex">
 <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
-<link rel="stylesheet" href="../styles.css?v=20260929d">
-<link rel="stylesheet" href="admin.css?v=20260929d">
+<link rel="stylesheet" href="../styles.css?v=20260929e">
+<link rel="stylesheet" href="admin.css?v=20260929e">
 <script>try{var t=localStorage.getItem('trexora-theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}</script>
 </head>
 <body class="admin-body" data-page="trades">
@@ -47,8 +47,15 @@
       <select id="fResult"><option value="">All results</option><option value="win">Win</option><option value="loss">Loss</option><option value="tie">Tie</option><option value="early">Early close</option><option value="void">Void</option></select>
     </div>
 
+    <div class="stat-grid" style="grid-template-columns:repeat(4,1fr)">
+      <div class="stat-card reveal" style="--d:.02s;--tint:#2f80ff"><small>Filtered volume</small><div class="num" id="tVol" style="font-size:1.4rem">$0</div></div>
+      <div class="stat-card reveal" style="--d:.08s;--tint:#22c55e"><small>Trader P/L</small><div class="num" id="tPL" style="font-size:1.4rem">$0</div></div>
+      <div class="stat-card reveal" style="--d:.14s;--tint:#f23645"><small>House P/L</small><div class="num" id="tHouse" style="font-size:1.4rem">$0</div></div>
+      <div class="stat-card reveal" style="--d:.2s;--tint:#d9a441"><small>Win rate</small><div class="num" id="tWR" style="font-size:1.4rem">—</div></div>
+    </div>
+
     <div class="tbl-wrap"><table class="data" id="tradesTable">
-      <thead><tr><th>Opened</th><th>User</th><th>Asset</th><th>Dir</th><th>Amount</th><th>Entry</th><th>Exit</th><th>Status</th><th>P/L</th></tr></thead>
+      <thead><tr><th>Opened</th><th>User</th><th>Asset</th><th>Dir</th><th>Amount</th><th>Entry</th><th>Exit</th><th>Status</th><th>P/L</th><th></th></tr></thead>
       <tbody></tbody>
     </table></div>
     <p style="color:var(--faint);font-size:.82rem;margin-top:10px" id="countLine"></p>
@@ -56,8 +63,8 @@
 </div>
 <div class="toast" id="toast" style="position:fixed;left:50%;bottom:30px;transform:translateX(-50%);background:#1c0d11;color:#fff;border:1px solid var(--brand);padding:12px 20px;border-radius:12px;opacity:0;pointer-events:none;transition:.3s;z-index:200"></div>
 
-<script src="../shared/store.js?v=20260929d"></script>
-<script src="admin.js?v=20260929d"></script>
+<script src="../shared/store.js?v=20260929e"></script>
+<script src="admin.js?v=20260929e"></script>
 <script>
 (function(){
   "use strict";
@@ -82,9 +89,37 @@
         "<td>" + TX.fmt(t.amount) + "</td><td>" + (t.entryPrice == null ? "—" : t.entryPrice) + "</td>" +
         "<td>" + (t.exitPrice == null ? "—" : t.exitPrice) + "</td>" +
         "<td>" + ADM.statusPill(t.status) + (t.result ? " " + ADM.statusPill(t.result) : "") + "</td>" +
-        "<td>" + (t.pl == null ? "—" : ((t.pl > 0 ? "+" : "") + TX.fmt(t.pl))) + "</td>";
+        "<td>" + (t.pl == null ? "—" : ((t.pl > 0 ? "+" : "") + TX.fmt(t.pl))) + "</td>" +
+        '<td><div class="row-actions">' + (t.status === "open"
+          ? '<button class="btn btn-ghost btn-xs" data-void="' + t.id + '" type="button">Void + refund</button>'
+          : "") + "</div></td>";
       tb.appendChild(tr);
     });
+    tb.querySelectorAll("[data-void]").forEach(function(b){
+      b.addEventListener("click", function(){
+        var id = b.getAttribute("data-void");
+        var t = null;
+        for (var i = 0; i < s.trades.length; i++) if (s.trades[i].id === id) t = s.trades[i];
+        if (!t || t.status !== "open") return;
+        if (!confirm("Void this trade and refund " + TX.fmt(t.amount) + " to " + (t.userEmail || "the user") + "?")) return;
+        var u = ADM.userById(s, t.userId);
+        if (u) u.balance = Math.round((u.balance + t.amount) * 100) / 100;
+        t.status = "closed"; t.result = "void"; t.pl = 0; t.closedAt = Date.now();
+        TX.save(s); render();
+        ADM.toast("Trade voided — stake refunded.");
+      });
+    });
+    /* summary strip over the filtered set */
+    var vol = rows.reduce(function(a,t){ return a + t.amount; }, 0);
+    var tpl = rows.reduce(function(a,t){ return a + (t.pl || 0); }, 0);
+    var c = rows.filter(function(t){ return t.status === "closed" && t.result !== "void"; });
+    var w = c.filter(function(t){ return t.result === "win"; }).length;
+    $("tVol").textContent = TX.fmt(vol);
+    var tplEl = $("tPL"); tplEl.textContent = (tpl >= 0 ? "+" : "−") + TX.fmt(Math.abs(tpl));
+    tplEl.style.color = tpl >= 0 ? "#4ade80" : "#ff8a94";
+    var hEl = $("tHouse"); hEl.textContent = (tpl <= 0 ? "+" : "−") + TX.fmt(Math.abs(tpl));
+    hEl.style.color = tpl <= 0 ? "#4ade80" : "#ff8a94";
+    $("tWR").textContent = c.length ? Math.round(w / c.length * 100) + "%" : "—";
     $("countLine").textContent = rows.length + " trade" + (rows.length === 1 ? "" : "s") + (rows.length > 200 ? " — showing first 200" : "") + ". Demo data included.";
   }
 

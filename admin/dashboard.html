@@ -6,8 +6,8 @@
 <title>Dashboard — Trexora Admin</title>
 <meta name="robots" content="noindex">
 <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
-<link rel="stylesheet" href="../styles.css?v=20260929d">
-<link rel="stylesheet" href="admin.css?v=20260929d">
+<link rel="stylesheet" href="../styles.css?v=20260929e">
+<link rel="stylesheet" href="admin.css?v=20260929e">
 <script>try{var t=localStorage.getItem('trexora-theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}</script>
 </head>
 <body class="admin-body" data-page="dashboard">
@@ -61,7 +61,59 @@
       </div>
     </div>
 
-    <div class="panel reveal" style="--d:.32s">
+    <div class="stat-grid">
+      <div class="stat-card reveal" style="--d:.02s;--tint:#2f80ff">
+        <div class="stat-top"><span class="stat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.2 3.4-5 6.5-5s5.7 1.8 6.5 5"/><circle cx="17.5" cy="9.5" r="2.5"/><path d="M16 15.2c2.6.3 4.7 1.9 5.5 4.8"/></svg></span><small>Total users</small></div>
+        <div class="num" id="stUsers">0</div><div class="stat-sub" id="stUsersSub">—</div>
+      </div>
+      <div class="stat-card reveal" style="--d:.1s;--tint:#f23645">
+        <div class="stat-top"><span class="stat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/></svg></span><small>Total trades</small></div>
+        <div class="num" id="stTrades">0</div><div class="stat-sub" id="stTradesSub">—</div>
+      </div>
+      <div class="stat-card reveal" style="--d:.18s;--tint:#22c55e">
+        <div class="stat-top"><span class="stat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M15 9.5c-.7-1-1.8-1.5-3-1.5-1.7 0-3 .9-3 2.3 0 3 6 1.4 6 4.4 0 1.4-1.3 2.3-3 2.3-1.2 0-2.3-.5-3-1.5"/></svg></span><small>Total volume</small></div>
+        <div class="num" id="stVolume">$0</div><div class="stat-sub" id="stVolumeSub">—</div>
+      </div>
+      <div class="stat-card reveal" style="--d:.26s;--tint:#d9a441">
+        <div class="stat-top"><span class="stat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="1.4" fill="currentColor"/></svg></span><small>Open exposure</small></div>
+        <div class="num" id="stExposure">$0</div><div class="stat-sub" id="stExposureSub">—</div>
+      </div>
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat-card reveal" style="--d:.3s;--tint:#22c55e">
+        <div class="stat-top"><span class="stat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg></span><small>Trader win rate</small></div>
+        <div class="num" id="stWinRate">0%</div><div class="stat-sub" id="stWinRateSub">—</div>
+      </div>
+      <div class="stat-card reveal" style="--d:.34s;--tint:#f23645">
+        <div class="stat-top"><span class="stat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2v20M17 6.5c-.8-1.2-2.6-2-5-2-3 0-5 1.6-5 3.8 0 5.2 10 2.6 10 7.9 0 2.2-2 3.8-5 3.8-2.4 0-4.2-.8-5-2"/></svg></span><small>House P/L</small></div>
+        <div class="num" id="stHouse">$0</div><div class="stat-sub" id="stHouseSub">—</div>
+      </div>
+      <div class="stat-card reveal" style="--d:.38s;--tint:#2f80ff">
+        <div class="stat-top"><span class="stat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M8 12h8"/></svg></span><small>Avg trade size</small></div>
+        <div class="num" id="stAvg">$0</div><div class="stat-sub" id="stAvgSub">—</div>
+      </div>
+      <div class="stat-card reveal" style="--d:.42s;--tint:#d9a441">
+        <div class="stat-top"><span class="stat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg></span><small>Active traders · 24h</small></div>
+        <div class="num" id="stActive">0</div><div class="stat-sub" id="stActiveSub">—</div>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div class="panel reveal" style="--d:.46s">
+        <h2>Win / loss split</h2>
+        <div class="donut-wrap">
+          <div class="donut" id="donut"><div class="donut-c"><strong id="donutPct">0%</strong><small>trader wins</small></div></div>
+          <div class="donut-legend" id="donutLegend"></div>
+        </div>
+      </div>
+      <div class="panel reveal" style="--d:.5s">
+        <h2>Open exposure by asset</h2>
+        <div id="expList"></div>
+      </div>
+    </div>
+
+    <div class="panel reveal" style="--d:.54s">
       <h2>Trades — last 7 days <span style="color:var(--faint);font-weight:400;font-size:.8rem">(demo data)</span></h2>
       <div class="bar-chart" id="weekChart"></div>
     </div>
@@ -82,8 +134,8 @@
 </div>
 <div class="toast" id="toast" style="position:fixed;left:50%;bottom:30px;transform:translateX(-50%);background:#1c0d11;color:#fff;border:1px solid var(--brand);padding:12px 20px;border-radius:12px;opacity:0;pointer-events:none;transition:.3s;z-index:200"></div>
 
-<script src="../shared/store.js?v=20260929d"></script>
-<script src="admin.js?v=20260929d"></script>
+<script src="../shared/store.js?v=20260929e"></script>
+<script src="admin.js?v=20260929e"></script>
 <script>
 (function(){
   "use strict";
@@ -108,8 +160,9 @@
   countUp($("stUsers"), activeUsers.length, int);
   $("stUsersSub").textContent = s.users.length + " total accounts";
   countUp($("stTrades"), s.trades.length, int);
-  var wins = s.trades.filter(function(t){ return t.result === "win"; }).length;
-  $("stTradesSub").textContent = wins + " wins · " + (s.trades.length - wins) + " closed";
+  var closed = s.trades.filter(function(t){ return t.status === "closed"; });
+  var wins = closed.filter(function(t){ return t.result === "win"; }).length;
+  $("stTradesSub").textContent = wins + " wins · " + (closed.length - wins) + " losses";
   var vol = s.trades.reduce(function(a,t){ return a + t.amount; }, 0);
   countUp($("stVolume"), vol, money);
   $("stVolumeSub").textContent = "across " + s.trades.length + " trades";
@@ -117,6 +170,57 @@
   var exp = openT.reduce(function(a,t){ return a + t.amount; }, 0);
   countUp($("stExposure"), exp, money);
   $("stExposureSub").textContent = openT.length + " open position" + (openT.length === 1 ? "" : "s");
+
+  /* analytics row */
+  var wr = closed.length ? wins / closed.length * 100 : 0;
+  var wrEl = $("stWinRate");
+  (function(){ var dur=950,t0=null; function fr(ts){ if(!t0)t0=ts; var p=Math.min(1,(ts-t0)/dur),e=1-Math.pow(1-p,3); wrEl.textContent=Math.round(wr*e)+"%"; if(p<1)requestAnimationFrame(fr);} requestAnimationFrame(fr); })();
+  $("stWinRateSub").textContent = wins + " of " + closed.length + " closed";
+  var house = -closed.reduce(function(a,t){ return a + (t.pl || 0); }, 0);
+  var hEl = $("stHouse");
+  countUp(hEl, Math.abs(house), function(v){ return (house < 0 ? "−" : "") + TX.fmt(v); });
+  hEl.style.color = house >= 0 ? "#4ade80" : "#ff8a94";
+  $("stHouseSub").textContent = "from " + closed.length + " closed trades";
+  countUp($("stAvg"), s.trades.length ? vol / s.trades.length : 0, money);
+  $("stAvgSub").textContent = "median " + TX.fmt(median(s.trades.map(function(t){ return t.amount; })));
+  var dayAgo = Date.now() - 86400000;
+  var activeIds = {};
+  s.trades.forEach(function(t){ if (t.openedAt >= dayAgo) activeIds[t.userId] = 1; });
+  var nActive = Object.keys(activeIds).length;
+  countUp($("stActive"), nActive, int);
+  $("stActiveSub").textContent = s.users.length + " registered";
+  function median(a){ if(!a.length) return 0; a=a.slice().sort(function(x,y){return x-y;}); var m=a.length>>1; return a.length%2?a[m]:(a[m-1]+a[m])/2; }
+
+  /* donut — win/loss split */
+  var losses = closed.length - wins;
+  var donut = $("donut");
+  (function(){ var dur=1100,t0=null; function fr(ts){ if(!t0)t0=ts; var p=Math.min(1,(ts-t0)/dur),e=1-Math.pow(1-p,3);
+    donut.style.background="conic-gradient(#22c55e 0 "+(wr*e)+"%, #f23645 "+(wr*e)+"% 100%)";
+    $("donutPct").textContent=Math.round(wr*e)+"%";
+    if(p<1)requestAnimationFrame(fr);} requestAnimationFrame(fr); })();
+  $("donutLegend").innerHTML =
+    '<div class="dl-row"><span class="dl-dot" style="background:#22c55e"></span>Trader wins<b>' + wins + '</b></div>' +
+    '<div class="dl-row"><span class="dl-dot" style="background:#f23645"></span>Trader losses<b>' + losses + '</b></div>' +
+    '<div class="dl-row"><span class="dl-dot" style="background:var(--line-soft)"></span>Open / other<b>' + (s.trades.length - closed.length) + '</b></div>';
+
+  /* exposure by asset */
+  var byAsset = {};
+  openT.forEach(function(t){ byAsset[t.assetName] = (byAsset[t.assetName] || 0) + t.amount; });
+  var expRows = Object.keys(byAsset).map(function(k){ return { name: k, amt: byAsset[k] }; })
+    .sort(function(a,b){ return b.amt - a.amt; }).slice(0, 6);
+  var expMax = expRows.length ? expRows[0].amt : 1;
+  var expBox = $("expList");
+  if (!expRows.length) { expBox.innerHTML = '<div class="exp-empty">No open positions right now.</div>'; }
+  else {
+    expBox.innerHTML = expRows.map(function(r, i){
+      return '<div class="exp-row" style="--d:' + (i * 0.07) + 's"><span class="exp-name">' + TX.esc(r.name) +
+        '</span><span class="exp-amt">' + TX.fmt(r.amt) + '</span><div class="exp-bar"><i data-w="' +
+        Math.round(r.amt / expMax * 100) + '"></i></div></div>';
+    }).join("");
+    requestAnimationFrame(function(){ requestAnimationFrame(function(){
+      expBox.querySelectorAll(".exp-bar i").forEach(function(b){ b.style.width = b.getAttribute("data-w") + "%"; });
+    }); });
+  }
 
   /* 7-day bar chart — bars grow in with stagger */
   var days = [], counts = [];

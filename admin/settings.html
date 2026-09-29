@@ -6,8 +6,8 @@
 <title>Settings — Trexora Admin</title>
 <meta name="robots" content="noindex">
 <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
-<link rel="stylesheet" href="../styles.css?v=20260929d">
-<link rel="stylesheet" href="admin.css?v=20260929d">
+<link rel="stylesheet" href="../styles.css?v=20260929e">
+<link rel="stylesheet" href="admin.css?v=20260929e">
 <script>try{var t=localStorage.getItem('trexora-theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}</script>
 </head>
 <body class="admin-body" data-page="settings">
@@ -46,6 +46,8 @@
       <div class="form-grid two">
         <div class="field"><label>Default payout % (new assets)</label><input class="inline-input" id="setPayout" type="number" min="1" max="100" style="width:100%"></div>
         <div class="field"><label>Global min / max trade (USD)</label><div style="display:flex;gap:8px"><input class="inline-input" id="setMin" type="number" min="1" style="width:100%"><input class="inline-input" id="setMax" type="number" min="1" style="width:100%"></div></div>
+        <div class="field"><label>Max open positions per user</label><input class="inline-input" id="setMaxOpen" type="number" min="1" max="50" style="width:100%"></div>
+        <div class="field"><label>Max payout % cap (any asset)</label><input class="inline-input" id="setPayoutCap" type="number" min="1" max="100" style="width:100%"></div>
       </div>
     </div>
 
@@ -67,8 +69,8 @@
 </div>
 <div class="toast" id="toast" style="position:fixed;left:50%;bottom:30px;transform:translateX(-50%);background:#1c0d11;color:#fff;border:1px solid var(--brand);padding:12px 20px;border-radius:12px;opacity:0;pointer-events:none;transition:.3s;z-index:200"></div>
 
-<script src="../shared/store.js?v=20260929d"></script>
-<script src="admin.js?v=20260929d"></script>
+<script src="../shared/store.js?v=20260929e"></script>
+<script src="admin.js?v=20260929e"></script>
 <script>
 (function(){
   "use strict";
@@ -76,9 +78,13 @@
   var s = TX.load();
 
   function fill(){
+    if (s.settings.maxOpenPerUser == null) s.settings.maxOpenPerUser = 10;
+    if (s.settings.payoutCap == null) s.settings.payoutCap = 95;
     $("setPayout").value = s.settings.defaultPayout;
     $("setMin").value = s.settings.minTrade;
     $("setMax").value = s.settings.maxTrade;
+    $("setMaxOpen").value = s.settings.maxOpenPerUser;
+    $("setPayoutCap").value = s.settings.payoutCap;
     $("tglEarly").checked = !!s.settings.earlyClose;
     $("tglSignups").checked = !!s.settings.signups;
     $("tglMaint").checked = !!s.settings.maintenance;
@@ -89,6 +95,10 @@
     s.settings.defaultPayout = Math.min(100, Math.max(1, parseInt($("setPayout").value, 10) || 80));
     s.settings.minTrade = Math.max(1, parseFloat($("setMin").value) || 1);
     s.settings.maxTrade = Math.max(s.settings.minTrade, parseFloat($("setMax").value) || 5000);
+    s.settings.maxOpenPerUser = Math.min(50, Math.max(1, parseInt($("setMaxOpen").value, 10) || 10));
+    s.settings.payoutCap = Math.min(100, Math.max(1, parseInt($("setPayoutCap").value, 10) || 95));
+    /* cap existing asset payouts at the new cap */
+    s.assets.forEach(function(a){ if (a.payout > s.settings.payoutCap) a.payout = s.settings.payoutCap; });
     s.settings.earlyClose = $("tglEarly").checked;
     s.settings.signups = $("tglSignups").checked;
     s.settings.maintenance = $("tglMaint").checked;

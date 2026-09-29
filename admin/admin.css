@@ -100,3 +100,32 @@ table.data tbody tr:hover{background:var(--bg-soft)}
 .panel{transition:border-color .25s,box-shadow .25s}
 .panel:hover{border-color:var(--line);box-shadow:0 8px 24px -16px rgba(0,0,0,.5)}
 @media(prefers-reduced-motion:reduce){.reveal,.req-row,.bar{animation:none!important;transition:none!important}.live-dot{animation:none}}
+
+/* ---------- dashboard analytics (2026-09-29) ---------- */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+@media(max-width:899px){.two-col{grid-template-columns:1fr}}
+.two-col .panel{margin-bottom:0}
+.donut-wrap{display:flex;align-items:center;gap:22px;flex-wrap:wrap}
+.donut{width:150px;height:150px;flex:none;border-radius:50%;background:conic-gradient(#22c55e 0 0%,var(--line-soft) 0 100%);display:grid;place-items:center;position:relative}
+.donut-c{width:104px;height:104px;border-radius:50%;background:var(--card);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+.donut-c strong{font-size:1.35rem;font-weight:800;font-variant-numeric:tabular-nums}
+.donut-c small{font-size:.66rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+.donut-legend{display:flex;flex-direction:column;gap:10px;font-size:.86rem}
+.dl-row{display:flex;align-items:center;gap:10px}
+.dl-dot{width:11px;height:11px;border-radius:4px;flex:none}
+.dl-row b{margin-left:auto;font-variant-numeric:tabular-nums;padding-left:18px}
+.exp-row{display:grid;grid-template-columns:1fr auto;gap:4px 12px;padding:9px 0;border-bottom:1px solid var(--line-soft);animation:rise .4s both;animation-delay:var(--d,0s)}
+.exp-row:last-child{border-bottom:0}
+.exp-name{font-weight:650;font-size:.86rem}
+.exp-amt{font-weight:800;font-variant-numeric:tabular-nums;font-size:.86rem}
+.exp-bar{grid-column:1/-1;height:7px;border-radius:99px;background:var(--bg-soft);overflow:hidden}
+.exp-bar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--brand-deep));width:0;transition:width 1s cubic-bezier(.2,.7,.2,1)}
+.exp-empty{color:var(--muted);font-size:.88rem;padding:8px 0}
+
+/* ---------- user modal extras (2026-09-29) ---------- */
+.mini-h{font-size:.8rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:16px 0 8px}
+.mini-trades{border:1px solid var(--line-soft);border-radius:10px;overflow:hidden}
+.mini-row{display:flex;justify-content:space-between;gap:8px;padding:9px 12px;font-size:.82rem;border-bottom:1px solid var(--line-soft)}
+.mini-row:last-child{border-bottom:0}
+.mini-win{color:#4ade80;font-weight:700}
+.mini-loss{color:#ff8a94;font-weight:700}
