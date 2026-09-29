@@ -1371,7 +1371,10 @@
       showAccountTab(b.getAttribute("data-amgo"));
     });
   });
-  showAccountTab("account");
+  /* init account area state without leaving the default Trade view */
+  ACCT_TABS.forEach(function (x) { var p = $("atab-" + x.id); if (p) p.hidden = x.id !== "account"; });
+  paintAcctTabs("account");
+  fillProfile();
   secPaint();
 
   /* ---------- welcome modal + onboarding tour ---------- */
