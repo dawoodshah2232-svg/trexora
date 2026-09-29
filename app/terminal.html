@@ -7,8 +7,8 @@
 <meta name="description" content="Trexora demo trading terminal with live charts.">
 <meta name="robots" content="noindex">
 <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
-<link rel="stylesheet" href="../styles.css?v=20260929f">
-<link rel="stylesheet" href="app.css?v=20260929f">
+<link rel="stylesheet" href="../styles.css?v=20260929g">
+<link rel="stylesheet" href="app.css?v=20260929g">
 <script>try{var t=localStorage.getItem('trexora-theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}</script>
 <script src="https://s3.tradingview.com/tv.js"></script>
 </head>
@@ -47,7 +47,7 @@
     <button data-view="history"><span class="ico">🕘</span>History</button>
     <button data-view="account"><span class="ico">👛</span>Account</button>
     <span class="rail-sp"></span>
-    <button id="supportBtn"><span class="ico">💬</span>Support</button>
+    <button id="supportBtn"><span class="ico">💬</span>Support<span class="coach" id="onboardTip" hidden>👉 You can return to the onboarding here anytime.</span></button>
     <button id="themeToggle2"><span class="ico">🌗</span>Theme</button>
     <button id="logoutBtn"><span class="ico">⏻</span>Log out</button>
   </aside>
@@ -62,7 +62,7 @@
           <span class="qx-sent-bar"><i id="sentFill"></i></span>
           <span class="qx-sent-dn" id="sentDn">–</span>
         </div>
-        <div class="chart-wrap qx-chart">
+        <div class="chart-wrap qx-chart" id="chartBox">
           <div id="tv_chart"></div>
           <div class="qx-tradebar" id="tradeBar" hidden>
             <span class="qtb-ico" id="tradeBarIco">₿</span>
@@ -172,7 +172,7 @@
     </div>
     <div class="qp-row">
       <label>Time</label>
-      <div class="qp-step">
+      <div class="qp-step" id="expStep">
         <button id="tDown" type="button" aria-label="Shorter time">−</button>
         <b id="tVal">1m</b>
         <button id="tUp" type="button" aria-label="Longer time">+</button>
@@ -182,7 +182,7 @@
     <div class="qp-times" id="qpTimes" hidden></div>
     <div class="qp-row">
       <label>Investment</label>
-      <div class="qp-step">
+      <div class="qp-step" id="amtStep">
         <button id="aDown" type="button" aria-label="Decrease amount">−</button>
         <b>$<span id="aVal">10</span></b>
         <button id="aUp" type="button" aria-label="Increase amount">+</button>
@@ -191,7 +191,7 @@
     </div>
     <div class="qp-chips" id="qpChips" hidden></div>
     <div class="qp-payout">Your payout: <b id="qpPayout">—</b></div>
-    <div class="qp-btns">
+    <div class="qp-btns" id="tradeBtns">
       <button class="qp-up" id="btnUp" type="button"><span>Up</span><small id="upReturn"></small></button>
       <button class="qp-down" id="btnDown" type="button"><span>Down</span><small id="downReturn"></small></button>
     </div>
@@ -230,7 +230,25 @@
     <a href="../faq.html">FAQ →</a>
     <a href="../legal/risk-disclosure.html">Risk disclosure →</a>
     <button type="button" id="chatBtn">💬 Live chat <small>(demo)</small></button>
+    <button type="button" id="replayTourBtn">🎓 Replay onboarding tutorial</button>
   </div>
+</div>
+
+<!-- Welcome + onboarding tour -->
+<div class="qx-welc-back" id="welcBack" hidden></div>
+<div class="qx-welc" id="welcModal" role="dialog" aria-modal="true" aria-label="Welcome to Trexora" hidden>
+  <button class="qx-welc-x" id="welcClose" type="button" aria-label="Close">✕</button>
+  <div class="qx-welc-ico">🎓</div>
+  <h3>Welcome to Trexora</h3>
+  <p>You're now on a demo account with <b>$10,000 in virtual funds</b>. Practice trading risk-free and get comfortable before using real money.</p>
+  <div class="qx-welc-note"><span>ⓘ</span> Most traders start with the tutorial to trade smarter.</div>
+  <button class="qx-welc-go" id="welcStart" type="button">Start Tutorial · 2 min</button>
+  <button class="qx-welc-later" id="welcLater" type="button">Later</button>
+</div>
+<div class="qx-spot" id="spotHl" hidden></div>
+<div class="qx-spot-tip" id="spotTip" hidden>
+  <b id="spotTitle"></b><p id="spotText"></p>
+  <div class="qx-spot-btns"><button id="spotSkip" type="button">Skip</button><span id="spotDots"></span><button id="spotNext" type="button">Next →</button></div>
 </div>
 
 <div class="settle-note" id="settleNote" hidden>
@@ -241,7 +259,7 @@
 
 <div class="toast" id="toast"></div>
 
-<script src="../shared/store.js?v=20260929f"></script>
-<script src="app.js?v=20260929f"></script>
+<script src="../shared/store.js?v=20260929g"></script>
+<script src="app.js?v=20260929g"></script>
 </body>
 </html>

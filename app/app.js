@@ -784,6 +784,73 @@
     toast("Withdrawal request sent — admin will approve it.");
   });
 
+  /* ---------- welcome modal + onboarding tour ---------- */
+  (function welcome() {
+    var KEY = "trexora_welc_seen", TIPK = "trexora_onboard_tip";
+    function seen(k) { try { return localStorage.getItem(k) === "1"; } catch (e) { return true; } }
+    function mark(k) { try { localStorage.setItem(k, "1"); } catch (e) {} }
+    var back = $("welcBack"), modal = $("welcModal");
+    function hideWelc() { back.hidden = true; modal.hidden = true; mark(KEY); maybeTip(); }
+    function maybeTip() {
+      if (seen(TIPK)) return;
+      var tip = $("onboardTip"), btn = $("supportBtn");
+      if (!tip || !btn || window.innerWidth < 900) { mark(TIPK); return; }
+      tip.hidden = false;
+      setTimeout(function () { tip.hidden = true; mark(TIPK); }, 9000);
+      tip.addEventListener("click", function () { tip.hidden = true; mark(TIPK); });
+    }
+    if (!seen(KEY)) setTimeout(function () { back.hidden = false; modal.hidden = false; }, 700);
+    $("welcClose").addEventListener("click", hideWelc);
+    $("welcLater").addEventListener("click", hideWelc);
+    $("welcStart").addEventListener("click", function () { hideWelc(); startTour(); });
+
+    var STEPS = [
+      { sel: "chartBox", t: "Live chart", d: "This is the real TradingView chart. Watch price action and pick your moment." },
+      { sel: "expStep", t: "Set the time", d: "Pick how long your trade runs — from 15 seconds up to 4 hours." },
+      { sel: "amtStep", t: "Set the investment", d: "Choose your stake with the stepper or the quick amount chips." },
+      { sel: "tradeBtns", t: "Up or Down", d: "Think the price will rise? Tap Up. Fall? Tap Down. Your payout shows right above." },
+      { sel: "openList", t: "Track your trades", d: "Open trades count down here live. You can close early from the History tab." }
+    ];
+    var idx = 0, hl = $("spotHl"), tip = $("spotTip");
+    function place(el) {
+      var r = el.getBoundingClientRect(), pad = 6;
+      hl.style.left = (r.left - pad) + "px"; hl.style.top = (r.top - pad) + "px";
+      hl.style.width = (r.width + pad * 2) + "px"; hl.style.height = (r.height + pad * 2) + "px";
+      var tw = Math.min(300, window.innerWidth * 0.86);
+      var x = Math.max(10, Math.min(window.innerWidth - tw - 10, r.left));
+      var below = r.bottom + pad + 12;
+      var y = below + 190 < window.innerHeight ? below : Math.max(10, r.top - 200);
+      if (window.innerWidth < 900) { x = (window.innerWidth - tw) / 2; y = window.innerHeight - 215; }
+      tip.style.left = x + "px"; tip.style.top = y + "px"; tip.style.width = tw + "px";
+    }
+    function showStep() {
+      var s = STEPS[idx], el = document.getElementById(s.sel);
+      if (!el) { next(); return; }
+      if (s.sel === "openList") showView("trade");
+      el.scrollIntoView({ block: "nearest", behavior: "smooth" });
+      setTimeout(function () {
+        hl.hidden = false; tip.hidden = false;
+        $("spotTitle").textContent = (idx + 1) + ". " + s.t;
+        $("spotText").textContent = s.d;
+        $("spotDots").textContent = "●".repeat(idx + 1) + "○".repeat(STEPS.length - idx - 1);
+        $("spotNext").textContent = idx === STEPS.length - 1 ? "Finish ✓" : "Next →";
+        place(el);
+      }, 250);
+    }
+    function endTour() { hl.hidden = true; tip.hidden = true; }
+    function next() { idx++; if (idx >= STEPS.length) endTour(); else showStep(); }
+    window.__startTrexoraTour = startTour;
+    function startTour() {
+      showView("trade");
+      idx = 0; showStep();
+    }
+    $("spotNext").addEventListener("click", next);
+    $("spotSkip").addEventListener("click", endTour);
+    window.addEventListener("resize", function () { if (!tip.hidden) showStep(); });
+    var rt = $("replayTourBtn");
+    if (rt) rt.addEventListener("click", function () { $("supportModal").hidden = true; startTour(); });
+  })();
+
   /* ---------- init ---------- */
   if (store.settings.maintenance) $("maintBanner").hidden = false;
   renderBalance();
