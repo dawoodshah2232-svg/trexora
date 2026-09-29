@@ -118,7 +118,7 @@
       var t = document.createElement("div");
       t.className = "qx-tab" + (id === state.assetId ? " active" : "");
       t.innerHTML =
-        '<span class="qt-ico">' + TX.esc(assetIcon(a)) + "</span>" +
+        '<span class="qt-ico">' + TX.assetIconHTML(a) + "</span>" +
         '<span class="qt-t"><b>' + TX.esc(a.name) + '</b><small data-px="' + a.id + '">' + fmtPrice(a, TX.priceOf(a)) + "</small></span>" +
         '<span class="qt-pay">' + a.payout + '%</span>' +
         (state.tabs.length > 1 ? '<button class="qt-x" type="button" aria-label="Close tab">✕</button>' : "");
@@ -172,7 +172,7 @@
       b.type = "button";
       b.className = "asset-row" + (a.id === state.assetId ? " active" : "");
       b.innerHTML =
-        '<span class="ar-icon">' + TX.esc(assetIcon(a)) + "</span>" +
+        '<span class="ar-icon">' + TX.assetIconHTML(a) + "</span>" +
         '<span class="ar-names"><strong>' + TX.esc(a.name) + "</strong><small>" + TX.esc(assetSub(a)) + " · " + TX.esc(assetCat(a)) + "</small></span>" +
         '<span class="ar-right"><span class="ar-price" data-px="' + a.id + '">' + fmtPrice(a, TX.priceOf(a)) + '</span><br><span class="ar-payout">' + a.payout + "%</span></span>";
       b.addEventListener("click", function () {
@@ -211,7 +211,7 @@
     state.assetId = id;
     if (state.tabs.indexOf(id) === -1) state.tabs.push(id);
     var a = getAsset(id);
-    $("qpIcon").textContent = a ? assetIcon(a) : "?";
+    $("qpIcon").innerHTML = TX.assetIconHTML(a);
     $("qpName").textContent = a ? a.name : "—";
     $("qpSub").textContent = a ? assetSub(a) + " · " + assetCat(a) : "—";
     $("qpPay").textContent = a ? a.payout + "%" : "—";
@@ -408,7 +408,7 @@
       var d = document.createElement("div");
       d.className = "qp-trade";
       d.innerHTML =
-        '<span class="qt-ico sm">' + TX.esc(a ? assetIcon(a) : "?") + "</span>" +
+        '<span class="qt-ico sm">' + TX.assetIconHTML(a) + "</span>" +
         '<span class="qpt-t"><b>' + TX.esc(t.assetName) + ' <em class="' + t.dir + '">' + t.dir.toUpperCase() + "</em></b>" +
         "<small>" + TX.fmt(t.amount) + " · entry " + (t.entryPrice == null ? "—" : t.entryPrice) + "</small></span>" +
         '<span class="qpt-r"><b class="countdown" data-exp="' + t.expiresAt + '">--:--</b>' +
@@ -427,7 +427,7 @@
     if (!t) { bar.hidden = true; return; }
     bar.hidden = false;
     var a = getAsset(t.assetId);
-    $("tradeBarIco").textContent = a ? assetIcon(a) : "?";
+    $("tradeBarIco").innerHTML = TX.assetIconHTML(a);
     $("tradeBarName").textContent = t.assetName + " · " + t.dir.toUpperCase() + " " + TX.fmt(t.amount);
     $("tradeBarSub").textContent = "entry " + (t.entryPrice == null ? "—" : t.entryPrice) + " · payout " + t.payout + "%";
     bar.setAttribute("data-tid", t.id);
@@ -651,7 +651,7 @@
       var d = document.createElement("div");
       d.className = "mkt-card";
       d.innerHTML =
-        '<span class="ar-icon">' + TX.esc(assetIcon(a)) + "</span>" +
+        '<span class="ar-icon">' + TX.assetIconHTML(a) + "</span>" +
         '<span class="mkt-t"><b>' + TX.esc(a.name) + "</b><small>" + TX.esc(assetSub(a)) + "</small>" +
         '<strong class="mkt-px">' + fmtPrice(a, TX.priceOf(a)) + "</strong></span>" +
         '<span class="mkt-r"><span class="ar-payout">' + a.payout + '%</span><button class="btn btn-primary btn-sm" type="button">Trade</button></span>';

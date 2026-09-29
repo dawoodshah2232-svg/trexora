@@ -64,10 +64,24 @@
       { id: "r_2", userId: "u_4", userEmail: "sara@demo.mail", type: "withdrawal", amount: 1200, method: "Bank transfer", status: "pending", createdAt: now - 3600000 * 2, note: "seeded demo data" },
       { id: "r_3", userId: "u_1", userEmail: "aria@demo.mail", type: "deposit", amount: 250, method: "Mastercard", status: "approved", createdAt: now - 86400000 * 2, note: "seeded demo data" }
     ];
+    var promos = [
+      { id: "p_dep50", code: "DEPOSIT50", pct: 50, category: "Deposit Bonus", expiry: "29/10/2030", enabled: true, usedBy: [], createdAt: now - 86400000 * 20 },
+      { id: "p_dep40", code: "DEPOSIT40", pct: 40, category: "Deposit Bonus", expiry: "29/10/2030", enabled: true, usedBy: [], createdAt: now - 86400000 * 20 },
+      { id: "p_dep30", code: "DEPOSIT30", pct: 30, category: "Deposit Bonus", expiry: "29/10/2030", enabled: true, usedBy: [], createdAt: now - 86400000 * 20 }
+    ];
+    var tournaments = [
+      { id: "t_crazy", name: "Crazy Wednesday", prize: 9000, entry: 10, startsAt: now + 86400000 * 2, durationH: 24, enabled: true },
+      { id: "t_free", name: "Free Friday", prize: 1000, entry: 0, startsAt: now + 86400000 * 4, durationH: 12, enabled: true },
+      { id: "t_weekend", name: "Weekend Battle", prize: 5000, entry: 1, startsAt: now + 86400000 * 6, durationH: 48, enabled: true }
+    ];
+    var signals = [];
     return {
-      v: 3, seededAt: now, seq: 1000,
+      v: 4, seededAt: now, seq: 1000,
       users: users, assets: assets, trades: trades, requests: requests,
-      settings: { defaultPayout: 80, minTrade: 1, maxTrade: 5000, earlyClose: true, signups: true, maintenance: false }
+      promos: promos, tournaments: tournaments, tourJoins: [], signals: signals,
+      verifyQueue: [], ledger: [], announcements: [],
+      roles: [{ id: "r_admin", email: DEMO_ADMIN.email, password: DEMO_ADMIN.password, role: "admin", createdAt: now - 86400000 * 60 }],
+      settings: { defaultPayout: 80, minTrade: 1, maxTrade: 5000, maxPayout: 95, maxOpen: 20, earlyClose: true, signups: true, maintenance: false, signalsOn: true, expiries: ["1m", "5m", "10m", "15m", "30m", "1h", "4h", "1d"] }
     };
   }
 
@@ -88,7 +102,26 @@
       (s.assets || []).forEach(function (a) { if (a.id === d.id) found = true; });
       if (!found) { s.assets.push(d); changed = true; }
     });
-    if (s.v !== 3) { s.v = 3; changed = true; }
+    /* v3 -> v4: ensure new admin-operated collections exist */
+    [["promos", []], ["tournaments", []], ["tourJoins", []], ["signals", []],
+     ["verifyQueue", []], ["ledger", []], ["announcements", []], ["roles", []]].forEach(function (pair) {
+      if (!Array.isArray(s[pair[0]])) { s[pair[0]] = pair[1]; changed = true; }
+    });
+    if (!s.settings) { s.settings = {}; changed = true; }
+    [["signalsOn", true], ["earlyClose", true], ["signups", true], ["maintenance", false],
+     ["defaultPayout", 80], ["minTrade", 1], ["maxTrade", 5000], ["maxPayout", 95], ["maxOpen", 20]
+    ].forEach(function (pair) {
+      if (s.settings[pair[0]] == null) { s.settings[pair[0]] = pair[1]; changed = true; }
+    });
+    if (!Array.isArray(s.settings.expiries) || !s.settings.expiries.length) {
+      s.settings.expiries = ["1m", "5m", "10m", "15m", "30m", "1h", "4h", "1d"]; changed = true;
+    }
+    /* seed default promos/tournaments/admin role once on old stores */
+    var fresh = seed();
+    if (!s.promos.length) { s.promos = fresh.promos; changed = true; }
+    if (!s.tournaments.length) { s.tournaments = fresh.tournaments; changed = true; }
+    if (!s.roles.length) { s.roles = fresh.roles; changed = true; }
+    if (s.v !== 4) { s.v = 4; changed = true; }
     if (changed) save(s);
     return s;
   }
@@ -98,7 +131,7 @@
       var raw = localStorage.getItem(STORE_KEY);
       if (raw) {
         var s = JSON.parse(raw);
-        if (s && (s.v === 2 || s.v === 3)) return migrate(s);
+        if (s && (s.v === 2 || s.v === 3 || s.v === 4)) return migrate(s);
       }
     } catch (e) {}
     var s2 = seed();
@@ -195,6 +228,33 @@
     adminAuthed: adminAuthed, setAdminAuthed: setAdminAuthed,
     DEMO_CLIENT: DEMO_CLIENT, DEMO_ADMIN: DEMO_ADMIN,
     defaultAssets: defaultAssets,
+    /* Proper asset icons: forex flags (flagcdn), crypto logos (cryptocurrency-icons),
+       minted-coin SVG for metals. Falls back to the currency letters if an image fails. */
+    CUR_SYM: { EUR: "€", USD: "$", GBP: "£", JPY: "¥", AUD: "A$", CHF: "Fr", XAU: "Au", XAG: "Ag", BTC: "₿", ETH: "Ξ" },
+    FLAG_CC: { EUR: "eu", GBP: "gb", USD: "us", JPY: "jp", AUD: "au", CHF: "ch", CAD: "ca", NZD: "nz" },
+    assetIconHTML: function (a) {
+      var base = String((a && a.base) || "").toUpperCase();
+      var kind = a && a.kind;
+      var fb = esc((this.CUR_SYM && this.CUR_SYM[base]) || base.slice(0, 2) || "?");
+      var inner = "";
+      if ((kind === "fiat" || kind === "forex") && this.FLAG_CC[base]) {
+        inner = '<img src="https://flagcdn.com/w80/' + this.FLAG_CC[base] + '.png" alt="' + esc(base) + ' flag" loading="lazy" onerror="this.remove()">';
+      } else if (base === "XAU" || base === "XAG") {
+        var c1 = base === "XAU" ? "#f7cd5a" : "#d7dde3", c2 = base === "XAU" ? "#a86e0a" : "#7d8894";
+        var gid = "txm" + base;
+        inner = '<svg viewBox="0 0 40 40" aria-hidden="true"><defs><radialGradient id="' + gid + '" cx="35%" cy="30%" r="80%">' +
+          '<stop offset="0%" stop-color="' + c1 + '"/><stop offset="100%" stop-color="' + c2 + '"/></radialGradient></defs>' +
+          '<circle cx="20" cy="20" r="17" fill="url(#' + gid + ')"/>' +
+          '<circle cx="20" cy="20" r="13" fill="none" stroke="rgba(255,255,255,.6)" stroke-width="2"/>' +
+          '<text x="20" y="25.5" text-anchor="middle" font-size="11" font-weight="800" fill="#3a2a04" font-family="Arial,sans-serif">' + base.slice(0, 2) + "</text></svg>";
+      } else if (kind === "crypto" && /^[A-Z0-9]{2,10}$/.test(base)) {
+        inner = '<img src="https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@1a63530be6e374711a8554f31b17e4cb92c25fae5/svg/color/' + base.toLowerCase() + '.svg" alt="' + esc(base) + ' logo" loading="lazy" onerror="this.remove()">';
+      }
+      return '<span class="tx-ico">' + inner + "<i>" + fb + "</i></span>";
+    },
+    ledger: function (store, userId, amount, kind, note) {
+      store.ledger.push({ id: uid("l"), userId: userId, amount: amount, kind: kind, note: note || "", createdAt: Date.now() });
+    },
     resetDemo: function () { try { localStorage.removeItem(STORE_KEY); } catch (e) {} return load(); }
   };
 })();

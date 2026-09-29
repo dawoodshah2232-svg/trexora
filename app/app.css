@@ -718,3 +718,32 @@ table.data tr:last-child td{border-bottom:0}
 .verify-ok{display:flex;gap:10px;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.4);border-radius:10px;padding:12px;font-size:.8rem;margin-bottom:12px}
 .del-acct{display:block;width:100%;background:none;border:0;color:#f23645;font-family:var(--font);font-size:.85rem;font-weight:700;padding:14px;cursor:pointer}
 @media(max-width:899px){.wd-cols{grid-template-columns:1fr}.wd-foot{grid-template-columns:1fr}}
+
+/* ---------- proper asset icons: flags / coin logos / metal coins ---------- */
+.tx-ico{position:relative;display:inline-grid;place-items:center;width:100%;height:100%;border-radius:50%;overflow:hidden}
+.tx-ico img{width:100%;height:100%;object-fit:cover;display:block;position:relative;z-index:1;border-radius:50%}
+.tx-ico svg{width:100%;height:100%;display:block;position:relative;z-index:1}
+.tx-ico i{position:absolute;inset:0;display:grid;place-items:center;font-style:normal;font-weight:800;font-size:.78em;color:#fff}
+.qt-ico .tx-ico,.ar-icon .tx-ico{width:100%;height:100%}
+.qp-flag .tx-ico,.qtb-ico .tx-ico{width:100%;height:100%}
+
+/* ============ full-bleed trade chart (2026-09-29) ============ */
+.qx-main{padding:0}
+.qx-page{padding:18px 18px 40px}
+#view-trade.active{display:flex;flex-direction:column;position:relative;min-height:0}
+#view-trade{height:calc(100svh - 58px);min-height:480px}
+#view-trade .qx-tabs{position:absolute;top:10px;left:10px;right:10px;z-index:8;margin:0}
+#view-trade .qx-chartzone{flex:1;min-height:0;display:block;position:relative}
+#view-trade .qx-chart{height:100%;min-height:0;border:0;border-radius:0;background:var(--bg)}
+#view-trade .qx-sent{position:absolute;left:8px;top:50%;transform:translateY(-50%);z-index:7;height:min(46%,320px);min-height:140px;background:rgba(12,7,9,.55);border:1px solid var(--line);border-radius:99px;backdrop-filter:blur(6px);padding:10px 0}
+#view-trade .qx-tradebar{top:64px;left:10px;right:10px}
+@media(min-width:900px){
+  #view-trade{height:calc(100vh - 58px)}
+}
+@media(max-width:899px){
+  #view-trade{height:calc(100svh - 58px - 66px)}
+  .qx-shell{position:relative}
+  .qx-shell:has(#view-trade.active) .qx-panel{position:absolute;left:8px;right:8px;top:auto;bottom:calc(74px + env(safe-area-inset-bottom));width:auto;height:auto;max-height:54%;z-index:40;background:rgba(19,11,14,.95);backdrop-filter:blur(16px);border:1px solid var(--line);border-radius:20px;box-shadow:0 -14px 44px rgba(0,0,0,.55);overflow-y:auto}
+  .qx-shell:has(#view-trade.active) .qx-main{padding-bottom:0}
+  .qx-main{padding-bottom:84px}
+}
