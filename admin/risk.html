@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Risk — Trexora Admin</title>
+<meta name="robots" content="noindex">
+<link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
+<link rel="stylesheet" href="../styles.css?v=20260929p">
+<link rel="stylesheet" href="admin.css?v=20260929v">
+<script>try{var t=localStorage.getItem('trexora-theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}</script>
+</head>
+<body class="admin-body" data-page="risk">
+<div class="admin-shell">
+  <aside class="sidebar" id="sidebar">
+    <a class="brand" href="dashboard.html" aria-label="Trexora admin">
+      <img class="logo logo-dark" src="../assets/logo-dark.svg" alt="Trexora" height="32">
+      <img class="logo logo-light" src="../assets/logo-light.svg" alt="Trexora" height="32">
+    </a>
+    <a class="side-link" data-nav="dashboard" href="dashboard.html"><span class="ico">📊</span>Dashboard</a>
+    <a class="side-link" data-nav="users" href="users.html"><span class="ico">👥</span>Users</a>
+    <a class="side-link" data-nav="assets" href="assets.html"><span class="ico">💹</span>Assets</a>
+    <a class="side-link" data-nav="risk" href="risk.html"><span class="ico">🛡️</span>Risk</a>
+    <a class="side-link" data-nav="trades" href="trades.html"><span class="ico">📑</span>Trades</a>
+    <a class="side-link" data-nav="requests" href="requests.html"><span class="ico">💸</span>Requests</a>
+    <a class="side-link" data-nav="payments" href="payments.html"><span class="ico">💳</span>Payments</a>
+    <a class="side-link" data-nav="integrations" href="integrations.html"><span class="ico">🔌</span>Integrations</a>
+    <a class="side-link" data-nav="settings" href="settings.html"><span class="ico">⚙️</span>Settings</a>
+    <div class="side-foot">
+      <a class="side-link" href="../index.html"><span class="ico">🌐</span>View website</a>
+      <a class="side-link" href="../app/terminal.html"><span class="ico">📈</span>Client terminal</a>
+      <button class="side-link" id="logoutBtn" type="button" style="background:none;border:0;width:100%;text-align:left;cursor:pointer;font-family:var(--font)"><span class="ico">⏻</span>Log out</button>
+    </div>
+  </aside>
+
+  <main class="admin-main">
+    <div class="admin-top">
+      <button class="icon-btn mobile-nav-toggle" id="mobileNavToggle" aria-label="Menu">☰</button>
+      <h1>Risk management</h1>
+      <span class="spacer"></span>
+      <span class="live-pill"><i class="live-dot"></i>DEMO DATA</span>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme" style="width:36px;height:36px">
+        <svg class="icon-sun" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M2 12h2.5M19.5 12H22M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+      </button>
+    </div>
+
+    <div class="page-head reveal">
+      <span class="ph-ico" style="--tint:#2f80ff" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 5-3.5 8.5-7 10-3.5-1.5-7-5-7-10V6z"/><path d="M9.5 12l2 2 3.5-4"/></svg></span>
+      <div>
+        <h2>Risk management</h2>
+        <p>Your economics, out in the open. The platform earns the <strong>payout spread</strong> on every trade — nothing is manipulated: prices come from the live market feed and every settlement uses the market price at expiry.</p>
+      </div>
+    </div>
+
+    <div class="sum-strip reveal" id="riskStrip" style="--d:.08s" aria-live="polite"></div>
+
+    <div class="panel">
+      <h2>Payout &amp; margin by asset</h2>
+      <p style="color:var(--muted);font-size:.85rem;margin-bottom:14px">Edit a payout to change the terminal immediately. Theoretical margin is the expected house edge per trade at a 50/50 win rate: <b style="color:var(--text)">(100 − payout) ÷ 2</b>.</p>
+      <div class="tbl-wrap"><table class="data" id="riskTable">
+        <thead><tr><th>Asset</th><th>Payout %</th><th>Margin %</th><th>Volume</th><th>Open exposure</th><th>Win %</th><th>Enabled</th></tr></thead>
+        <tbody></tbody>
+      </table></div>
+    </div>
+
+    <div class="panel">
+      <h2>Platform limits</h2>
+      <p style="color:var(--muted);font-size:.85rem;margin-bottom:14px">Enforced by the terminal on every trade. Change them in <a href="settings.html" style="color:var(--brand)">Settings → Trading limits</a>.</p>
+      <div class="form-grid two" id="limitsGrid" style="pointer-events:none"></div>
+    </div>
+
+    <div class="panel">
+      <h2>How the house earns</h2>
+      <div class="switch-row"><div><div class="lbl">1 · The payout spread</div><div class="desc">A trader stakes $10 at 80% payout. Win: they receive $18. Loss: the $10 stays with the platform. At an even win rate the expected margin is 10% of volume — set per asset above.</div></div></div>
+      <div class="switch-row"><div><div class="lbl">2 · Real market prices</div><div class="desc">Entry and expiry prices come from the live Deriv feed, the same feed drawn on the chart. There is no price offset, no candle manipulation, no per-trader rigging — the numbers every trader sees are the market numbers.</div></div></div>
+      <div class="switch-row"><div><div class="lbl">3 · Transparent limits</div><div class="desc">Min/max stake, max open positions and the payout cap apply equally to every account and are visible to traders in the ticket. Exposure is monitored on the dashboard.</div></div></div>
+    </div>
+  </main>
+</div>
+<div class="toast" id="toast" style="position:fixed;left:50%;bottom:30px;transform:translateX(-50%);background:#0D1830;color:#fff;border:1px solid var(--brand);padding:12px 20px;border-radius:12px;opacity:0;pointer-events:none;transition:.3s;z-index:200"></div>
+
+<script src="../shared/store.js?v=20260929v"></script>
+<script src="admin.js?v=20260929f"></script>
+<script>
+(function(){
+  "use strict";
+  var $ = ADM.$;
+  var s = TX.load();
+  function marginOf(p){ return Math.max(0, (100 - p) / 2); }
+
+  function paintStrip(){
+    var grid = $("riskStrip"); if (!grid) return;
+    var en = s.assets.filter(function(a){ return a.enabled; });
+    var avg = en.length ? en.reduce(function(x,a){ return x + (a.payout || 0); }, 0) / en.length : 0;
+    var expo = s.trades.filter(function(t){ return t.status === "open"; })
+      .reduce(function(x,t){ return x + (t.amount || 0); }, 0);
+    grid.innerHTML =
+      ADM.chip("#2f80ff", "Avg payout", avg.toFixed(1) + "%", '<circle cx="12" cy="12" r="9"/><path d="M12 7v10M15 9.5c-.7-1-1.8-1.5-3-1.5-1.7 0-3 .9-3 2.3 0 3 6 1.4 6 4.4 0 1.4-1.3 2.3-3 2.3-1.2 0-2.3-.5-3-1.5"/>') +
+      ADM.chip("#22c55e", "Theoretical margin", marginOf(avg).toFixed(1) + "%", '<path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/>') +
+      ADM.chip("#d9a441", "Open exposure", TX.fmt(expo), '<circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="1.4" fill="currentColor"/>') +
+      ADM.chip("#8b5cf6", "Max open / user", s.settings.maxOpenPerUser || 10, '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.2 3.4-5 6.5-5s5.7 1.8 6.5 5"/><circle cx="17.5" cy="9.5" r="2.5"/><path d="M16 15.2c2.6.3 4.7 1.9 5.5 4.8"/>');
+  }
+
+  function render(){
+    paintStrip();
+    var tb = $("riskTable").querySelector("tbody"); tb.innerHTML = "";
+    s.assets.forEach(function(a){
+      var ats = s.trades.filter(function(t){ return t.assetId === a.id; });
+      var c = ats.filter(function(t){ return t.status === "closed"; });
+      var w = c.filter(function(t){ return t.result === "win"; }).length;
+      var vol = ats.reduce(function(x,t){ return x + (t.amount || 0); }, 0);
+      var expo = ats.filter(function(t){ return t.status === "open"; })
+        .reduce(function(x,t){ return x + (t.amount || 0); }, 0);
+      var tr = document.createElement("tr");
+      tr.innerHTML =
+        "<td><strong>" + TX.esc(a.name) + "</strong></td>" +
+        '<td><input class="inline-input" data-f="payout" data-id="' + a.id + '" type="number" min="1" max="100" value="' + a.payout + '" style="width:70px"></td>' +
+        '<td style="color:#4ade80;font-weight:700">' + marginOf(a.payout || 0).toFixed(1) + "%</td>" +
+        "<td>" + TX.fmt(vol) + "</td>" +
+        "<td>" + TX.fmt(expo) + "</td>" +
+        "<td>" + (c.length ? Math.round(w / c.length * 100) + "%" : "—") + "</td>" +
+        '<td><label class="toggle"><input type="checkbox" data-f="enabled" data-id="' + a.id + '"' + (a.enabled ? " checked" : "") + '><span class="track"></span></label></td>';
+      tb.appendChild(tr);
+    });
+    tb.querySelectorAll("input[data-f]").forEach(function(inp){
+      inp.addEventListener("change", function(){
+        var id = inp.getAttribute("data-id"), f = inp.getAttribute("data-f"), a = null;
+        for (var i = 0; i < s.assets.length; i++) if (s.assets[i].id === id) a = s.assets[i];
+        if (!a) return;
+        if (f === "enabled") a.enabled = inp.checked;
+        else if (f === "payout") { var cap = s.settings.payoutCap || 95; a.payout = Math.min(cap, Math.max(1, parseInt(inp.value, 10) || a.payout)); }
+        TX.save(s); render();
+        ADM.toast("Risk updated — live in the terminal now.");
+      });
+    });
+    var g = $("limitsGrid");
+    function ro(label, val){
+      return '<div class="field"><label>' + label + '</label><input class="inline-input" type="text" value="' + TX.esc(String(val)) + '" readonly style="width:100%;opacity:.75"></div>';
+    }
+    g.innerHTML =
+      ro("Default payout % (new assets)", (s.settings.defaultPayout || 80) + "%") +
+      ro("Global min / max trade (USD)", TX.fmt(s.settings.minTrade || 0) + " – " + TX.fmt(s.settings.maxTrade || 0)) +
+      ro("Max open positions per user", s.settings.maxOpenPerUser || 10) +
+      ro("Max payout % cap (any asset)", (s.settings.payoutCap || 95) + "%");
+  }
+  render();
+})();
+</script>
+</body>
+</html>
